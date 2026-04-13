@@ -1,0 +1,88 @@
+# Doxyfile for ConsoleForge v1
+# Generated for Doxygen 1.16.x
+
+#---------------------------------------------------------------------------
+# Project
+#---------------------------------------------------------------------------
+PROJECT_NAME           = "ConsoleForge"
+PROJECT_NUMBER         = 1.0.0
+PROJECT_BRIEF          = "Elm-architecture TUI framework for .NET 8"
+OUTPUT_DIRECTORY       = docs
+CREATE_SUBDIRS         = NO
+OUTPUT_LANGUAGE        = English
+
+#---------------------------------------------------------------------------
+# Input
+#---------------------------------------------------------------------------
+INPUT                  = src/ConsoleForge
+INPUT_ENCODING         = UTF-8
+FILE_PATTERNS          = *.cs
+RECURSIVE              = YES
+EXCLUDE_PATTERNS       = */bin/* */obj/*
+
+#---------------------------------------------------------------------------
+# Source parsing — C# XML doc via OPTIMIZE_OUTPUT_FOR_C / JAVADOC style
+#---------------------------------------------------------------------------
+OPTIMIZE_OUTPUT_JAVA   = YES
+JAVADOC_AUTOBRIEF      = YES
+EXTRACT_ALL            = NO
+EXTRACT_PRIVATE        = NO
+EXTRACT_STATIC         = YES
+EXTRACT_ANON_NSPACES   = NO
+HIDE_UNDOC_MEMBERS     = NO
+HIDE_UNDOC_CLASSES     = NO
+SHOW_INCLUDE_FILES     = NO
+INLINE_SOURCES         = NO
+
+#---------------------------------------------------------------------------
+# HTML output
+#---------------------------------------------------------------------------
+GENERATE_HTML          = YES
+HTML_OUTPUT            = html
+HTML_FILE_EXTENSION    = .html
+HTML_COLORSTYLE        = DARK
+GENERATE_TREEVIEW      = YES
+TREEVIEW_WIDTH         = 250
+DISABLE_INDEX          = NO
+FULL_SIDEBAR           = NO
+HTML_DYNAMIC_SECTIONS  = YES
+SEARCHENGINE           = YES
+
+#---------------------------------------------------------------------------
+# No LaTeX / RTF / man / XML
+#---------------------------------------------------------------------------
+GENERATE_LATEX         = NO
+GENERATE_RTF           = NO
+GENERATE_MAN           = NO
+GENERATE_XML           = NO
+GENERATE_DOCBOOK       = NO
+GENERATE_AUTOGEN_DEF   = NO
+
+#---------------------------------------------------------------------------
+# Diagrams — use built-in dot if available, else skip
+#---------------------------------------------------------------------------
+HAVE_DOT               = NO
+COLLABORATION_GRAPH    = NO
+INCLUDE_GRAPH          = NO
+INCLUDED_BY_GRAPH      = NO
+
+#---------------------------------------------------------------------------
+# Warnings
+#---------------------------------------------------------------------------
+QUIET                  = NO
+WARNINGS               = YES
+WARN_IF_UNDOCUMENTED   = YES
+WARN_IF_DOC_ERROR      = YES
+WARN_NO_PARAMDOC       = NO
+WARN_AS_ERROR          = NO
+WARN_LOGFILE           = docs/doxygen-warnings.log
+
+#---------------------------------------------------------------------------
+# Misc
+#---------------------------------------------------------------------------
+AUTOLINK_SUPPORT       = YES
+BUILTIN_STL_SUPPORT    = YES
+CPP_CLI_SUPPORT        = YES
+TAB_SIZE               = 4
+MARKDOWN_SUPPORT       = YES
+TOC_INCLUDE_HEADINGS   = 3

@@ -19,7 +19,9 @@ public sealed class TextBlock : IWidget
     /// <summary>Object-initializer constructor.</summary>
     public TextBlock() { }
 
+    /// <summary>The text content to display, wrapped at the region width.</summary>
     public string Text { get; init; } = "";
+    /// <summary>Visual style applied to the rendered text. Inherits <see cref="ConsoleForge.Styling.Theme.BaseStyle"/> when no properties are set.</summary>
     public Style Style { get; init; } = Style.Default;
     public SizeConstraint Width { get; init; } = SizeConstraint.Auto;
     public SizeConstraint Height { get; init; } = SizeConstraint.Auto;

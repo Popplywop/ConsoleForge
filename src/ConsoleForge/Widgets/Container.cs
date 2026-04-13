@@ -42,7 +42,9 @@ public sealed class Container : IWidget, IContainer
     public SizeConstraint Height { get; init; } = SizeConstraint.Flex(1);
 
     // ── Container-specific ──────────────────────────────────────────────────
+    /// <summary>Visual style applied as background fill before children render.</summary>
     public Style Style      { get; init; } = Style.Default;
+    /// <summary>When true, children that overflow the container's main axis are clipped and scrollable via <see cref="ScrollOffset"/>.</summary>
     public bool  Scrollable { get; init; }
 
     /// <summary>

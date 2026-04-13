@@ -18,13 +18,25 @@ public sealed class List : IFocusable
     public SizeConstraint Height { get; init; } = SizeConstraint.Flex(1);
 
     // ── List-specific ────────────────────────────────────────────────────────
+    /// <summary>The display strings shown in the list.</summary>
     public IReadOnlyList<string> Items         { get; init; } = [];
+    /// <summary>Zero-based index of the currently highlighted item.</summary>
     public int                   SelectedIndex { get; init; }
+    /// <summary>Visual style for unselected rows. Inherits theme base style when no properties set.</summary>
     public Style                 Style         { get; init; } = Style.Default;
+    /// <summary>Visual style applied to the highlighted row. Defaults to reverse-video.</summary>
     public Style                 SelectedItemStyle { get; init; } = Style.Default.Reverse(true);
 
+    /// <summary>Object-initializer constructor; all properties default.</summary>
     public List() { }
 
+    /// <summary>
+    /// Positional constructor for inline usage.
+    /// </summary>
+    /// <param name="items">Display strings to show.</param>
+    /// <param name="selectedIndex">Initially highlighted row index (clamped).</param>
+    /// <param name="style">Optional style for unselected rows.</param>
+    /// <param name="selectedItemStyle">Optional style for the highlighted row.</param>
     public List(
         IReadOnlyList<string> items,
         int selectedIndex = 0,

@@ -34,7 +34,9 @@ public interface ITerminal : IDisposable
     void Flush();
 
     // ── Cursor ───────────────────────────────────────────────────────
+    /// <summary>Show or hide the terminal hardware cursor.</summary>
     void SetCursorVisible(bool visible);
+    /// <summary>Move the terminal cursor to the given zero-based column and row.</summary>
     void SetCursorPosition(int col, int row);
 
     // ── Title ────────────────────────────────────────────────────────
@@ -75,12 +77,20 @@ public interface ITerminal : IDisposable
 
 // ── Supporting types ─────────────────────────────────────────────────────────
 
+/// <summary>Base discriminated union for all terminal input events.</summary>
 public abstract record InputEvent;
+/// <summary>Input event wrapping a keyboard keypress.</summary>
 public sealed record KeyInputEvent(KeyMsg Key) : InputEvent;
+/// <summary>Input event raised when the terminal is resized.</summary>
 public sealed record ResizeInputEvent(int Width, int Height) : InputEvent;
 
+/// <summary>
+/// Event arguments carrying the new terminal dimensions after a resize.
+/// </summary>
 public sealed class TerminalResizedEventArgs(int width, int height) : EventArgs
 {
+    /// <summary>New terminal width in columns.</summary>
     public int Width { get; } = width;
+    /// <summary>New terminal height in rows.</summary>
     public int Height { get; } = height;
 }

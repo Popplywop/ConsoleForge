@@ -5,6 +5,7 @@ namespace ConsoleForge.Layout;
 /// </summary>
 public sealed class ResolvedLayout
 {
+    /// <summary>Initialises the layout with the given widget-to-region allocation map.</summary>
     public ResolvedLayout(Dictionary<IWidget, Region> allocations)
     {
         Allocations = allocations;

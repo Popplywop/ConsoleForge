@@ -1,0 +1,16 @@
+/home/jpopple/projects/ConsoleForge/src/ConsoleForge/Core/Messages.cs:14: warning: Found ';' while parsing initializer list! (doxygen could be confused by a macro call without semicolon)
+/home/jpopple/projects/ConsoleForge/src/ConsoleForge/Core/Messages.cs:17: warning: Found ';' while parsing initializer list! (doxygen could be confused by a macro call without semicolon)
+/home/jpopple/projects/ConsoleForge/src/ConsoleForge/Core/Messages.cs:20: warning: Found ';' while parsing initializer list! (doxygen could be confused by a macro call without semicolon)
+/home/jpopple/projects/ConsoleForge/src/ConsoleForge/Core/Messages.cs:26: warning: Found ';' while parsing initializer list! (doxygen could be confused by a macro call without semicolon)
+/home/jpopple/projects/ConsoleForge/src/ConsoleForge/Core/Messages.cs:29: warning: Found ';' while parsing initializer list! (doxygen could be confused by a macro call without semicolon)
+/home/jpopple/projects/ConsoleForge/src/ConsoleForge/Core/Messages.cs:32: warning: Found ';' while parsing initializer list! (doxygen could be confused by a macro call without semicolon)
+/home/jpopple/projects/ConsoleForge/src/ConsoleForge/Core/Messages.cs:40: warning: Found ';' while parsing initializer list! (doxygen could be confused by a macro call without semicolon)
+/home/jpopple/projects/ConsoleForge/src/ConsoleForge/Terminal/ITerminal.cs:83: warning: Found ';' while parsing initializer list! (doxygen could be confused by a macro call without semicolon)
+/home/jpopple/projects/ConsoleForge/src/ConsoleForge/Terminal/ITerminal.cs:85: warning: Found ';' while parsing initializer list! (doxygen could be confused by a macro call without semicolon)
+/home/jpopple/projects/ConsoleForge/src/ConsoleForge/Widgets/List.cs:97: warning: Found ';' while parsing initializer list! (doxygen could be confused by a macro call without semicolon)
+/home/jpopple/projects/ConsoleForge/src/ConsoleForge/Widgets/TextInput.cs:130: warning: Found ';' while parsing initializer list! (doxygen could be confused by a macro call without semicolon)
+error: NamespaceDefImpl::insertMembers(): member 'SizeConstraint' with unexpected type 'property' and class scope '' inserted in namespace scope 'ConsoleForge::Layout'!
+error: NamespaceDefImpl::insertMembers(): member 'profile' with unexpected type 'property' and class scope '' inserted in namespace scope 'ConsoleForge::Styling'!
+error: NamespaceDefImpl::insertMembers(): member 'Theme' with unexpected type 'property' and class scope '' inserted in namespace scope 'ConsoleForge::Styling'!
+/home/jpopple/projects/ConsoleForge/src/ConsoleForge/Core/IComponent.cs:14: warning: Member Update(IMsg msg) (function) of interface ConsoleForge.Core.IComponent-1-g is not documented.
+/home/jpopple/projects/ConsoleForge/src/ConsoleForge/Core/IModel.cs:23: warning: Member Update(IMsg msg) (function) of interface ConsoleForge.Core.IModel is not documented.

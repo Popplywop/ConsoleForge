@@ -6,6 +6,8 @@ namespace ConsoleForge.Layout;
 /// </summary>
 public sealed class LayoutConstraintException : Exception
 {
+    /// <summary>Initialises the exception with a descriptive message.</summary>
     public LayoutConstraintException(string message) : base(message) { }
+    /// <summary>Initialises the exception with a message and an inner exception that is the cause.</summary>
     public LayoutConstraintException(string message, Exception inner) : base(message, inner) { }
 }

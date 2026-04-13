@@ -18,7 +18,9 @@ public sealed class BorderBox : IWidget
         if (style is not null) Style = style.Value;
     }
 
+    /// <summary>Optional title text rendered in the top border edge.</summary>
     public string Title { get; init; } = "";
+    /// <summary>Optional child widget rendered inside the border, in the inner region.</summary>
     public IWidget? Body { get; init; }
     public Style Style { get; init; } = Style.Default.Border(Borders.Normal);
     public SizeConstraint Width { get; init; } = SizeConstraint.Flex(1);

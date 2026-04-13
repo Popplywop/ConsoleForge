@@ -29,6 +29,13 @@ public sealed class RenderContext : IRenderContext
     public ColorProfile   ColorProfile { get; private set; }
     public ResolvedLayout Layout       { get; private set; }
 
+    /// <summary>
+    /// Initialises a fresh render context for a single full-redraw frame.
+    /// </summary>
+    /// <param name="region">The terminal region this context covers.</param>
+    /// <param name="theme">Active visual theme.</param>
+    /// <param name="colorProfile">ANSI color output profile.</param>
+    /// <param name="layout">Pre-resolved widget-to-region layout map.</param>
     public RenderContext(Region region, Theme theme, ColorProfile colorProfile, ResolvedLayout layout)
     {
         Region       = region;

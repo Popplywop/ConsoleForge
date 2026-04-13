@@ -88,78 +88,109 @@ public readonly struct Style : IEquatable<Style>
     }
 
     // ── Color ────────────────────────────────────────────────────────
+    /// <summary>Returns a new style with the foreground color set to <paramref name="color"/>.</summary>
     public Style Foreground(IColor color) => With(FgBit, fg: color);
+    /// <summary>Returns a new style with the background color set to <paramref name="color"/>.</summary>
     public Style Background(IColor color) => With(BgBit, bg: color);
 
     // ── Text decoration ──────────────────────────────────────────────
+    /// <summary>Returns a new style with bold enabled or disabled.</summary>
     public Style Bold(bool value = true) => With(BoldBit | (value ? BoldValueBit : 0), clearBits: value ? 0 : BoldValueBit);
+    /// <summary>Returns a new style with italic enabled or disabled.</summary>
     public Style Italic(bool value = true) => With(ItalicBit | (value ? ItalicValueBit : 0), clearBits: value ? 0 : ItalicValueBit);
+    /// <summary>Returns a new style with underline enabled or disabled.</summary>
     public Style Underline(bool value = true) => With(UnderlineBit | (value ? UnderlineValueBit : 0), clearBits: value ? 0 : UnderlineValueBit);
+    /// <summary>Returns a new style with strikethrough enabled or disabled.</summary>
     public Style Strikethrough(bool value = true) => With(StrikeBit | (value ? StrikeValueBit : 0), clearBits: value ? 0 : StrikeValueBit);
+    /// <summary>Returns a new style with faint (dim) intensity enabled or disabled.</summary>
     public Style Faint(bool value = true) => With(FaintBit | (value ? FaintValueBit : 0), clearBits: value ? 0 : FaintValueBit);
+    /// <summary>Returns a new style with blinking enabled or disabled.</summary>
     public Style Blink(bool value = true) => With(BlinkBit | (value ? BlinkValueBit : 0), clearBits: value ? 0 : BlinkValueBit);
+    /// <summary>Returns a new style with foreground/background colors swapped (reverse video) enabled or disabled.</summary>
     public Style Reverse(bool value = true) => With(ReverseBit | (value ? ReverseValueBit : 0), clearBits: value ? 0 : ReverseValueBit);
 
     // ── Spacing ──────────────────────────────────────────────────────
+    /// <summary>Returns a new style with equal padding on all four sides.</summary>
     public Style Padding(int all) => Padding(all, all, all, all);
+    /// <summary>Returns a new style with symmetric vertical and horizontal padding.</summary>
     public Style Padding(int vertical, int horizontal) => Padding(vertical, horizontal, vertical, horizontal);
+    /// <summary>Returns a new style with independent padding on each side.</summary>
     public Style Padding(int top, int right, int bottom, int left) =>
         new(_props | PaddingBit, _fg, _bg, _borderFg, _borderBg, _border,
             top, right, bottom, left, _marginTop, _marginRight, _marginBottom, _marginLeft,
             _width, _height, _align);
 
+    /// <summary>Returns a new style with equal margin on all four sides.</summary>
     public Style Margin(int all) => Margin(all, all, all, all);
+    /// <summary>Returns a new style with symmetric vertical and horizontal margin.</summary>
     public Style Margin(int vertical, int horizontal) => Margin(vertical, horizontal, vertical, horizontal);
+    /// <summary>Returns a new style with independent margin on each side.</summary>
     public Style Margin(int top, int right, int bottom, int left) =>
         new(_props | MarginBit, _fg, _bg, _borderFg, _borderBg, _border,
             _paddingTop, _paddingRight, _paddingBottom, _paddingLeft,
             top, right, bottom, left, _width, _height, _align);
 
     // ── Size ─────────────────────────────────────────────────────────
+    /// <summary>Returns a new style with a fixed width in terminal columns.</summary>
     public Style Width(int columns) => new(_props | WidthBit, _fg, _bg, _borderFg, _borderBg, _border,
         _paddingTop, _paddingRight, _paddingBottom, _paddingLeft,
         _marginTop, _marginRight, _marginBottom, _marginLeft, columns, _height, _align);
 
+    /// <summary>Returns a new style with a fixed height in terminal rows.</summary>
     public Style Height(int rows) => new(_props | HeightBit, _fg, _bg, _borderFg, _borderBg, _border,
         _paddingTop, _paddingRight, _paddingBottom, _paddingLeft,
         _marginTop, _marginRight, _marginBottom, _marginLeft, _width, rows, _align);
 
     // ── Alignment ────────────────────────────────────────────────────
+    /// <summary>Returns a new style with horizontal text alignment set to <paramref name="align"/>.</summary>
     public Style Align(HorizontalAlign align) => new(_props | AlignBit, _fg, _bg, _borderFg, _borderBg, _border,
         _paddingTop, _paddingRight, _paddingBottom, _paddingLeft,
         _marginTop, _marginRight, _marginBottom, _marginLeft, _width, _height, align);
 
     // ── Borders ──────────────────────────────────────────────────────
+    /// <summary>Returns a new style with all four border sides enabled using <paramref name="border"/> characters.</summary>
     public Style Border(BorderSpec border) => new(_props | BorderBit | BorderTopBit | BorderRightBit | BorderBottomBit | BorderLeftBit,
         _fg, _bg, _borderFg, _borderBg, border,
         _paddingTop, _paddingRight, _paddingBottom, _paddingLeft,
         _marginTop, _marginRight, _marginBottom, _marginLeft, _width, _height, _align);
 
+    /// <summary>Returns a new style with the top border side enabled or disabled.</summary>
     public Style BorderTop(bool enabled = true) => enabled
         ? new(_props | BorderBit | BorderTopBit, _fg, _bg, _borderFg, _borderBg, _border, _paddingTop, _paddingRight, _paddingBottom, _paddingLeft, _marginTop, _marginRight, _marginBottom, _marginLeft, _width, _height, _align)
         : new(_props & ~BorderTopBit, _fg, _bg, _borderFg, _borderBg, _border, _paddingTop, _paddingRight, _paddingBottom, _paddingLeft, _marginTop, _marginRight, _marginBottom, _marginLeft, _width, _height, _align);
 
+    /// <summary>Returns a new style with the right border side enabled or disabled.</summary>
     public Style BorderRight(bool enabled = true) => enabled
         ? new(_props | BorderBit | BorderRightBit, _fg, _bg, _borderFg, _borderBg, _border, _paddingTop, _paddingRight, _paddingBottom, _paddingLeft, _marginTop, _marginRight, _marginBottom, _marginLeft, _width, _height, _align)
         : new(_props & ~BorderRightBit, _fg, _bg, _borderFg, _borderBg, _border, _paddingTop, _paddingRight, _paddingBottom, _paddingLeft, _marginTop, _marginRight, _marginBottom, _marginLeft, _width, _height, _align);
 
+    /// <summary>Returns a new style with the bottom border side enabled or disabled.</summary>
     public Style BorderBottom(bool enabled = true) => enabled
         ? new(_props | BorderBit | BorderBottomBit, _fg, _bg, _borderFg, _borderBg, _border, _paddingTop, _paddingRight, _paddingBottom, _paddingLeft, _marginTop, _marginRight, _marginBottom, _marginLeft, _width, _height, _align)
         : new(_props & ~BorderBottomBit, _fg, _bg, _borderFg, _borderBg, _border, _paddingTop, _paddingRight, _paddingBottom, _paddingLeft, _marginTop, _marginRight, _marginBottom, _marginLeft, _width, _height, _align);
 
+    /// <summary>Returns a new style with the left border side enabled or disabled.</summary>
     public Style BorderLeft(bool enabled = true) => enabled
         ? new(_props | BorderBit | BorderLeftBit, _fg, _bg, _borderFg, _borderBg, _border, _paddingTop, _paddingRight, _paddingBottom, _paddingLeft, _marginTop, _marginRight, _marginBottom, _marginLeft, _width, _height, _align)
         : new(_props & ~BorderLeftBit, _fg, _bg, _borderFg, _borderBg, _border, _paddingTop, _paddingRight, _paddingBottom, _paddingLeft, _marginTop, _marginRight, _marginBottom, _marginLeft, _width, _height, _align);
 
+    /// <summary>Returns a new style with the border foreground color set to <paramref name="color"/>.</summary>
     public Style BorderForeground(IColor color) => With(BorderFgBit, borderFg: color);
+    /// <summary>Returns a new style with the border background color set to <paramref name="color"/>.</summary>
     public Style BorderBackground(IColor color) => With(BorderBgBit, borderBg: color);
 
     // ── Unset ────────────────────────────────────────────────────────
+    /// <summary>Returns a new style with the foreground color property cleared.</summary>
     public Style UnsetForeground() => new(_props & ~FgBit, null, _bg, _borderFg, _borderBg, _border, _paddingTop, _paddingRight, _paddingBottom, _paddingLeft, _marginTop, _marginRight, _marginBottom, _marginLeft, _width, _height, _align);
+    /// <summary>Returns a new style with the background color property cleared.</summary>
     public Style UnsetBackground() => new(_props & ~BgBit, _fg, null, _borderFg, _borderBg, _border, _paddingTop, _paddingRight, _paddingBottom, _paddingLeft, _marginTop, _marginRight, _marginBottom, _marginLeft, _width, _height, _align);
+    /// <summary>Returns a new style with the bold property cleared.</summary>
     public Style UnsetBold() => new(_props & ~(BoldBit | BoldValueBit), _fg, _bg, _borderFg, _borderBg, _border, _paddingTop, _paddingRight, _paddingBottom, _paddingLeft, _marginTop, _marginRight, _marginBottom, _marginLeft, _width, _height, _align);
+    /// <summary>Returns a new style with the italic property cleared.</summary>
     public Style UnsetItalic() => new(_props & ~(ItalicBit | ItalicValueBit), _fg, _bg, _borderFg, _borderBg, _border, _paddingTop, _paddingRight, _paddingBottom, _paddingLeft, _marginTop, _marginRight, _marginBottom, _marginLeft, _width, _height, _align);
+    /// <summary>Returns a new style with the underline property cleared.</summary>
     public Style UnsetUnderline() => new(_props & ~(UnderlineBit | UnderlineValueBit), _fg, _bg, _borderFg, _borderBg, _border, _paddingTop, _paddingRight, _paddingBottom, _paddingLeft, _marginTop, _marginRight, _marginBottom, _marginLeft, _width, _height, _align);
+    /// <summary>Returns a new style with all border properties (sides, colors, spec) cleared.</summary>
     public Style UnsetBorder() => new(_props & ~(BorderBit | BorderTopBit | BorderRightBit | BorderBottomBit | BorderLeftBit | BorderFgBit | BorderBgBit), _fg, _bg, null, null, default, _paddingTop, _paddingRight, _paddingBottom, _paddingLeft, _marginTop, _marginRight, _marginBottom, _marginLeft, _width, _height, _align);
 
     // ── Inheritance ──────────────────────────────────────────────────
@@ -314,6 +345,7 @@ public readonly struct Style : IEquatable<Style>
     internal int PaddingLeft => _paddingLeft;
 
     // ── IEquatable ───────────────────────────────────────────────────
+    /// <summary>Returns true if this style is value-equal to <paramref name="other"/>.</summary>
     public bool Equals(Style other) => _props == other._props &&
         Equals(_fg, other._fg) && Equals(_bg, other._bg) &&
         Equals(_borderFg, other._borderFg) && Equals(_borderBg, other._borderBg) &&
@@ -324,9 +356,13 @@ public readonly struct Style : IEquatable<Style>
         _marginBottom == other._marginBottom && _marginLeft == other._marginLeft &&
         _width == other._width && _height == other._height && _align == other._align;
 
+    /// <inheritdoc/>
     public override bool Equals(object? obj) => obj is Style s && Equals(s);
+    /// <inheritdoc/>
     public override int GetHashCode() => HashCode.Combine(_props, _fg, _bg, _width, _height);
+    /// <summary>Returns true if <paramref name="left"/> and <paramref name="right"/> are value-equal.</summary>
     public static bool operator ==(Style left, Style right) => left.Equals(right);
+    /// <summary>Returns true if <paramref name="left"/> and <paramref name="right"/> differ.</summary>
     public static bool operator !=(Style left, Style right) => !left.Equals(right);
 
     // ── Helpers ───────────────────────────────────────────────────────
@@ -387,4 +423,13 @@ public readonly struct Style : IEquatable<Style>
     }
 }
 
-public enum HorizontalAlign { Left, Center, Right }
+/// <summary>Horizontal text alignment options used by <see cref="Style.Align"/>.</summary>
+public enum HorizontalAlign
+{
+    /// <summary>Align text to the left edge (default).</summary>
+    Left,
+    /// <summary>Center text within the available width.</summary>
+    Center,
+    /// <summary>Align text to the right edge.</summary>
+    Right
+}

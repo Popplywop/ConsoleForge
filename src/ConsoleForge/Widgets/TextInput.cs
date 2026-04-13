@@ -17,13 +17,25 @@ public sealed class TextInput : IFocusable
     public SizeConstraint Height { get; init; } = SizeConstraint.Fixed(1);
 
     // ── TextInput-specific ───────────────────────────────────────────────────
+    /// <summary>Current text value in the input field.</summary>
     public string Value          { get; init; } = "";
+    /// <summary>Placeholder text shown when <see cref="Value"/> is empty.</summary>
     public string Placeholder    { get; init; } = "";
+    /// <summary>Zero-based index of the cursor within <see cref="Value"/>.</summary>
     public int    CursorPosition { get; init; }
+    /// <summary>Visual style for the input text. Inherits theme base style when no properties are set.</summary>
     public Style  Style          { get; init; } = Style.Default;
 
+    /// <summary>Object-initializer constructor; all properties default.</summary>
     public TextInput() { }
 
+    /// <summary>
+    /// Positional constructor for inline usage.
+    /// </summary>
+    /// <param name="value">Initial text value.</param>
+    /// <param name="placeholder">Placeholder shown when value is empty.</param>
+    /// <param name="cursorPosition">Initial cursor position (clamped to value length).</param>
+    /// <param name="style">Optional visual style override.</param>
     public TextInput(
         string value = "",
         string placeholder = "",

@@ -27,6 +27,7 @@ public sealed class AnsiTerminal : ITerminal
     public int Height => Console.WindowHeight;
 
     public IObservable<InputEvent> Input => _inputSubject;
+    /// <summary>Raised when the terminal window is resized (SIGWINCH on Unix).</summary>
     public event EventHandler<TerminalResizedEventArgs>? Resized;
 
     // ── Output ───────────────────────────────────────────────────────
@@ -51,11 +52,13 @@ public sealed class AnsiTerminal : ITerminal
 
     // ── Cursor ───────────────────────────────────────────────────────
 
+    /// <summary>Appends an ANSI escape sequence to show or hide the hardware cursor.</summary>
     public void SetCursorVisible(bool visible)
     {
         _outputBuffer.Append(visible ? "\x1b[?25h" : "\x1b[?25l");
     }
 
+    /// <summary>Appends an ANSI cursor-position escape sequence (converts 0-based col/row to 1-based ANSI).</summary>
     public void SetCursorPosition(int col, int row)
     {
         // ANSI cursor position is 1-indexed
@@ -173,6 +176,10 @@ public sealed class AnsiTerminal : ITerminal
 
     // ── IDisposable ──────────────────────────────────────────────────
 
+    /// <summary>
+    /// Restores raw mode and alternate screen, completes the input observable, and
+    /// disposes the SIGWINCH registration. Safe to call multiple times.
+    /// </summary>
     public void Dispose()
     {
         if (_disposed) return;

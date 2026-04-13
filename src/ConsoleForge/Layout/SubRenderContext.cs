@@ -16,6 +16,10 @@ public sealed class SubRenderContext : IRenderContext
     public ColorProfile ColorProfile => _parent.ColorProfile;
     public ResolvedLayout Layout => _parent.Layout;
 
+    /// <summary>
+    /// Initialises a sub-context that forwards writes to <paramref name="parent"/>
+    /// but restricts rendering to <paramref name="region"/>.
+    /// </summary>
     public SubRenderContext(IRenderContext parent, Region region)
     {
         _parent = parent;
