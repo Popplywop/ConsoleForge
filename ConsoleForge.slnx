@@ -1,0 +1,14 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/ConsoleForge/ConsoleForge.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/ConsoleForge.Benchmarks/ConsoleForge.Benchmarks.csproj" />
+    <Project Path="tests/ConsoleForge.Tests/ConsoleForge.Tests.csproj" />
+  </Folder>
+  <Folder Name="/samples/">
+    <Project Path="samples/ConsoleForge.TodoApp/ConsoleForge.TodoApp.csproj" />
+    <Project Path="samples/ConsoleForge.SysMonitor/ConsoleForge.SysMonitor.csproj" />
+    <Project Path="samples/ConsoleForge.Gallery/ConsoleForge.Gallery.csproj" />
+  </Folder>
+</Solution>
