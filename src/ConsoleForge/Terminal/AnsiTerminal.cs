@@ -58,10 +58,11 @@ public sealed class AnsiTerminal : ITerminal
 
     // ── Cursor ───────────────────────────────────────────────────────
 
-    /// <summary>Appends an ANSI escape sequence to show or hide the hardware cursor.</summary>
+    /// <summary>Shows or hides the hardware cursor by writing directly to the terminal (bypasses the render buffer).</summary>
     public void SetCursorVisible(bool visible)
     {
-        _outputBuffer.Append(visible ? "\x1b[?25h" : "\x1b[?25l");
+        Console.Write(visible ? "\x1b[?25h" : "\x1b[?25l");
+        Console.Out.Flush();
     }
 
     /// <summary>Appends an ANSI cursor-position escape sequence (converts 0-based col/row to 1-based ANSI).</summary>

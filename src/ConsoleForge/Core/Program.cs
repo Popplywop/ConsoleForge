@@ -179,7 +179,9 @@ public sealed class Program
             _cts.Cancel();
             StopAllSubscriptions();
             if (_terminal is not null)
+            {
                 _terminal.SetCursorVisible(true); // Restore cursor before exiting
+            }
             if (ownTerminal)
                 _terminal?.Dispose();
         }
