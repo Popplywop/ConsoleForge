@@ -4,10 +4,31 @@
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+
+    <!-- NuGet packaging -->
+    <PackageId>ConsoleForge</PackageId>
+    <Version>0.0.1</Version>
+    <Authors>Popplywop</Authors>
+    <Description>A .NET 8 TUI framework using the Elm architecture — model, update, view — with composable widgets, ANSI terminal rendering, and reactive event handling.</Description>
+    <PackageTags>tui;terminal;console;elm;ui;widgets;ansi</PackageTags>
+    <PackageProjectUrl>https://github.com/Popplywop/ConsoleForge</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/Popplywop/ConsoleForge</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="System.Reactive" Version="6.1.0" />
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 
   <ItemGroup>
