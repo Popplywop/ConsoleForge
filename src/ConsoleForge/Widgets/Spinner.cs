@@ -27,8 +27,11 @@ public sealed class Spinner : IWidget
         ["◜", "◠", "◝", "◞", "◡", "◟"];
 
     // ── IWidget ─────────────────────────────────────────────────────────────
+    /// <summary>Horizontal size constraint. Defaults to <see cref="SizeConstraint.Auto"/> (sized to content).</summary>
     public SizeConstraint Width  { get; init; } = SizeConstraint.Auto;
+    /// <summary>Vertical size constraint. Defaults to <see cref="SizeConstraint.Auto"/> (single row).</summary>
     public SizeConstraint Height { get; init; } = SizeConstraint.Auto;
+    /// <summary>Base style applied to the spinner text. Inherits from the active theme when unset.</summary>
     public Style Style { get; init; } = Style.Default;
 
     // ── Spinner-specific ─────────────────────────────────────────────────────
@@ -60,6 +63,11 @@ public sealed class Spinner : IWidget
     }
 
     // ── Render ───────────────────────────────────────────────────────────────
+    /// <summary>
+    /// Renders the current animation frame (and optional label) into <paramref name="ctx"/>'s
+    /// allocated region. Content is truncated to fit the available width.
+    /// </summary>
+    /// <param name="ctx">The render context providing the target region, theme, and write methods.</param>
     public void Render(IRenderContext ctx)
     {
         var region = ctx.Region;

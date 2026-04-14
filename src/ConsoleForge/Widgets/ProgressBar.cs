@@ -10,8 +10,11 @@ namespace ConsoleForge.Widgets;
 public sealed class ProgressBar : IWidget
 {
     // ── IWidget ─────────────────────────────────────────────────────────────
+    /// <summary>Horizontal size constraint. Defaults to <see cref="SizeConstraint.Flex(int)"/> weight 1 (fill available width).</summary>
     public SizeConstraint Width  { get; init; } = SizeConstraint.Flex(1);
+    /// <summary>Vertical size constraint. Defaults to <see cref="SizeConstraint.Fixed(int)"/> 1 (single row).</summary>
     public SizeConstraint Height { get; init; } = SizeConstraint.Fixed(1);
+    /// <summary>Base style applied to the entire widget. Inherits from the active theme when unset.</summary>
     public Style Style { get; init; } = Style.Default;
 
     // ── ProgressBar-specific ─────────────────────────────────────────────────
@@ -54,6 +57,12 @@ public sealed class ProgressBar : IWidget
     }
 
     // ── Render ───────────────────────────────────────────────────────────────
+    /// <summary>
+    /// Renders the progress bar into <paramref name="ctx"/>'s allocated region.
+    /// Draws a filled portion followed by an empty portion, then an optional
+    /// percentage label at the right edge.
+    /// </summary>
+    /// <param name="ctx">The render context providing the target region, theme, and write methods.</param>
     public void Render(IRenderContext ctx)
     {
         var region = ctx.Region;

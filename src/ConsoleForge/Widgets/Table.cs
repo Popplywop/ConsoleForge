@@ -31,8 +31,11 @@ public sealed class Table : IWidget
     private const int StackAllocThreshold = 64;
 
     // ── IWidget ─────────────────────────────────────────────────────────────
+    /// <summary>Horizontal size constraint. Defaults to <see cref="SizeConstraint.Flex(int)"/> weight 1 (fill available width).</summary>
     public SizeConstraint Width  { get; init; } = SizeConstraint.Flex(1);
+    /// <summary>Vertical size constraint. Defaults to <see cref="SizeConstraint.Flex(int)"/> weight 1 (fill available height).</summary>
     public SizeConstraint Height { get; init; } = SizeConstraint.Flex(1);
+    /// <summary>Base style applied to the widget. Individual row and header styles override this per-section.</summary>
     public Style Style { get; init; } = Style.Default;
 
     // ── Table-specific ───────────────────────────────────────────────────────
@@ -89,6 +92,12 @@ public sealed class Table : IWidget
     }
 
     // ── Render ───────────────────────────────────────────────────────────────
+    /// <summary>
+    /// Renders the header row, separator line, and data rows into <paramref name="ctx"/>'s
+    /// allocated region. Rows that exceed the available height are clipped.
+    /// Column widths are resolved on each render; flex columns share remaining space equally.
+    /// </summary>
+    /// <param name="ctx">The render context providing the target region, theme, and write methods.</param>
     public void Render(IRenderContext ctx)
     {
         var region = ctx.Region;

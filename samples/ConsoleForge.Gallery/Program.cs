@@ -15,99 +15,143 @@ enum Page
     List,
     TextInput,
     Styles,
+    ProgressBar,
+    Spinner,
+    Table,
 }
 
 // ── Messages ─────────────────────────────────────────────────────────────────
 
-record GoPageMsg(Page P) : IMsg;
-record InputChangedMsg(string Value, int Cursor) : IMsg;
-record ListPickedMsg(int Index) : IMsg;
 record TickMsg(DateTimeOffset At) : IMsg;
 
 // ── Model ────────────────────────────────────────────────────────────────────
 
 record GalleryModel(
     Page ActivePage,
+    // Sidebar list widget — carries its own selection state
+    ConsoleForge.Widgets.List NavList,
+    // Focus: 0 = sidebar, 1+ = content area
+    int FocusIndex,
+    // TextInput page
     TextInput Input1,
     TextInput Input2,
-    int ListIndex,
+    // List page
+    int ListPageIndex,
     string LastPicked,
+    // ProgressBar page
+    double ProgressValue,
+    // Spinner page
+    int SpinnerFrame,
+    // Table page
+    int TableSelected,
+    // Styles page animation
     int TickCount) : IModel
 {
+    private static readonly string[] PageNames =
+        Enum.GetValues<Page>().Select(p => $"  {p}").ToArray();
+
     public static GalleryModel Initial() => new(
-        ActivePage: Page.TextBlock,
-        Input1: new TextInput(value: "", placeholder: "Type something…"),
-        Input2: new TextInput(value: "pre-filled text", placeholder: ""),
-        ListIndex: 0,
-        LastPicked: "",
-        TickCount: 0
+        ActivePage:    Page.TextBlock,
+        NavList:       new ConsoleForge.Widgets.List(PageNames, selectedIndex: 0) { HasFocus = true },
+        FocusIndex:    0,
+        Input1:        new TextInput(value: "", placeholder: "Type something…"),
+        Input2:        new TextInput(value: "pre-filled text", placeholder: ""),
+        ListPageIndex: 0,
+        LastPicked:    "",
+        ProgressValue: 42,
+        SpinnerFrame:  0,
+        TableSelected: 0,
+        TickCount:     0
     );
 
-    public ICmd? Init() => Cmd.Tick(TimeSpan.FromSeconds(1), at => new TickMsg(at));
+    public ICmd? Init() => Cmd.Tick(TimeSpan.FromMilliseconds(120), at => new TickMsg(at));
 
     public (IModel Model, ICmd? Cmd) Update(IMsg msg)
     {
         switch (msg)
         {
-            // ── Global quit ───────────────────────────────────────────────
-            case KeyMsg { Key: ConsoleKey.Q, Ctrl: false }
-                when ActivePage != Page.TextInput:
-                return (this, Cmd.Quit());
-
+            // ── Quit ──────────────────────────────────────────────────────────
             case KeyMsg { Key: ConsoleKey.Escape }:
+            case KeyMsg { Key: ConsoleKey.Q, Ctrl: false } when FocusIndex == 0:
                 return (this, Cmd.Quit());
 
-            // ── Page navigation via number keys ───────────────────────────
-            case KeyMsg { Character: '1' } when ActivePage != Page.TextInput:
-                return (this with { ActivePage = Page.TextBlock }, null);
-            case KeyMsg { Character: '2' } when ActivePage != Page.TextInput:
-                return (this with { ActivePage = Page.Borders }, null);
-            case KeyMsg { Character: '3' } when ActivePage != Page.TextInput:
-                return (this with { ActivePage = Page.Layout }, null);
-            case KeyMsg { Character: '4' } when ActivePage != Page.TextInput:
-                return (this with { ActivePage = Page.List }, null);
-            case KeyMsg { Character: '5' } when ActivePage != Page.TextInput:
-                return (this with { ActivePage = Page.TextInput }, null);
-            case KeyMsg { Character: '6' } when ActivePage != Page.TextInput:
-                return (this with { ActivePage = Page.Styles }, null);
-
-            // ── Arrow left/right: cycle pages ─────────────────────────────
-            case KeyMsg { Key: ConsoleKey.LeftArrow }
-                when ActivePage != Page.TextInput:
+            // ── Tab: toggle focus between sidebar (0) and content area (1) ──
+            // The framework also sends FocusIndexChangedMsg; we handle Tab here
+            // to sync our own FocusIndex and flip HasFocus on the NavList.
+            case KeyMsg { Key: ConsoleKey.Tab }:
             {
-                var p = (Page)Math.Max(0, (int)ActivePage - 1);
-                return (this with { ActivePage = p }, null);
+                var newFocus = FocusIndex == 0 ? 1 : 0;
+                var newNav = new ConsoleForge.Widgets.List(NavList.Items, NavList.SelectedIndex) { HasFocus = newFocus == 0 };
+                return (this with { FocusIndex = newFocus, NavList = newNav }, null);
             }
 
-            case KeyMsg { Key: ConsoleKey.RightArrow }
-                when ActivePage != Page.TextInput:
+            // ── Sidebar navigation (only when sidebar has focus) ──────────────
+            case KeyMsg { Key: ConsoleKey.UpArrow } when FocusIndex == 0:
             {
-                var p = (Page)Math.Min((int)Page.Styles, (int)ActivePage + 1);
-                return (this with { ActivePage = p }, null);
+                var newIdx = Math.Max(0, NavList.SelectedIndex - 1);
+                var page   = (Page)newIdx;
+                return (this with {
+                    NavList = new ConsoleForge.Widgets.List(NavList.Items, newIdx) { HasFocus = true },
+                    ActivePage = page,
+                    FocusIndex = 0
+                }, null);
             }
 
-            // ── List page: up/down navigation ─────────────────────────────
-            case KeyMsg { Key: ConsoleKey.UpArrow }
-                when ActivePage == Page.List:
-                return (this with { ListIndex = Math.Max(0, ListIndex - 1) }, null);
-
-            case KeyMsg { Key: ConsoleKey.DownArrow }
-                when ActivePage == Page.List:
-                return (this with { ListIndex = Math.Min(ListItems.Length - 1, ListIndex + 1) }, null);
-
-            case KeyMsg { Key: ConsoleKey.Enter }
-                when ActivePage == Page.List:
-                return (this with { LastPicked = ListItems[ListIndex] }, null);
-
-            // ── TextInput page ────────────────────────────────────────────
-            // Tab cycles pages (escape hatch from input mode)
-            case KeyMsg { Key: ConsoleKey.Tab } when ActivePage == Page.TextInput:
+            case KeyMsg { Key: ConsoleKey.DownArrow } when FocusIndex == 0:
             {
-                var p = (Page)(((int)ActivePage + 1) % (int)(Page.Styles + 1));
-                return (this with { ActivePage = p }, null);
+                var newIdx = Math.Min(PageNames.Length - 1, NavList.SelectedIndex + 1);
+                var page   = (Page)newIdx;
+                return (this with {
+                    NavList = new ConsoleForge.Widgets.List(NavList.Items, newIdx) { HasFocus = true },
+                    ActivePage = page,
+                    FocusIndex = 0
+                }, null);
             }
 
-            case KeyMsg keyMsg when ActivePage == Page.TextInput:
+            case KeyMsg { Key: ConsoleKey.Enter } when FocusIndex == 0:
+            {
+                // Enter on sidebar: navigate to page and shift focus to content
+                var newNav = new ConsoleForge.Widgets.List(NavList.Items, NavList.SelectedIndex) { HasFocus = false };
+                return (this with { NavList = newNav, FocusIndex = 1 }, null);
+            }
+
+            // ── ListSelectionChangedMsg from sidebar List widget ───────────────
+            case ListSelectionChangedMsg { Source: var src, NewIndex: var newIdx }
+                when ReferenceEquals(src, NavList):
+            {
+                var page = (Page)newIdx;
+                return (this with {
+                    NavList = new ConsoleForge.Widgets.List(NavList.Items, newIdx) { HasFocus = NavList.HasFocus },
+                    ActivePage = page
+                }, null);
+            }
+
+            // ── Content area: List page ───────────────────────────────────────
+            case KeyMsg { Key: ConsoleKey.UpArrow } when FocusIndex == 1 && ActivePage == Page.List:
+                return (this with { ListPageIndex = Math.Max(0, ListPageIndex - 1) }, null);
+
+            case KeyMsg { Key: ConsoleKey.DownArrow } when FocusIndex == 1 && ActivePage == Page.List:
+                return (this with { ListPageIndex = Math.Min(ListItems.Length - 1, ListPageIndex + 1) }, null);
+
+            case KeyMsg { Key: ConsoleKey.Enter } when FocusIndex == 1 && ActivePage == Page.List:
+                return (this with { LastPicked = ListItems[ListPageIndex] }, null);
+
+            // ── Content area: ProgressBar page ───────────────────────────────
+            case KeyMsg { Key: ConsoleKey.LeftArrow } when FocusIndex == 1 && ActivePage == Page.ProgressBar:
+                return (this with { ProgressValue = Math.Max(0, ProgressValue - 5) }, null);
+
+            case KeyMsg { Key: ConsoleKey.RightArrow } when FocusIndex == 1 && ActivePage == Page.ProgressBar:
+                return (this with { ProgressValue = Math.Min(100, ProgressValue + 5) }, null);
+
+            // ── Content area: Table page ──────────────────────────────────────
+            case KeyMsg { Key: ConsoleKey.UpArrow } when FocusIndex == 1 && ActivePage == Page.Table:
+                return (this with { TableSelected = Math.Max(0, TableSelected - 1) }, null);
+
+            case KeyMsg { Key: ConsoleKey.DownArrow } when FocusIndex == 1 && ActivePage == Page.Table:
+                return (this with { TableSelected = Math.Min(TableRows.Count - 1, TableSelected + 1) }, null);
+
+            // ── Content area: TextInput page ──────────────────────────────────
+            case KeyMsg keyMsg when FocusIndex == 1 && ActivePage == Page.TextInput:
             {
                 IMsg? out1 = null;
                 IMsg? out2 = null;
@@ -123,10 +167,12 @@ record GalleryModel(
                 return (m2, null);
             }
 
-            // ── Tick: used on Styles page for live color animation ─────────
+            // ── Tick: spinner animation + styles gradient ─────────────────────
             case TickMsg:
-                return (this with { TickCount = TickCount + 1 },
-                    Cmd.Tick(TimeSpan.FromSeconds(1), at => new TickMsg(at)));
+                return (this with {
+                    SpinnerFrame = SpinnerFrame + 1,
+                    TickCount    = TickCount + 1
+                }, Cmd.Tick(TimeSpan.FromMilliseconds(120), at => new TickMsg(at)));
 
             default:
                 return (this, null);
@@ -135,49 +181,75 @@ record GalleryModel(
 
     public IWidget View()
     {
-        var tabBar   = BuildTabBar();
-        var content  = BuildPageContent();
-        var statusBar = BuildStatusBar();
+        var sidebar    = BuildSidebar();
+        var content    = BuildPageContent();
+        var statusBar  = BuildStatusBar();
 
-        var root = new Container(Axis.Vertical, [tabBar, content, statusBar]);
-        return root;
+        var body = new Container(Axis.Horizontal, [sidebar, content]);
+        return new Container(Axis.Vertical, [body, statusBar]);
     }
 
-    // ── Tab bar ───────────────────────────────────────────────────────────────
+    // ── Sidebar ───────────────────────────────────────────────────────────────
 
-    private IWidget BuildTabBar()
+    private IWidget BuildSidebar()
     {
-        var pages = Enum.GetValues<Page>();
-        var tabs  = pages.Select((p, i) =>
-        {
-            var label  = $" {i + 1}:{p} ";
-            var active = p == ActivePage;
-            var style  = active
-                ? Style.Default.Background(Color.FromHex("#005F87")).Foreground(Color.BrightWhite).Bold()
-                : Style.Default.Background(Color.FromHex("#1C1C1C")).Foreground(Color.FromHex("#808080"));
-            IWidget tab = new TextBlock(label, style: style);
-            return new Container(Axis.Vertical,
-                width: SizeConstraint.Fixed(label.Length),
-                children: [tab]);
-        }).Cast<IWidget>().ToArray();
-
-        var filler = new Container(Axis.Vertical,
-            width: SizeConstraint.Flex(1),
-            style: Style.Default.Background(Color.FromHex("#1C1C1C")),
-            children: [new TextBlock(" ", style: Style.Default.Background(Color.FromHex("#1C1C1C")))]);
-
-        return new Container(Axis.Horizontal,
+        var header = new Container(Axis.Vertical,
             height: SizeConstraint.Fixed(1),
-            children: [.. tabs, filler]);
+            style: Style.Default.Background(Color.FromHex("#1C1C1C")),
+            children: [
+                new TextBlock(" Widgets",
+                    style: Style.Default
+                        .Background(Color.FromHex("#1C1C1C"))
+                        .Foreground(Color.FromHex("#00D7FF"))
+                        .Bold())
+            ]);
+
+        var divider = new Container(Axis.Vertical,
+            height: SizeConstraint.Fixed(1),
+            style: Style.Default.Background(Color.FromHex("#1C1C1C")),
+            children: [
+                new TextBlock(new string('─', 18),
+                    style: Style.Default
+                        .Background(Color.FromHex("#1C1C1C"))
+                        .Foreground(Color.FromHex("#444444")))
+            ]);
+
+        // NavList carries HasFocus so it renders with focus style when active
+        var listArea = new Container(Axis.Vertical,
+            style: Style.Default.Background(Color.FromHex("#1C1C1C")),
+            children: [NavList]);
+
+        var hint = new Container(Axis.Vertical,
+            height: SizeConstraint.Fixed(1),
+            style: Style.Default.Background(Color.FromHex("#1C1C1C")),
+            children: [
+                new TextBlock(FocusIndex == 0 ? " ↑↓ Enter·Tab" : " Tab to focus",
+                    style: Style.Default
+                        .Background(Color.FromHex("#1C1C1C"))
+                        .Foreground(Color.FromHex("#444444")))
+            ]);
+
+        return new Container(Axis.Vertical,
+            width: SizeConstraint.Fixed(18),
+            style: Style.Default.Background(Color.FromHex("#1C1C1C")),
+            children: [header, divider, listArea, hint]);
     }
 
     // ── Status bar ────────────────────────────────────────────────────────────
 
     private IWidget BuildStatusBar()
     {
-        var hint = ActivePage == Page.TextInput
-            ? " Tab Next page   Esc Quit   (arrows/printable keys go to inputs)"
-            : " 1-6 / ←→ Navigate   Tab Cycle   Q / Esc Quit";
+        var hint = FocusIndex == 0
+            ? " ↑↓ Navigate   Enter Select   Tab Focus content   Q/Esc Quit"
+            : ActivePage switch
+            {
+                Page.TextInput   => " Tab Focus sidebar   Esc Quit   (keys → inputs)",
+                Page.ProgressBar => " ←→ Adjust value   Tab Focus sidebar   Esc Quit",
+                Page.Table       => " ↑↓ Select row   Tab Focus sidebar   Esc Quit",
+                Page.List        => " ↑↓ Navigate   Enter Select   Tab Focus sidebar   Esc Quit",
+                _                => " Tab Focus sidebar   Esc Quit",
+            };
+
         return new Container(Axis.Horizontal,
             height: SizeConstraint.Fixed(1),
             style: Style.Default.Background(Color.FromHex("#1C1C1C")),
@@ -193,13 +265,16 @@ record GalleryModel(
 
     private IWidget BuildPageContent() => ActivePage switch
     {
-        Page.TextBlock => PageTextBlock(),
-        Page.Borders   => PageBorders(),
-        Page.Layout    => PageLayout(),
-        Page.List      => PageList(),
-        Page.TextInput => PageTextInput(),
-        Page.Styles    => PageStyles(),
-        _              => new TextBlock("?")
+        Page.TextBlock   => PageTextBlock(),
+        Page.Borders     => PageBorders(),
+        Page.Layout      => PageLayout(),
+        Page.List        => PageList(),
+        Page.TextInput   => PageTextInput(),
+        Page.Styles      => PageStyles(),
+        Page.ProgressBar => PageProgressBar(),
+        Page.Spinner     => PageSpinner(),
+        Page.Table       => PageTable(),
+        _                => new TextBlock("?")
     };
 
     // ── PAGE: TextBlock ───────────────────────────────────────────────────────
@@ -214,29 +289,29 @@ record GalleryModel(
 
         var styled = Section("Styled text",
             new Container(Axis.Vertical, [
-                new TextBlock("Bold text",      style: Style.Default.Bold()),
-                new TextBlock("Italic text",    style: Style.Default.Italic()),
-                new TextBlock("Underlined",     style: Style.Default.Underline()),
-                new TextBlock("Strikethrough",  style: Style.Default.Strikethrough()),
-                new TextBlock("Faint/dim",      style: Style.Default.Faint()),
+                new TextBlock("Bold text",     style: Style.Default.Bold()),
+                new TextBlock("Italic text",   style: Style.Default.Italic()),
+                new TextBlock("Underlined",    style: Style.Default.Underline()),
+                new TextBlock("Strikethrough", style: Style.Default.Strikethrough()),
+                new TextBlock("Faint/dim",     style: Style.Default.Faint()),
             ]));
 
         var colored = Section("Foreground colors",
             new Container(Axis.Vertical, [
-                new TextBlock("Red",          style: Style.Default.Foreground(Color.Red)),
-                new TextBlock("Green",        style: Style.Default.Foreground(Color.Green)),
-                new TextBlock("Yellow",       style: Style.Default.Foreground(Color.Yellow)),
-                new TextBlock("Blue",         style: Style.Default.Foreground(Color.Blue)),
-                new TextBlock("Magenta",      style: Style.Default.Foreground(Color.Magenta)),
-                new TextBlock("Cyan",         style: Style.Default.Foreground(Color.Cyan)),
+                new TextBlock("Red",     style: Style.Default.Foreground(Color.Red)),
+                new TextBlock("Green",   style: Style.Default.Foreground(Color.Green)),
+                new TextBlock("Yellow",  style: Style.Default.Foreground(Color.Yellow)),
+                new TextBlock("Blue",    style: Style.Default.Foreground(Color.Blue)),
+                new TextBlock("Magenta", style: Style.Default.Foreground(Color.Magenta)),
+                new TextBlock("Cyan",    style: Style.Default.Foreground(Color.Cyan)),
                 new TextBlock("TrueColor #FF5733", style: Style.Default.Foreground(Color.FromHex("#FF5733"))),
             ]));
 
         var backgrounds = Section("Background colors",
             new Container(Axis.Horizontal, [
-                Swatch("  Red  ",  Color.Red,     Color.BrightWhite),
-                Swatch(" Green ", Color.Green,    Color.Black),
-                Swatch(" Blue  ", Color.Blue,     Color.BrightWhite),
+                Swatch("  Red  ", Color.Red,              Color.BrightWhite),
+                Swatch(" Green ", Color.Green,            Color.Black),
+                Swatch(" Blue  ", Color.Blue,             Color.BrightWhite),
                 Swatch("  Hex  ", Color.FromHex("#5F0087"), Color.BrightWhite),
             ]));
 
@@ -279,9 +354,9 @@ record GalleryModel(
         var row2 = new Container(Axis.Horizontal,
             height: SizeConstraint.Fixed(5),
             children: [
-                MakeBorderDemo("Double",  Borders.Double,  Color.Magenta),
-                MakeBorderDemo("ASCII",   Borders.ASCII,   Color.Green),
-                MakeBorderDemo("Hidden",  Borders.Hidden,  Color.DarkGray),
+                MakeBorderDemo("Double", Borders.Double, Color.Magenta),
+                MakeBorderDemo("ASCII",  Borders.ASCII,  Color.Green),
+                MakeBorderDemo("Hidden", Borders.Hidden, Color.DarkGray),
             ]);
 
         var titleDemo = Section("Titled border",
@@ -314,7 +389,6 @@ record GalleryModel(
         var heading = new TextBlock("Container Widget — layout engine",
             style: Style.Default.Foreground(Color.FromHex("#00D7FF")).Bold());
 
-        // Horizontal flex
         var hFlex = Section("Horizontal — Flex children (equal share)",
             new Container(Axis.Horizontal,
                 height: SizeConstraint.Fixed(3),
@@ -324,26 +398,23 @@ record GalleryModel(
                     ColoredBox("Flex(1)", Color.FromHex("#00005F"), SizeConstraint.Flex(1)),
                 ]));
 
-        // Horizontal fixed + flex
         var hMixed = Section("Horizontal — Fixed(12) + Flex fill",
             new Container(Axis.Horizontal,
                 height: SizeConstraint.Fixed(3),
                 children: [
-                    ColoredBox("Fixed(12)", Color.FromHex("#5F005F"), SizeConstraint.Fixed(12)),
+                    ColoredBox("Fixed(12)",       Color.FromHex("#5F005F"), SizeConstraint.Fixed(12)),
                     ColoredBox("Flex(1) fills rest", Color.FromHex("#005F5F"), SizeConstraint.Flex(1)),
                 ]));
 
-        // Vertical
         var vLayout = Section("Vertical — Fixed(2) rows + Flex fill",
             new Container(Axis.Vertical,
                 height: SizeConstraint.Fixed(6),
                 children: [
                     ColoredBox("Fixed(2) row", Color.FromHex("#3A3A00"), SizeConstraint.Flex(1),
                         heightConstraint: SizeConstraint.Fixed(2)),
-                    ColoredBox("Flex fills", Color.FromHex("#003A3A"), SizeConstraint.Flex(1)),
+                    ColoredBox("Flex fills",  Color.FromHex("#003A3A"), SizeConstraint.Flex(1)),
                 ]));
 
-        // Nested
         var nested = Section("Nested containers",
             new Container(Axis.Horizontal,
                 height: SizeConstraint.Fixed(5),
@@ -377,10 +448,9 @@ record GalleryModel(
         var heading = new TextBlock("List Widget",
             style: Style.Default.Foreground(Color.FromHex("#00D7FF")).Bold());
 
-        // Basic list
-        var basicList = new List(
+        var basicList = new ConsoleForge.Widgets.List(
             items: ListItems,
-            selectedIndex: ListIndex,
+            selectedIndex: ListPageIndex,
             selectedItemStyle: Style.Default
                 .Background(Color.FromHex("#005F87"))
                 .Foreground(Color.BrightWhite));
@@ -392,8 +462,7 @@ record GalleryModel(
         var picked = new TextBlock(pickedText,
             style: Style.Default.Foreground(Color.Yellow));
 
-        // Custom-styled list
-        var customList = new List(
+        var customList = new ConsoleForge.Widgets.List(
             items: ["  ◆ Option Alpha", "  ◆ Option Beta", "  ◆ Option Gamma"],
             selectedIndex: 1,
             selectedItemStyle: Style.Default.Foreground(Color.FromHex("#00FF87")).Bold());
@@ -423,7 +492,7 @@ record GalleryModel(
 
         var desc = new TextBlock(
             "TextInput accepts printable characters, Backspace, Delete, and ←→ cursor movement.\n" +
-            "Multiple inputs can coexist; both below receive all keystrokes simultaneously.",
+            "Both inputs below receive all keystrokes while this page is focused.",
             style: Style.Default.Foreground(Color.FromHex("#808080")));
 
         var label1 = new TextBlock("Input 1 (empty placeholder):",
@@ -464,17 +533,16 @@ record GalleryModel(
         var heading = new TextBlock("Style System",
             style: Style.Default.Foreground(Color.FromHex("#00D7FF")).Bold());
 
-        // ANSI 16 colors palette
         var ansiColors = new[]
         {
-            (Color.Black,        "Black"),       (Color.Red,          "Red"),
-            (Color.Green,        "Green"),        (Color.Yellow,       "Yellow"),
-            (Color.Blue,         "Blue"),         (Color.Magenta,      "Magenta"),
-            (Color.Cyan,         "Cyan"),         (Color.White,        "White"),
-            (Color.BrightBlack,  "BrightBlack"),  (Color.BrightRed,    "BrightRed"),
-            (Color.BrightGreen,  "BrightGreen"),  (Color.BrightYellow, "BrightYellow"),
-            (Color.BrightBlue,   "BrightBlue"),   (Color.BrightMagenta,"BrightMagenta"),
-            (Color.BrightCyan,   "BrightCyan"),   (Color.BrightWhite,  "BrightWhite"),
+            (Color.Black,       "Black"),        (Color.Red,           "Red"),
+            (Color.Green,       "Green"),         (Color.Yellow,        "Yellow"),
+            (Color.Blue,        "Blue"),          (Color.Magenta,       "Magenta"),
+            (Color.Cyan,        "Cyan"),          (Color.White,         "White"),
+            (Color.BrightBlack, "BrightBlack"),   (Color.BrightRed,     "BrightRed"),
+            (Color.BrightGreen, "BrightGreen"),   (Color.BrightYellow,  "BrightYellow"),
+            (Color.BrightBlue,  "BrightBlue"),    (Color.BrightMagenta, "BrightMagenta"),
+            (Color.BrightCyan,  "BrightCyan"),    (Color.BrightWhite,   "BrightWhite"),
         };
 
         var colorSwatches = ansiColors
@@ -496,7 +564,6 @@ record GalleryModel(
                         ).Cast<IWidget>().ToArray()),
                 ]));
 
-        // TrueColor gradient (animated via tick)
         var gradientChars = Enumerable.Range(0, 40).Select(i =>
         {
             var hue = (i * 9 + TickCount * 5) % 360;
@@ -509,7 +576,6 @@ record GalleryModel(
                 height: SizeConstraint.Fixed(1),
                 children: gradientChars));
 
-        // Combinations
         var combos = Section("Style combinations",
             new Container(Axis.Vertical, [
                 new TextBlock("Bold + Underline + Red",
@@ -522,7 +588,6 @@ record GalleryModel(
                     style: Style.Default.Reverse()),
             ]));
 
-        // Inheritance demo
         var inheritDemo = Section("Style inheritance (theme → widget → child)",
             new BorderBox("Outer (BorderFg=Yellow)",
                 body: new Container(Axis.Vertical, [
@@ -540,12 +605,173 @@ record GalleryModel(
             style: Style.Default.BorderForeground(Color.FromHex("#00D7FF")).Border(Borders.Rounded));
     }
 
+    // ── PAGE: ProgressBar ─────────────────────────────────────────────────────
+
+    private IWidget PageProgressBar()
+    {
+        var heading = new TextBlock("ProgressBar Widget",
+            style: Style.Default.Foreground(Color.FromHex("#00D7FF")).Bold());
+
+        var hint = new TextBlock("← → to adjust value",
+            style: Style.Default.Foreground(Color.FromHex("#626262")));
+
+        var valueLabel = new TextBlock($"Value: {ProgressValue:0}  (← / → to adjust by 5)",
+            style: Style.Default.Foreground(Color.Yellow));
+
+        var defaultBar = Section("Default style",
+            new ProgressBar(ProgressValue));
+
+        var customFill = Section("Custom fill/empty chars",
+            new ProgressBar(ProgressValue,
+                fillChar:  '▓',
+                emptyChar: '░',
+                style: Style.Default.Foreground(Color.FromHex("#00FF87"))));
+
+        var noLabel = Section("No percent label",
+            new ProgressBar(ProgressValue, showPercent: false,
+                style: Style.Default.Foreground(Color.Cyan)));
+
+        var full = Section("Full  (100%)",
+            new ProgressBar(100,
+                style: Style.Default.Foreground(Color.Green)));
+
+        var empty = Section("Empty (  0%)",
+            new ProgressBar(0,
+                style: Style.Default.Foreground(Color.Red)));
+
+        return new BorderBox("ProgressBar",
+            body: new Container(Axis.Vertical, [
+                new Container(Axis.Vertical, height: SizeConstraint.Fixed(1), children: [heading]),
+                new Container(Axis.Vertical, height: SizeConstraint.Fixed(1), children: [hint]),
+                new Container(Axis.Vertical, height: SizeConstraint.Fixed(1), children: [valueLabel]),
+                defaultBar, customFill, noLabel, full, empty
+            ]),
+            style: Style.Default.BorderForeground(Color.FromHex("#00D7FF")).Border(Borders.Rounded));
+    }
+
+    // ── PAGE: Spinner ─────────────────────────────────────────────────────────
+
+    private IWidget PageSpinner()
+    {
+        var heading = new TextBlock("Spinner Widget",
+            style: Style.Default.Foreground(Color.FromHex("#00D7FF")).Bold());
+
+        var desc = new TextBlock(
+            "Spinners self-animate via TickMsg (120ms tick). " +
+            "Each row below shows a different frame set.",
+            style: Style.Default.Foreground(Color.FromHex("#808080")));
+
+        var braille = Section("Braille frames (default)",
+            new Container(Axis.Horizontal, height: SizeConstraint.Fixed(1), children: [
+                new Spinner(SpinnerFrame, label: "Loading…"),
+            ]));
+
+        var ascii = Section("ASCII frames  (- \\ | /)",
+            new Container(Axis.Horizontal, height: SizeConstraint.Fixed(1), children: [
+                new Spinner(SpinnerFrame, label: "Working…", frames: Spinner.AsciiFrames,
+                    style: Style.Default.Foreground(Color.Yellow)),
+            ]));
+
+        var arc = Section("Arc frames",
+            new Container(Axis.Horizontal, height: SizeConstraint.Fixed(1), children: [
+                new Spinner(SpinnerFrame, label: "Please wait…", frames: Spinner.ArcFrames,
+                    style: Style.Default.Foreground(Color.Cyan)),
+            ]));
+
+        var noLabel = Section("No label",
+            new Container(Axis.Horizontal, height: SizeConstraint.Fixed(1), children: [
+                new Spinner(SpinnerFrame,
+                    style: Style.Default.Foreground(Color.Magenta)),
+                new TextBlock("  ← spinner only",
+                    style: Style.Default.Foreground(Color.FromHex("#626262"))),
+            ]));
+
+        return new BorderBox("Spinner",
+            body: new Container(Axis.Vertical, [
+                new Container(Axis.Vertical, height: SizeConstraint.Fixed(1), children: [heading]),
+                new Container(Axis.Vertical, height: SizeConstraint.Fixed(2), children: [desc]),
+                braille, ascii, arc, noLabel
+            ]),
+            style: Style.Default.BorderForeground(Color.FromHex("#00D7FF")).Border(Borders.Rounded));
+    }
+
+    // ── PAGE: Table ───────────────────────────────────────────────────────────
+
+    private IWidget PageTable()
+    {
+        var heading = new TextBlock("Table Widget",
+            style: Style.Default.Foreground(Color.FromHex("#00D7FF")).Bold());
+
+        var hint = new TextBlock("↑ ↓ to select a row",
+            style: Style.Default.Foreground(Color.FromHex("#626262")));
+
+        var table = new Table(
+            columns: [
+                new TableColumn("Name",       Width: 16),
+                new TableColumn("Category",   Width: 12),
+                new TableColumn("Status",     Width: 10),
+                new TableColumn("Score",      Width: 0),   // flex
+            ],
+            rows: TableRows,
+            selectedIndex: TableSelected,
+            headerStyle: Style.Default.Bold().Foreground(Color.FromHex("#00D7FF")),
+            rowStyle:    Style.Default.Foreground(Color.BrightWhite));
+
+        var tableWithSep = Section("Default separator (│)",
+            new Container(Axis.Vertical,
+                height: SizeConstraint.Fixed(TableRows.Count + 3),
+                children: [table]));
+
+        // Custom separator
+        var tableNoSep = new Table(
+            columns: [
+                new TableColumn("Language", Width: 14),
+                new TableColumn("Paradigm", Width: 14),
+                new TableColumn("Year",     Width: 6),
+            ],
+            rows: [
+                ["C#",         "OO / FP",  "2000"],
+                ["F#",         "FP / OO",  "2005"],
+                ["Rust",       "Systems",  "2015"],
+                ["TypeScript", "OO / FP",  "2012"],
+            ],
+            selectedIndex: -1,
+            headerStyle: Style.Default.Bold().Foreground(Color.Yellow))
+        {
+            Separator = ' '
+        };
+
+        var tableCustomSep = Section("Space separator (no lines)",
+            new Container(Axis.Vertical,
+                height: SizeConstraint.Fixed(4 + 3),
+                children: [tableNoSep]));
+
+        return new BorderBox("Table",
+            body: new Container(Axis.Vertical, [
+                new Container(Axis.Vertical, height: SizeConstraint.Fixed(1), children: [heading]),
+                new Container(Axis.Vertical, height: SizeConstraint.Fixed(1), children: [hint]),
+                tableWithSep,
+                tableCustomSep,
+            ]),
+            style: Style.Default.BorderForeground(Color.FromHex("#00D7FF")).Border(Borders.Rounded));
+    }
+
     // ── Shared data ───────────────────────────────────────────────────────────
 
     private static readonly string[] ListItems =
     [
         "Apple", "Banana", "Cherry", "Date", "Elderberry",
         "Fig", "Grape", "Honeydew", "Kiwi", "Lemon",
+    ];
+
+    private static readonly IReadOnlyList<IReadOnlyList<string>> TableRows =
+    [
+        ["ConsoleForge", "Framework",  "Stable",  "98"],
+        ["BenchmarkDotNet", "Testing", "Stable",  "95"],
+        ["System.Reactive", "Library", "Stable",  "90"],
+        ["Spectre.Console", "UI",      "Stable",  "88"],
+        ["Terminal.Gui",    "UI",      "Stable",  "82"],
+        ["Avalonia",        "UI",      "Beta",    "79"],
     ];
 
     // ── Shared helper widgets ─────────────────────────────────────────────────
@@ -575,7 +801,6 @@ record GalleryModel(
                 new TextBlock(label, style: Style.Default.Background(bg).Foreground(Color.BrightWhite))
             ]);
 
-    // Convert HSV [0,360) [0,1] [0,1] to RGB bytes
     private static (byte r, byte g, byte b) HsvToRgb(double h, double s, double v)
     {
         var c = v * s;

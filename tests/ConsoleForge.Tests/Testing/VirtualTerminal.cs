@@ -21,6 +21,12 @@ public sealed class VirtualTerminal : ITerminal
     private bool _exitedCleanly;
     private bool _disposed;
 
+    /// <summary>
+    /// Initialises a virtual terminal with the given dimensions.
+    /// The screen buffer is filled with spaces.
+    /// </summary>
+    /// <param name="width">Terminal width in columns. Default 80.</param>
+    /// <param name="height">Terminal height in rows. Default 24.</param>
     public VirtualTerminal(int width = 80, int height = 24)
     {
         Width = width;
@@ -32,10 +38,17 @@ public sealed class VirtualTerminal : ITerminal
     }
 
     // ── ITerminal: Dimensions ─────────────────────────────────────────
+    /// <summary>Terminal width in columns. Updated by <see cref="SimulateResize"/>.</summary>
     public int Width { get; private set; }
+    /// <summary>Terminal height in rows. Updated by <see cref="SimulateResize"/>.</summary>
     public int Height { get; private set; }
 
     // ── ITerminal: Output ─────────────────────────────────────────────
+    /// <summary>
+    /// Appends <paramref name="ansiText"/> to the write history and applies it to the
+    /// internal screen buffer via the ANSI decoder.
+    /// </summary>
+    /// <param name="ansiText">Raw ANSI text (may contain escape sequences).</param>
     public void Write(string ansiText)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -43,6 +56,7 @@ public sealed class VirtualTerminal : ITerminal
         ApplyAnsiToScreen(ansiText);
     }
 
+    /// <summary>Clears the screen buffer, filling every cell with a space character.</summary>
     public void Clear()
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -51,6 +65,7 @@ public sealed class VirtualTerminal : ITerminal
                 _screen[r, c] = ' ';
     }
 
+    /// <summary>No-op for the virtual terminal — writes are applied immediately in <see cref="Write"/>.</summary>
     public void Flush()
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -58,8 +73,12 @@ public sealed class VirtualTerminal : ITerminal
     }
 
     // ── ITerminal: Cursor ─────────────────────────────────────────────
+    /// <summary>No-op — cursor visibility is not tracked by the virtual terminal.</summary>
     public void SetCursorVisible(bool visible) { }
 
+    /// <summary>Updates the internal cursor position used by the ANSI decoder for subsequent writes.</summary>
+    /// <param name="col">Zero-based column.</param>
+    /// <param name="row">Zero-based row.</param>
     public void SetCursorPosition(int col, int row)
     {
         _cursorRow = row;
@@ -67,15 +86,18 @@ public sealed class VirtualTerminal : ITerminal
     }
 
     // ── ITerminal: Title ──────────────────────────────────────────────
+    /// <summary>No-op — window title changes are not tracked by the virtual terminal.</summary>
     public void SetTitle(string title) { }
 
     // ── ITerminal: Screen mode ────────────────────────────────────────
+    /// <summary>Records that the alternate screen has been entered. Checked by <see cref="ExitedCleanly"/>.</summary>
     public void EnterAlternateScreen()
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         _alternateScreen = true;
     }
 
+    /// <summary>Records that the alternate screen has been exited. Checked by <see cref="ExitedCleanly"/>.</summary>
     public void ExitAlternateScreen()
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -83,12 +105,14 @@ public sealed class VirtualTerminal : ITerminal
     }
 
     // ── ITerminal: Input mode ─────────────────────────────────────────
+    /// <summary>Records that raw mode has been entered. Checked by <see cref="ExitedCleanly"/>.</summary>
     public void EnterRawMode()
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         _rawMode = true;
     }
 
+    /// <summary>Records that raw mode has been exited. Checked by <see cref="ExitedCleanly"/>.</summary>
     public void ExitRawMode()
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -96,12 +120,19 @@ public sealed class VirtualTerminal : ITerminal
     }
 
     // ── ITerminal: Input stream ───────────────────────────────────────
+    /// <summary>Observable stream of input events. Inject events via <see cref="EnqueueKey"/> or <see cref="SimulateResize"/>.</summary>
     public IObservable<InputEvent> Input => _input;
 
     // ── ITerminal: Resize events ──────────────────────────────────────
+    /// <summary>Raised when <see cref="SimulateResize"/> is called.</summary>
     public event EventHandler<TerminalResizedEventArgs>? Resized;
 
     // ── IDisposable ───────────────────────────────────────────────────
+    /// <summary>
+    /// Exits raw mode and alternate screen if active, then completes the input observable.
+    /// Sets <see cref="ExitedCleanly"/> to <see langword="true"/> if either mode was active.
+    /// Safe to call multiple times.
+    /// </summary>
     public void Dispose()
     {
         if (_disposed) return;
