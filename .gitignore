@@ -41,4 +41,4 @@ Thumbs.db
 .env.*
 
 # Doxygen generated output (built by CI, served via gh-pages)
-docs/html/
+docs/
