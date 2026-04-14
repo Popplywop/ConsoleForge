@@ -81,8 +81,11 @@ public sealed class List : IFocusable
         for (var i = 0; i < maxRows; i++)
         {
             var text = Items[i];
+            // Truncate if too long, pad to region width so background fills the full row
             if (text.Length > region.Width)
                 text = text[..region.Width];
+            else if (text.Length < region.Width)
+                text = text.PadRight(region.Width);
 
             var rowStyle = i == SelectedIndex ? selectedStyle : baseStyle;
             ctx.Write(region.Col, region.Row + i, text, rowStyle);

@@ -193,31 +193,18 @@ record GalleryModel(
 
     private IWidget BuildSidebar()
     {
-        var header = new Container(Axis.Vertical,
-            height: SizeConstraint.Fixed(1),
-            style: Style.Default.Background(Color.FromHex("#1C1C1C")),
-            children: [
-                new TextBlock(" Widgets",
-                    style: Style.Default
-                        .Background(Color.FromHex("#1C1C1C"))
-                        .Foreground(Color.FromHex("#00D7FF"))
-                        .Bold())
-            ]);
-
-        var divider = new Container(Axis.Vertical,
-            height: SizeConstraint.Fixed(1),
-            style: Style.Default.Background(Color.FromHex("#1C1C1C")),
-            children: [
-                new TextBlock(new string('─', 18),
-                    style: Style.Default
-                        .Background(Color.FromHex("#1C1C1C"))
-                        .Foreground(Color.FromHex("#444444")))
-            ]);
-
-        // NavList carries HasFocus so it renders with focus style when active
-        var listArea = new Container(Axis.Vertical,
-            style: Style.Default.Background(Color.FromHex("#1C1C1C")),
-            children: [NavList]);
+        // NavList carries HasFocus so it renders with focus style when active.
+        // The BorderBox provides the header title and a consistent border.
+        var navBorder = new BorderBox("Widgets",
+            body: new Container(Axis.Vertical,
+                style: Style.Default.Background(Color.FromHex("#1C1C1C")),
+                children: [NavList]),
+            style: Style.Default
+                .Background(Color.FromHex("#1C1C1C"))
+                .Border(Borders.Rounded)
+                .BorderForeground(FocusIndex == 0
+                    ? Color.FromHex("#00D7FF")
+                    : Color.FromHex("#444444")));
 
         var hint = new Container(Axis.Vertical,
             height: SizeConstraint.Fixed(1),
@@ -230,9 +217,9 @@ record GalleryModel(
             ]);
 
         return new Container(Axis.Vertical,
-            width: SizeConstraint.Fixed(18),
+            width: SizeConstraint.Fixed(22),
             style: Style.Default.Background(Color.FromHex("#1C1C1C")),
-            children: [header, divider, listArea, hint]);
+            children: [navBorder, hint]);
     }
 
     // ── Status bar ────────────────────────────────────────────────────────────
