@@ -52,7 +52,8 @@ var NAVTREE =
 var NAVTREEINDEX =
 [
 "annotated.html",
-"classConsoleForge_1_1Widgets_1_1Table.html#a1b3b5fb6db38b277cbde10de7d67f1e5"
+"classConsoleForge_1_1Widgets_1_1Spinner.html#af3299545c8f44bada294186066e0d5a6",
+"structConsoleForge_1_1Styling_1_1Style.html#ae1c3bd0eac850d0f8bbf3dce30acb692"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';

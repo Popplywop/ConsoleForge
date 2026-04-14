@@ -1,11 +1,13 @@
 var classConsoleForge_1_1Widgets_1_1Table =
 [
     [ "Table", "classConsoleForge_1_1Widgets_1_1Table.html#afb51fb0506811d33a36504c4fbf64456", null ],
-    [ "Table", "classConsoleForge_1_1Widgets_1_1Table.html#a2af1db24b403236320b957b13218b911", null ],
+    [ "Table", "classConsoleForge_1_1Widgets_1_1Table.html#ad05aa6b15ee5cc3307a289655dc9c0b4", null ],
     [ "Render", "classConsoleForge_1_1Widgets_1_1Table.html#a1b3b5fb6db38b277cbde10de7d67f1e5", null ],
     [ "Columns", "classConsoleForge_1_1Widgets_1_1Table.html#a878081ab877f28bf92c4755f4821cc33", null ],
     [ "HeaderStyle", "classConsoleForge_1_1Widgets_1_1Table.html#a49e4785593b4cc04132759a88b246a14", null ],
     [ "Height", "classConsoleForge_1_1Widgets_1_1Table.html#a4eda522abdf2eb9c947baa45c026c790", null ],
+    [ "PaddingLeft", "classConsoleForge_1_1Widgets_1_1Table.html#aae943f547d58cde6a168779770d9a91b", null ],
+    [ "PaddingRight", "classConsoleForge_1_1Widgets_1_1Table.html#ad18c6442495107209a3d5e8396b64d61", null ],
     [ "Rows", "classConsoleForge_1_1Widgets_1_1Table.html#af4a8ba3470fd5e8e05b6f2e0ac59351e", null ],
     [ "RowStyle", "classConsoleForge_1_1Widgets_1_1Table.html#a685ad3430b4ea961bcd0593ddc057b6c", null ],
     [ "SelectedIndex", "classConsoleForge_1_1Widgets_1_1Table.html#adcc4ac7e34e594e73519087900343a45", null ],
