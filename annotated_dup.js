@@ -5,9 +5,11 @@ var annotated_dup =
         [ "Cmd", "classConsoleForge_1_1Core_1_1Cmd.html", "classConsoleForge_1_1Core_1_1Cmd" ],
         [ "FocusManager", "classConsoleForge_1_1Core_1_1FocusManager.html", "classConsoleForge_1_1Core_1_1FocusManager" ],
         [ "IComponent", "interfaceConsoleForge_1_1Core_1_1IComponent.html", "interfaceConsoleForge_1_1Core_1_1IComponent" ],
+        [ "IHasSubscriptions", "interfaceConsoleForge_1_1Core_1_1IHasSubscriptions.html", "interfaceConsoleForge_1_1Core_1_1IHasSubscriptions" ],
         [ "IModel", "interfaceConsoleForge_1_1Core_1_1IModel.html", "interfaceConsoleForge_1_1Core_1_1IModel" ],
         [ "IMsg", "interfaceConsoleForge_1_1Core_1_1IMsg.html", null ],
         [ "Program", "classConsoleForge_1_1Core_1_1Program.html", "classConsoleForge_1_1Core_1_1Program" ],
+        [ "Sub", "classConsoleForge_1_1Core_1_1Sub.html", "classConsoleForge_1_1Core_1_1Sub" ],
         [ "ViewDescriptor", "structConsoleForge_1_1Core_1_1ViewDescriptor.html", "structConsoleForge_1_1Core_1_1ViewDescriptor" ]
       ] ],
       [ "Layout", "namespaceConsoleForge_1_1Layout.html", [
@@ -35,6 +37,9 @@ var annotated_dup =
         [ "BorderBox", "classConsoleForge_1_1Widgets_1_1BorderBox.html", "classConsoleForge_1_1Widgets_1_1BorderBox" ],
         [ "Container", "classConsoleForge_1_1Widgets_1_1Container.html", "classConsoleForge_1_1Widgets_1_1Container" ],
         [ "List", "classConsoleForge_1_1Widgets_1_1List.html", "classConsoleForge_1_1Widgets_1_1List" ],
+        [ "ProgressBar", "classConsoleForge_1_1Widgets_1_1ProgressBar.html", "classConsoleForge_1_1Widgets_1_1ProgressBar" ],
+        [ "Spinner", "classConsoleForge_1_1Widgets_1_1Spinner.html", "classConsoleForge_1_1Widgets_1_1Spinner" ],
+        [ "Table", "classConsoleForge_1_1Widgets_1_1Table.html", "classConsoleForge_1_1Widgets_1_1Table" ],
         [ "TextBlock", "classConsoleForge_1_1Widgets_1_1TextBlock.html", "classConsoleForge_1_1Widgets_1_1TextBlock" ],
         [ "TextInput", "classConsoleForge_1_1Widgets_1_1TextInput.html", "classConsoleForge_1_1Widgets_1_1TextInput" ]
       ] ]

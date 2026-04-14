@@ -1,7 +1,11 @@
 var searchData=
 [
-  ['textblock_0',['textblock',['../classConsoleForge_1_1Widgets_1_1TextBlock.html#ad4135ae7e72e6f09eff766267717a6d2',1,'ConsoleForge.Widgets.TextBlock.TextBlock(string text, Style? style=null)'],['../classConsoleForge_1_1Widgets_1_1TextBlock.html#a1fcde1c19151372e2659377c0cf2110e',1,'ConsoleForge.Widgets.TextBlock.TextBlock()']]],
-  ['textinput_1',['textinput',['../classConsoleForge_1_1Widgets_1_1TextInput.html#a08166084fe8fb5f6a1cb4ce2d32e4ab1',1,'ConsoleForge.Widgets.TextInput.TextInput()'],['../classConsoleForge_1_1Widgets_1_1TextInput.html#a8139469e9868ce357ff5bfd0fbd16ee5',1,'ConsoleForge.Widgets.TextInput.TextInput(string value=&quot;&quot;, string placeholder=&quot;&quot;, int cursorPosition=0, Style? style=null)']]],
-  ['tick_2',['Tick',['../classConsoleForge_1_1Core_1_1Cmd.html#a952509a4b93d6aacb4ed04a863201b15',1,'ConsoleForge::Core::Cmd']]],
-  ['toansisequence_3',['ToAnsiSequence',['../interfaceConsoleForge_1_1Styling_1_1IColor.html#aabd271f730f6c7d1c4fbbc4d9fa5d40b',1,'ConsoleForge::Styling::IColor']]]
+  ['sequence_0',['Sequence',['../classConsoleForge_1_1Core_1_1Cmd.html#a086a3394bee5399cd0c55d51ad9d4977',1,'ConsoleForge::Core::Cmd']]],
+  ['setcursorposition_1',['setcursorposition',['../classConsoleForge_1_1Terminal_1_1AnsiTerminal.html#a536dbaacc534b732511a5c26a3df4f24',1,'ConsoleForge.Terminal.AnsiTerminal.SetCursorPosition()'],['../interfaceConsoleForge_1_1Terminal_1_1ITerminal.html#ab0e1cb508673ab0237965e884a04a26d',1,'ConsoleForge.Terminal.ITerminal.SetCursorPosition()']]],
+  ['setcursorvisible_2',['setcursorvisible',['../classConsoleForge_1_1Terminal_1_1AnsiTerminal.html#a92758c749112aab209ea4fdcda96d979',1,'ConsoleForge.Terminal.AnsiTerminal.SetCursorVisible()'],['../interfaceConsoleForge_1_1Terminal_1_1ITerminal.html#a35bf8c4aed5e96ff78aa48561b88fa02',1,'ConsoleForge.Terminal.ITerminal.SetCursorVisible()']]],
+  ['settheme_3',['SetTheme',['../classConsoleForge_1_1Core_1_1Program.html#a7de62e8e675e32a6b8e5dc66d120970d',1,'ConsoleForge::Core::Program']]],
+  ['settitle_4',['settitle',['../classConsoleForge_1_1Terminal_1_1AnsiTerminal.html#a7999aa99e454a03b3be4c5c25d07179f',1,'ConsoleForge.Terminal.AnsiTerminal.SetTitle()'],['../interfaceConsoleForge_1_1Terminal_1_1ITerminal.html#ada0fa9a12c88be298f9aa2c9aa9e923a',1,'ConsoleForge.Terminal.ITerminal.SetTitle()']]],
+  ['spinner_5',['spinner',['../classConsoleForge_1_1Widgets_1_1Spinner.html#a50efc355b9204e45646832e4813f2682',1,'ConsoleForge.Widgets.Spinner.Spinner()'],['../classConsoleForge_1_1Widgets_1_1Spinner.html#a32797421c04151d80248b849220768ce',1,'ConsoleForge.Widgets.Spinner.Spinner(int frame, string? label=null, IReadOnlyList&lt; string &gt;? frames=null, Style? style=null)']]],
+  ['subrendercontext_6',['SubRenderContext',['../classConsoleForge_1_1Layout_1_1SubRenderContext.html#a44308db36ff425272e2d4053c2eee3cb',1,'ConsoleForge::Layout::SubRenderContext']]],
+  ['subscriptions_7',['Subscriptions',['../interfaceConsoleForge_1_1Core_1_1IHasSubscriptions.html#a6d66d0ef5a88a2b580d642e464c68514',1,'ConsoleForge::Core::IHasSubscriptions']]]
 ];

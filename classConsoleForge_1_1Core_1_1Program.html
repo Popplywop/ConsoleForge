@@ -111,9 +111,9 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>SetTheme</b> (Theme t
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
-<tr class="memitem:ad3e49011f9461196aa38ca430d93da80" id="r_ad3e49011f9461196aa38ca430d93da80"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classConsoleForge_1_1Core_1_1Program.html#ad3e49011f9461196aa38ca430d93da80">Run</a> (<a class="el" href="interfaceConsoleForge_1_1Core_1_1IModel.html">IModel</a> model, <a class="el" href="interfaceConsoleForge_1_1Terminal_1_1ITerminal.html">ITerminal</a>? terminal=null, Theme? theme=null, int targetFps=30)</td></tr>
-<tr class="memdesc:ad3e49011f9461196aa38ca430d93da80"><td class="mdescLeft">&#160;</td><td class="mdescRight">Run the application.  <br /></td></tr>
-<tr class="separator:ad3e49011f9461196aa38ca430d93da80"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9412080c6d2bd890a93fca04772a46e5" id="r_a9412080c6d2bd890a93fca04772a46e5"><td class="memItemLeft" align="right" valign="top">static Task&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classConsoleForge_1_1Core_1_1Program.html#a9412080c6d2bd890a93fca04772a46e5">Run</a> (<a class="el" href="interfaceConsoleForge_1_1Core_1_1IModel.html">IModel</a> model, <a class="el" href="interfaceConsoleForge_1_1Terminal_1_1ITerminal.html">ITerminal</a>? terminal=null, Theme? theme=null, int targetFps=30)</td></tr>
+<tr class="memdesc:a9412080c6d2bd890a93fca04772a46e5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Run the application asynchronously.  <br /></td></tr>
+<tr class="separator:a9412080c6d2bd890a93fca04772a46e5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="properties" name="properties"></a>
 Properties</h2></td></tr>
@@ -126,8 +126,8 @@ Properties</h2></td></tr>
 <div class="textblock"><p>Main event loop for a <a class="el" href="namespaceConsoleForge.html">ConsoleForge</a> application. </p>
 <p>Call Run to start the application. The method blocks until the model issues QuitMsg or the user force-quits. The terminal is guaranteed to be restored (raw mode exited, alternate screen exited) even if an unhandled exception occurs. </p>
 </div><h2 class="groupheader">Member Function Documentation</h2>
-<a id="ad3e49011f9461196aa38ca430d93da80" name="ad3e49011f9461196aa38ca430d93da80"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ad3e49011f9461196aa38ca430d93da80">&#9670;&#160;</a></span>Run()</h2>
+<a id="a9412080c6d2bd890a93fca04772a46e5" name="a9412080c6d2bd890a93fca04772a46e5"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9412080c6d2bd890a93fca04772a46e5">&#9670;&#160;</a></span>Run()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -136,7 +136,7 @@ Properties</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">static void ConsoleForge.Core.Program.Run </td>
+          <td class="memname">static Task ConsoleForge.Core.Program.Run </td>
           <td>(</td>
           <td class="paramtype"><a class="el" href="interfaceConsoleForge_1_1Core_1_1IModel.html">IModel</a>&#160;</td>
           <td class="paramname"><em>model</em>, </td>
@@ -172,8 +172,8 @@ Properties</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Run the application. </p>
-<p>Blocks until the model produces a QuitMsg.</p>
+<p>Run the application asynchronously. </p>
+<p>Returns when the model produces a QuitMsg.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">model</td><td>Initial model. <code>Init()</code> is called before the loop starts.</td></tr>

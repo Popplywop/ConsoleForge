@@ -1,9 +1,8 @@
 var searchData=
 [
-  ['text_0',['Text',['../classConsoleForge_1_1Widgets_1_1TextBlock.html#a2c511bb271d5c25f2b264e9ef83c055f',1,'ConsoleForge::Widgets::TextBlock']]],
-  ['theme_1',['theme',['../interfaceConsoleForge_1_1Layout_1_1IRenderContext.html#a1a5bbdcfff7bf88e34af47437d02e7e0',1,'ConsoleForge.Layout.IRenderContext.Theme'],['../classConsoleForge_1_1Layout_1_1RenderContext.html#a5f5148ee1e285a21df07ee647f081761',1,'ConsoleForge.Layout.RenderContext.Theme'],['../classConsoleForge_1_1Layout_1_1SubRenderContext.html#a1abb7fc012a39e1ace0689996abd86c2',1,'ConsoleForge.Layout.SubRenderContext.Theme']]],
-  ['title_2',['title',['../structConsoleForge_1_1Core_1_1ViewDescriptor.html#a61cab5d5946faabf48a06f4a8304b1f1',1,'ConsoleForge.Core.ViewDescriptor.Title'],['../classConsoleForge_1_1Widgets_1_1BorderBox.html#a9e4df924d9d391e9b8f7c5dee5ad6a34',1,'ConsoleForge.Widgets.BorderBox.Title']]],
-  ['top_3',['Top',['../structConsoleForge_1_1Styling_1_1BorderSpec.html#a115e92415bb9537eb9b14741b3865225',1,'ConsoleForge::Styling::BorderSpec']]],
-  ['topleft_4',['TopLeft',['../structConsoleForge_1_1Styling_1_1BorderSpec.html#a94b69485f55067bf5d18aabbedd493fd',1,'ConsoleForge::Styling::BorderSpec']]],
-  ['topright_5',['TopRight',['../structConsoleForge_1_1Styling_1_1BorderSpec.html#a7571f74c5771ba6faf0c04cf69df3c7e',1,'ConsoleForge::Styling::BorderSpec']]]
+  ['region_0',['region',['../interfaceConsoleForge_1_1Layout_1_1IRenderContext.html#a465492afff48533de0ab2ed6f0e9f16b',1,'ConsoleForge.Layout.IRenderContext.Region'],['../classConsoleForge_1_1Layout_1_1RenderContext.html#acae2c8801d0bc5c6d99cbc3dd19c0141',1,'ConsoleForge.Layout.RenderContext.Region'],['../classConsoleForge_1_1Layout_1_1SubRenderContext.html#aaf592709fc5969b51dbfc3bee5df66f1',1,'ConsoleForge.Layout.SubRenderContext.Region']]],
+  ['right_1',['Right',['../structConsoleForge_1_1Styling_1_1BorderSpec.html#a439684c5d8ea0e57193c1461018074ed',1,'ConsoleForge::Styling::BorderSpec']]],
+  ['rootwidget_2',['RootWidget',['../structConsoleForge_1_1Core_1_1ViewDescriptor.html#afdae6456e975bca420a9ad68e553f559',1,'ConsoleForge::Core::ViewDescriptor']]],
+  ['rows_3',['Rows',['../classConsoleForge_1_1Widgets_1_1Table.html#af4a8ba3470fd5e8e05b6f2e0ac59351e',1,'ConsoleForge::Widgets::Table']]],
+  ['rowstyle_4',['RowStyle',['../classConsoleForge_1_1Widgets_1_1Table.html#a685ad3430b4ea961bcd0593ddc057b6c',1,'ConsoleForge::Widgets::Table']]]
 ];

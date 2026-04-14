@@ -1,5 +1,7 @@
 var searchData=
 [
-  ['input_0',['input',['../classConsoleForge_1_1Terminal_1_1AnsiTerminal.html#ac2e53919f46e653954a1a8013c8480d6',1,'ConsoleForge.Terminal.AnsiTerminal.Input'],['../interfaceConsoleForge_1_1Terminal_1_1ITerminal.html#ac57aeda8e36a0f675d455c64c7e8ea48',1,'ConsoleForge.Terminal.ITerminal.Input']]],
-  ['items_1',['Items',['../classConsoleForge_1_1Widgets_1_1List.html#a04b613aeaf4ea2c5dca87501b9d42be3',1,'ConsoleForge::Widgets::List']]]
+  ['fillchar_0',['FillChar',['../classConsoleForge_1_1Widgets_1_1ProgressBar.html#ace955b31bde0656e397427875c3590d5',1,'ConsoleForge::Widgets::ProgressBar']]],
+  ['fillstyle_1',['FillStyle',['../classConsoleForge_1_1Widgets_1_1ProgressBar.html#ac0854563eab676a27b03ad1a53029f8e',1,'ConsoleForge::Widgets::ProgressBar']]],
+  ['frame_2',['Frame',['../classConsoleForge_1_1Widgets_1_1Spinner.html#a366eb199965e7a37c12c1d7d2c6e2486',1,'ConsoleForge::Widgets::Spinner']]],
+  ['frames_3',['Frames',['../classConsoleForge_1_1Widgets_1_1Spinner.html#aa7a0f74e89dbcf375cfb74259afd8bab',1,'ConsoleForge::Widgets::Spinner']]]
 ];

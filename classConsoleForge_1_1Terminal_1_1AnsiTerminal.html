@@ -175,7 +175,7 @@ EventHandler&lt; TerminalResizedEventArgs &gt;?&#160;</td><td class="memItemRigh
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Production ITerminal backed by System.Console. </p>
-<p>Handles ANSI output, raw mode (Unix), alternate screen, and SIGWINCH resizes. </p>
+<p>Handles ANSI output, raw mode (Unix/Windows), alternate screen, and resize events. On Unix: raw mode via termios, resize via SIGWINCH. On Windows: raw mode via kernel32 console mode, resize via background polling thread. </p>
 </div><h2 class="groupheader">Member Function Documentation</h2>
 <a id="af2d3504fe4eb4ccefe906f935063b76f" name="af2d3504fe4eb4ccefe906f935063b76f"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#af2d3504fe4eb4ccefe906f935063b76f">&#9670;&#160;</a></span>Clear()</h2>

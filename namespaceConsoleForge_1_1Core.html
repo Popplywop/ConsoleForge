@@ -103,11 +103,17 @@ Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classConsoleForge_1_1Core_1_1Cmd.html">Cmd</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Factory for creating common command values.  <a href="classConsoleForge_1_1Core_1_1Cmd.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><b>CmdDispatcher</b></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Fires an ICmd on the thread pool and writes the resulting IMsg to <em>channel</em> . <br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classConsoleForge_1_1Core_1_1FocusManager.html">FocusManager</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Stateless helper that traverses a widget tree depth-first and finds all IFocusable instances in declaration order.  <a href="classConsoleForge_1_1Core_1_1FocusManager.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">interface &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="interfaceConsoleForge_1_1Core_1_1IComponent.html">IComponent</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Interface for reusable sub-components that maintain their own state but do not own the program loop.  <a href="interfaceConsoleForge_1_1Core_1_1IComponent.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">interface &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="interfaceConsoleForge_1_1Core_1_1IHasSubscriptions.html">IHasSubscriptions</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Optional interface for models that declare long-running subscriptions.  <a href="interfaceConsoleForge_1_1Core_1_1IHasSubscriptions.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">interface &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="interfaceConsoleForge_1_1Core_1_1IModel.html">IModel</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">The root interface for all <a class="el" href="namespaceConsoleForge.html">ConsoleForge</a> application models.  <a href="interfaceConsoleForge_1_1Core_1_1IModel.html#details">More...</a><br /></td></tr>
@@ -121,15 +127,21 @@ Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><b>Renderer</b></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Renders widget trees to the terminal using a persistent double-buffered RenderContext. <br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classConsoleForge_1_1Core_1_1Sub.html">Sub</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Factory helpers for creating common ISub values.  <a href="classConsoleForge_1_1Core_1_1Sub.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structConsoleForge_1_1Core_1_1ViewDescriptor.html">ViewDescriptor</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Immutable descriptor for a single rendered frame.  <a href="structConsoleForge_1_1Core_1_1ViewDescriptor.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
 Functions</h2></td></tr>
-<tr class="memitem:aa6b3948bfc7554ff8486ac536f25a7dd" id="r_aa6b3948bfc7554ff8486ac536f25a7dd"><td class="memItemLeft" align="right" valign="top">delegate <a class="el" href="interfaceConsoleForge_1_1Core_1_1IMsg.html">IMsg</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceConsoleForge_1_1Core.html#aa6b3948bfc7554ff8486ac536f25a7dd">ICmd</a> ()</td></tr>
-<tr class="memdesc:aa6b3948bfc7554ff8486ac536f25a7dd"><td class="mdescLeft">&#160;</td><td class="mdescRight">A command: a blocking function that produces one message when complete.  <br /></td></tr>
-<tr class="separator:aa6b3948bfc7554ff8486ac536f25a7dd"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a45d6a05ca04f21a284e8ebc48a09fbb4" id="r_a45d6a05ca04f21a284e8ebc48a09fbb4"><td class="memItemLeft" align="right" valign="top">delegate Task&lt; <a class="el" href="interfaceConsoleForge_1_1Core_1_1IMsg.html">IMsg</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceConsoleForge_1_1Core.html#a45d6a05ca04f21a284e8ebc48a09fbb4">ICmd</a> ()</td></tr>
+<tr class="memdesc:a45d6a05ca04f21a284e8ebc48a09fbb4"><td class="mdescLeft">&#160;</td><td class="mdescRight">A command: an async function that produces one message when complete.  <br /></td></tr>
+<tr class="separator:a45d6a05ca04f21a284e8ebc48a09fbb4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3423e4fa2afce76645b3d47bd39bdd07" id="r_a3423e4fa2afce76645b3d47bd39bdd07"><td class="memItemLeft" align="right" valign="top">delegate IAsyncEnumerable&lt; <a class="el" href="interfaceConsoleForge_1_1Core_1_1IMsg.html">IMsg</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceConsoleForge_1_1Core.html#a3423e4fa2afce76645b3d47bd39bdd07">ISub</a> (CancellationToken cancellationToken)</td></tr>
+<tr class="memdesc:a3423e4fa2afce76645b3d47bd39bdd07"><td class="mdescLeft">&#160;</td><td class="mdescRight">A subscription: a long-running async function that produces messages continuously until the supplied CancellationToken is cancelled.  <br /></td></tr>
+<tr class="separator:a3423e4fa2afce76645b3d47bd39bdd07"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a77f925cd6359324739aa3a3d44b2f140" id="r_a77f925cd6359324739aa3a3d44b2f140"><td class="memItemLeft" align="right" valign="top">readonly record struct&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceConsoleForge_1_1Core.html#a77f925cd6359324739aa3a3d44b2f140">CursorDescriptor</a> (bool Visible=true, int Col=0, int Row=0)</td></tr>
 <tr class="memdesc:a77f925cd6359324739aa3a3d44b2f140"><td class="mdescLeft">&#160;</td><td class="mdescRight">Cursor state for a rendered frame.  <br /></td></tr>
 <tr class="separator:a77f925cd6359324739aa3a3d44b2f140"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -189,14 +201,14 @@ record&#160;</td><td class="memItemRight" valign="bottom"><b>QuitMsg</b></td></t
 
 </div>
 </div>
-<a id="aa6b3948bfc7554ff8486ac536f25a7dd" name="aa6b3948bfc7554ff8486ac536f25a7dd"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aa6b3948bfc7554ff8486ac536f25a7dd">&#9670;&#160;</a></span>ICmd()</h2>
+<a id="a45d6a05ca04f21a284e8ebc48a09fbb4" name="a45d6a05ca04f21a284e8ebc48a09fbb4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a45d6a05ca04f21a284e8ebc48a09fbb4">&#9670;&#160;</a></span>ICmd()</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">delegate <a class="el" href="interfaceConsoleForge_1_1Core_1_1IMsg.html">IMsg</a> ConsoleForge.Core.ICmd </td>
+          <td class="memname">delegate Task&lt; <a class="el" href="interfaceConsoleForge_1_1Core_1_1IMsg.html">IMsg</a> &gt; ConsoleForge.Core.ICmd </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
@@ -204,8 +216,29 @@ record&#160;</td><td class="memItemRight" valign="bottom"><b>QuitMsg</b></td></t
       </table>
 </div><div class="memdoc">
 
-<p>A command: a blocking function that produces one message when complete. </p>
-<p>The framework executes each non-null command on a background thread. Return null (Cmd.None) to indicate no operation. </p>
+<p>A command: an async function that produces one message when complete. </p>
+<p>The framework awaits each non-null command. Use async lambdas or Task.FromResult&lt;TResult&gt; for synchronous results. Return null (Cmd.None) to indicate no operation. </p>
+
+</div>
+</div>
+<a id="a3423e4fa2afce76645b3d47bd39bdd07" name="a3423e4fa2afce76645b3d47bd39bdd07"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3423e4fa2afce76645b3d47bd39bdd07">&#9670;&#160;</a></span>ISub()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">delegate IAsyncEnumerable&lt; <a class="el" href="interfaceConsoleForge_1_1Core_1_1IMsg.html">IMsg</a> &gt; ConsoleForge.Core.ISub </td>
+          <td>(</td>
+          <td class="paramtype">CancellationToken&#160;</td>
+          <td class="paramname"><em>cancellationToken</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>A subscription: a long-running async function that produces messages continuously until the supplied CancellationToken is cancelled. </p>
+<p>Return <code>null</code> from the callback to suppress dispatching a message (e.g. after an interval fires with no meaningful data). The framework will not write null messages to the channel. </p>
 
 </div>
 </div>

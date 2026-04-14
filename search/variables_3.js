@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['inputevent_0',['InputEvent',['../namespaceConsoleForge_1_1Terminal.html#aa06fee791d6fdd746b59f104a2577adb',1,'ConsoleForge::Terminal']]]
+  ['hidden_0',['Hidden',['../classConsoleForge_1_1Styling_1_1Borders.html#a04340217022a97293e01c075d4b7f3c5',1,'ConsoleForge::Styling::Borders']]]
 ];

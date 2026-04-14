@@ -6,5 +6,6 @@ var searchData=
   ['borderspec_3',['BorderSpec',['../structConsoleForge_1_1Styling_1_1BorderSpec.html',1,'ConsoleForge::Styling']]],
   ['bottom_4',['Bottom',['../structConsoleForge_1_1Styling_1_1BorderSpec.html#a1f2cf606b44120600d6317ec5acd89da',1,'ConsoleForge::Styling::BorderSpec']]],
   ['bottomleft_5',['BottomLeft',['../structConsoleForge_1_1Styling_1_1BorderSpec.html#a2a0a8dfd3f57bcb6b9dde9c2eea8e2c9',1,'ConsoleForge::Styling::BorderSpec']]],
-  ['bottomright_6',['BottomRight',['../structConsoleForge_1_1Styling_1_1BorderSpec.html#a05aaa1546ca7794c74bf748da32eae6b',1,'ConsoleForge::Styling::BorderSpec']]]
+  ['bottomright_6',['BottomRight',['../structConsoleForge_1_1Styling_1_1BorderSpec.html#a05aaa1546ca7794c74bf748da32eae6b',1,'ConsoleForge::Styling::BorderSpec']]],
+  ['brailleframes_7',['BrailleFrames',['../classConsoleForge_1_1Widgets_1_1Spinner.html#a4794af7fa3c239fba5fb2f817bf0539c',1,'ConsoleForge::Widgets::Spinner']]]
 ];

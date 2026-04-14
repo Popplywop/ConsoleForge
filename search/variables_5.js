@@ -1,6 +1,4 @@
 var searchData=
 [
-  ['nocolor_0',['NoColor',['../namespaceConsoleForge_1_1Styling.html#a94a5f28617919be4248a00b51cd8c9c0',1,'ConsoleForge::Styling']]],
-  ['none_1',['None',['../classConsoleForge_1_1Core_1_1Cmd.html#adb75494238b406587bc368bafc574d7b',1,'ConsoleForge::Core::Cmd']]],
-  ['normal_2',['Normal',['../classConsoleForge_1_1Styling_1_1Borders.html#aaa1ce69afb19b73235397dbd38a2c1d3',1,'ConsoleForge::Styling::Borders']]]
+  ['model_0',['model',['../interfaceConsoleForge_1_1Core_1_1IComponent.html#ac1d06406f9419dc2126f08a7ec1480e2',1,'ConsoleForge.Core.IComponent.Model'],['../interfaceConsoleForge_1_1Core_1_1IModel.html#a061db75f6f84b23b7d93f0dcacda8bac',1,'ConsoleForge.Core.IModel.Model']]]
 ];

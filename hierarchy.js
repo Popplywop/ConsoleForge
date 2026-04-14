@@ -17,6 +17,7 @@ var hierarchy =
     [ "IEquatable", null, [
       [ "ConsoleForge.Styling.Style", "structConsoleForge_1_1Styling_1_1Style.html", null ]
     ] ],
+    [ "ConsoleForge.Core.IHasSubscriptions", "interfaceConsoleForge_1_1Core_1_1IHasSubscriptions.html", null ],
     [ "ConsoleForge.Core.IModel", "interfaceConsoleForge_1_1Core_1_1IModel.html", null ],
     [ "ConsoleForge.Core.IMsg", "interfaceConsoleForge_1_1Core_1_1IMsg.html", null ],
     [ "ConsoleForge.Layout.IRenderContext", "interfaceConsoleForge_1_1Layout_1_1IRenderContext.html", [
@@ -33,10 +34,14 @@ var hierarchy =
       ] ],
       [ "ConsoleForge.Widgets.BorderBox", "classConsoleForge_1_1Widgets_1_1BorderBox.html", null ],
       [ "ConsoleForge.Widgets.Container", "classConsoleForge_1_1Widgets_1_1Container.html", null ],
+      [ "ConsoleForge.Widgets.ProgressBar", "classConsoleForge_1_1Widgets_1_1ProgressBar.html", null ],
+      [ "ConsoleForge.Widgets.Spinner", "classConsoleForge_1_1Widgets_1_1Spinner.html", null ],
+      [ "ConsoleForge.Widgets.Table", "classConsoleForge_1_1Widgets_1_1Table.html", null ],
       [ "ConsoleForge.Widgets.TextBlock", "classConsoleForge_1_1Widgets_1_1TextBlock.html", null ]
     ] ],
     [ "ConsoleForge.Layout.LayoutEngine", "classConsoleForge_1_1Layout_1_1LayoutEngine.html", null ],
     [ "ConsoleForge.Core.Program", "classConsoleForge_1_1Core_1_1Program.html", null ],
     [ "ConsoleForge.Layout.ResolvedLayout", "classConsoleForge_1_1Layout_1_1ResolvedLayout.html", null ],
+    [ "ConsoleForge.Core.Sub", "classConsoleForge_1_1Core_1_1Sub.html", null ],
     [ "ConsoleForge.Core.ViewDescriptor", "structConsoleForge_1_1Core_1_1ViewDescriptor.html", null ]
 ];
