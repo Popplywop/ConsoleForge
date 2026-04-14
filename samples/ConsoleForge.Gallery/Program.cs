@@ -185,8 +185,12 @@ record GalleryModel(
         var content    = BuildPageContent();
         var statusBar  = BuildStatusBar();
 
-        var body = new Container(Axis.Horizontal, [sidebar, content]);
-        return new Container(Axis.Vertical, [body, statusBar]);
+        var body = new Container(Axis.Horizontal,
+            style: Style.Default.Background(Color.FromHex("#1C1C1C")),
+            children: [sidebar, content]);
+        return new Container(Axis.Vertical,
+            style: Style.Default.Background(Color.FromHex("#1C1C1C")),
+            children: [body, statusBar]);
     }
 
     // ── Sidebar ───────────────────────────────────────────────────────────────

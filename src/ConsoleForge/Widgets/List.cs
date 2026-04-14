@@ -77,6 +77,7 @@ public sealed class List : IFocusable
             ? SelectedItemStyle.Inherit(ctx.Theme.FocusedStyle)
             : SelectedItemStyle.Inherit(ctx.Theme.BaseStyle);
 
+        var fill = new string(' ', region.Width);
         var maxRows = Math.Min(Items.Count, region.Height);
         for (var i = 0; i < maxRows; i++)
         {
@@ -90,6 +91,10 @@ public sealed class List : IFocusable
             var rowStyle = i == SelectedIndex ? selectedStyle : baseStyle;
             ctx.Write(region.Col, region.Row + i, text, rowStyle);
         }
+
+        // Fill rows below items with base style so background is uniform
+        for (var i = maxRows; i < region.Height; i++)
+            ctx.Write(region.Col, region.Row + i, fill, baseStyle);
     }
 }
 
