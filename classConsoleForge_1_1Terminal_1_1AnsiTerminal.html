@@ -125,7 +125,7 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:aaca47525e5b96e70edec5e644408ac81"><td class="mdescLeft">&#160;</td><td class="mdescRight">Flush the buffered output to the physical terminal.  <br /></td></tr>
 <tr class="separator:aaca47525e5b96e70edec5e644408ac81"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a92758c749112aab209ea4fdcda96d979" id="r_a92758c749112aab209ea4fdcda96d979"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classConsoleForge_1_1Terminal_1_1AnsiTerminal.html#a92758c749112aab209ea4fdcda96d979">SetCursorVisible</a> (bool visible)</td></tr>
-<tr class="memdesc:a92758c749112aab209ea4fdcda96d979"><td class="mdescLeft">&#160;</td><td class="mdescRight">Appends an ANSI escape sequence to show or hide the hardware cursor.  <br /></td></tr>
+<tr class="memdesc:a92758c749112aab209ea4fdcda96d979"><td class="mdescLeft">&#160;</td><td class="mdescRight">Shows or hides the hardware cursor by writing directly to the terminal (bypasses the render buffer).  <br /></td></tr>
 <tr class="separator:a92758c749112aab209ea4fdcda96d979"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a536dbaacc534b732511a5c26a3df4f24" id="r_a536dbaacc534b732511a5c26a3df4f24"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classConsoleForge_1_1Terminal_1_1AnsiTerminal.html#a536dbaacc534b732511a5c26a3df4f24">SetCursorPosition</a> (int col, int row)</td></tr>
 <tr class="memdesc:a536dbaacc534b732511a5c26a3df4f24"><td class="mdescLeft">&#160;</td><td class="mdescRight">Appends an ANSI cursor-position escape sequence (converts 0-based col/row to 1-based ANSI).  <br /></td></tr>
@@ -373,7 +373,7 @@ EventHandler&lt; TerminalResizedEventArgs &gt;?&#160;</td><td class="memItemRigh
       </table>
 </div><div class="memdoc">
 
-<p>Appends an ANSI escape sequence to show or hide the hardware cursor. </p>
+<p>Shows or hides the hardware cursor by writing directly to the terminal (bypasses the render buffer). </p>
 
 <p>Implements <a class="el" href="interfaceConsoleForge_1_1Terminal_1_1ITerminal.html#a35bf8c4aed5e96ff78aa48561b88fa02">ConsoleForge.Terminal.ITerminal</a>.</p>
 
