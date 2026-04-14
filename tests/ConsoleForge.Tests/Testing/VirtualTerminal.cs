@@ -14,6 +14,8 @@ public sealed class VirtualTerminal : ITerminal
     private readonly Subject<InputEvent> _input = new();
     private readonly List<string> _writeHistory = new();
     private readonly char[,] _screen;
+    private int _cursorRow;
+    private int _cursorCol;
     private bool _rawMode;
     private bool _alternateScreen;
     private bool _exitedCleanly;
@@ -38,6 +40,7 @@ public sealed class VirtualTerminal : ITerminal
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         _writeHistory.Add(ansiText);
+        ApplyAnsiToScreen(ansiText);
     }
 
     public void Clear()
@@ -56,7 +59,12 @@ public sealed class VirtualTerminal : ITerminal
 
     // ── ITerminal: Cursor ─────────────────────────────────────────────
     public void SetCursorVisible(bool visible) { }
-    public void SetCursorPosition(int col, int row) { }
+
+    public void SetCursorPosition(int col, int row)
+    {
+        _cursorRow = row;
+        _cursorCol = col;
+    }
 
     // ── ITerminal: Title ──────────────────────────────────────────────
     public void SetTitle(string title) { }
@@ -130,6 +138,12 @@ public sealed class VirtualTerminal : ITerminal
         }
     }
 
+    /// <summary>
+    /// Returns a string containing the full rendered screen content (all rows joined with newlines).
+    /// Useful for simple assertions: <c>Assert.Contains("Hello", terminal.ScreenContent)</c>.
+    /// </summary>
+    public string ScreenContent => string.Join("\n", Lines);
+
     /// <summary>True if ExitRawMode + ExitAlternateScreen were called on Dispose.</summary>
     public bool ExitedCleanly => _exitedCleanly;
 
@@ -159,5 +173,110 @@ public sealed class VirtualTerminal : ITerminal
         Height = newHeight;
         _input.OnNext(new ResizeInputEvent(newWidth, newHeight));
         Resized?.Invoke(this, new TerminalResizedEventArgs(newWidth, newHeight));
+    }
+
+    // ── ANSI decoder ─────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Parse <paramref name="ansi"/> and write printable characters into <see cref="_screen"/>,
+    /// respecting cursor-movement sequences (<c>ESC[row;colH</c>) and erase-line sequences.
+    /// All other escape sequences are consumed without writing.
+    /// </summary>
+    private void ApplyAnsiToScreen(string ansi)
+    {
+        int i = 0;
+        while (i < ansi.Length)
+        {
+            if (ansi[i] == '\x1b' && i + 1 < ansi.Length && ansi[i + 1] == '[')
+            {
+                // CSI sequence: ESC [ <params> <final>
+                int j = i + 2;
+                while (j < ansi.Length && (ansi[j] < 0x40 || ansi[j] > 0x7E)) j++;
+
+                if (j < ansi.Length)
+                {
+                    var final = ansi[j];
+                    var param = ansi[(i + 2)..j];
+
+                    switch (final)
+                    {
+                        case 'H': // cursor position ESC[row;colH or ESC[H
+                        {
+                            var parts = param.Split(';');
+                            if (parts.Length == 2 &&
+                                int.TryParse(parts[0], out int r) &&
+                                int.TryParse(parts[1], out int c))
+                            {
+                                _cursorRow = r - 1;
+                                _cursorCol = c - 1;
+                            }
+                            else
+                            {
+                                _cursorRow = 0;
+                                _cursorCol = 0;
+                            }
+                            break;
+                        }
+                        case 'K': // erase in line: ESC[K or ESC[0K = erase to end; ESC[2K = erase whole line
+                        {
+                            if (param is "2")
+                            {
+                                for (var c = 0; c < Width; c++)
+                                    if (_cursorRow >= 0 && _cursorRow < Height)
+                                        _screen[_cursorRow, c] = ' ';
+                            }
+                            else // 0 or empty = erase to end of line
+                            {
+                                for (var c = _cursorCol; c < Width; c++)
+                                    if (_cursorRow >= 0 && _cursorRow < Height && c >= 0)
+                                        _screen[_cursorRow, c] = ' ';
+                            }
+                            break;
+                        }
+                        case 'J': // erase in display: ESC[2J = clear screen
+                        {
+                            if (param is "2" or "")
+                            {
+                                for (var r = 0; r < Height; r++)
+                                    for (var c = 0; c < Width; c++)
+                                        _screen[r, c] = ' ';
+                            }
+                            break;
+                        }
+                        // All other sequences (color, bold, etc.) — skip
+                    }
+                    i = j + 1;
+                }
+                else { i++; }
+            }
+            else if (ansi[i] == '\x1b')
+            {
+                // Non-CSI escape — skip until end of sequence
+                int j = i + 1;
+                while (j < ansi.Length && ansi[j] < '@') j++;
+                i = j + 1;
+            }
+            else
+            {
+                var ch = ansi[i];
+                if (ch == '\n')
+                {
+                    _cursorRow++;
+                    _cursorCol = 0;
+                }
+                else if (ch == '\r')
+                {
+                    _cursorCol = 0;
+                }
+                else
+                {
+                    if (_cursorRow >= 0 && _cursorRow < Height &&
+                        _cursorCol >= 0 && _cursorCol < Width)
+                        _screen[_cursorRow, _cursorCol] = ch;
+                    _cursorCol++;
+                }
+                i++;
+            }
+        }
     }
 }

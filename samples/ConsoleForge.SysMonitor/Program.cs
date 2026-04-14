@@ -440,7 +440,7 @@ record SysMonitorModel(
 
 static class EntryPoint
 {
-    static void Main()
+    static async Task Main()
     {
         var theme = new Theme(
             name: "SysMonitor",
@@ -449,6 +449,6 @@ static class EntryPoint
             focusedStyle: Style.Default.BorderForeground(Color.FromHex("#FFB347"))
         );
 
-        Program.Run(SysMonitorModel.Initial(), theme: theme);
+        await Program.Run(SysMonitorModel.Initial(), theme: theme);
     }
 }

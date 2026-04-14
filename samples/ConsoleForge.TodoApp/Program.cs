@@ -215,7 +215,7 @@ record TodoModel(
 
 static class EntryPoint
 {
-    static void Main()
+    static async Task Main()
     {
         var theme = new Theme(
             name: "TodoApp",
@@ -224,6 +224,6 @@ static class EntryPoint
             focusedStyle: Style.Default.BorderForeground(Color.Yellow)
         );
 
-        Program.Run(TodoModel.Initial(), theme: theme);
+        await Program.Run(TodoModel.Initial(), theme: theme);
     }
 }

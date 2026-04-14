@@ -7,7 +7,7 @@
 
     <!-- NuGet packaging -->
     <PackageId>ConsoleForge</PackageId>
-    <Version>0.0.2</Version>
+    <Version>0.1.0</Version>
     <Authors>Popplywop</Authors>
     <Description>A .NET 8 TUI framework using the Elm architecture — model, update, view — with composable widgets, ANSI terminal rendering, and reactive event handling.</Description>
     <PackageTags>tui;terminal;console;elm;ui;widgets;ansi</PackageTags>
@@ -22,6 +22,12 @@
     <DebugType>embedded</DebugType>
   </PropertyGroup>
 
+  <!-- Define WINDOWS symbol when building on Windows so that #if !WINDOWS guards
+       correctly exclude libc P/Invokes and Unix-only code from the Windows binary. -->
+  <PropertyGroup Condition="$([MSBuild]::IsOSPlatform('Windows'))">
+    <DefineConstants>$(DefineConstants);WINDOWS</DefineConstants>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="System.Reactive" Version="6.1.0" />
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All" />
@@ -34,6 +40,9 @@
   <ItemGroup>
     <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
       <_Parameter1>ConsoleForge.Benchmarks</_Parameter1>
+    </AssemblyAttribute>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
+      <_Parameter1>ConsoleForge.Tests</_Parameter1>
     </AssemblyAttribute>
   </ItemGroup>
 

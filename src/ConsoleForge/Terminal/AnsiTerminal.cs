@@ -7,7 +7,9 @@ namespace ConsoleForge.Terminal;
 
 /// <summary>
 /// Production <see cref="ITerminal"/> backed by <see cref="System.Console"/>.
-/// Handles ANSI output, raw mode (Unix), alternate screen, and SIGWINCH resizes.
+/// Handles ANSI output, raw mode (Unix/Windows), alternate screen, and resize events.
+/// On Unix: raw mode via termios, resize via SIGWINCH.
+/// On Windows: raw mode via kernel32 console mode, resize via background polling thread.
 /// </summary>
 public sealed class AnsiTerminal : ITerminal
 {
@@ -15,6 +17,10 @@ public sealed class AnsiTerminal : ITerminal
     private readonly StringBuilder _outputBuffer = new();
     private Thread? _inputThread;
     private PosixSignalRegistration? _sigwinchRegistration;
+
+    // Windows resize polling
+    private Thread? _resizePollingThread;
+    private volatile bool _stopResizePolling;
 
 #if !WINDOWS
     private Termios.Termios_t _savedTermios;
@@ -90,13 +96,20 @@ public sealed class AnsiTerminal : ITerminal
 
     public void EnterRawMode()
     {
-#if !WINDOWS
-        if (_rawMode) return;
-        if (Termios.GetAttr(out _savedTermios))
+        if (OperatingSystem.IsWindows())
         {
-            var raw = _savedTermios;
-            if (Termios.MakeRaw(ref raw))
-                _rawMode = true;
+            WindowsConsole.TryEnableRawMode();
+        }
+#if !WINDOWS
+        else
+        {
+            if (_rawMode) return;
+            if (Termios.GetAttr(out _savedTermios))
+            {
+                var raw = _savedTermios;
+                if (Termios.MakeRaw(ref raw))
+                    _rawMode = true;
+            }
         }
 #endif
         StartInputThread();
@@ -105,10 +118,17 @@ public sealed class AnsiTerminal : ITerminal
 
     public void ExitRawMode()
     {
+        if (OperatingSystem.IsWindows())
+        {
+            WindowsConsole.TryRestoreMode();
+        }
 #if !WINDOWS
-        if (!_rawMode) return;
-        Termios.Restore(ref _savedTermios);
-        _rawMode = false;
+        else
+        {
+            if (!_rawMode) return;
+            Termios.Restore(ref _savedTermios);
+            _rawMode = false;
+        }
 #endif
     }
 
@@ -152,10 +172,16 @@ public sealed class AnsiTerminal : ITerminal
         }
     }
 
-    // ── SIGWINCH ─────────────────────────────────────────────────────
+    // ── SIGWINCH / resize polling ─────────────────────────────────────
 
     private void RegisterSigwinch()
     {
+        if (OperatingSystem.IsWindows())
+        {
+            StartResizePolling();
+            return;
+        }
+
         try
         {
             _sigwinchRegistration = PosixSignalRegistration.Create(
@@ -170,8 +196,48 @@ public sealed class AnsiTerminal : ITerminal
         }
         catch
         {
-            // Not available on all platforms (e.g., Windows) — ignore
+            // Not available on all platforms — ignore
         }
+    }
+
+    /// <summary>
+    /// Windows fallback: polls <see cref="Console.WindowWidth"/> /
+    /// <see cref="Console.WindowHeight"/> every 100 ms and fires resize events on change.
+    /// </summary>
+    private void StartResizePolling()
+    {
+        var lastW = Console.WindowWidth;
+        var lastH = Console.WindowHeight;
+
+        _resizePollingThread = new Thread(() =>
+        {
+            while (!_stopResizePolling && !_disposed)
+            {
+                Thread.Sleep(100);
+                try
+                {
+                    var w = Console.WindowWidth;
+                    var h = Console.WindowHeight;
+                    if (w != lastW || h != lastH)
+                    {
+                        lastW = w;
+                        lastH = h;
+                        _inputSubject.OnNext(new ResizeInputEvent(w, h));
+                        Resized?.Invoke(this, new TerminalResizedEventArgs(w, h));
+                    }
+                }
+                catch
+                {
+                    // Console may be unavailable during shutdown — stop quietly
+                    break;
+                }
+            }
+        })
+        {
+            IsBackground = true,
+            Name = "ConsoleForge.ResizePoller"
+        };
+        _resizePollingThread.Start();
     }
 
     // ── IDisposable ──────────────────────────────────────────────────
@@ -184,6 +250,8 @@ public sealed class AnsiTerminal : ITerminal
     {
         if (_disposed) return;
         _disposed = true;
+
+        _stopResizePolling = true;
 
         try { ExitRawMode(); } catch { /* ensure cleanup */ }
         try { ExitAlternateScreen(); } catch { /* ensure cleanup */ }

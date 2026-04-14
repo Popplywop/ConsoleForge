@@ -1,4 +1,4 @@
 using BenchmarkDotNet.Running;
 
-BenchmarkRunner.Run<RenderBenchmarks>();
+BenchmarkSwitcher.FromAssembly(typeof(RenderBenchmarks).Assembly).Run(args);
 

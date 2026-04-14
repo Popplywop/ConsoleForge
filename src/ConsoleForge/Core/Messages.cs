@@ -38,3 +38,11 @@ public sealed record RedrawMsg : IMsg;
 /// <param name="Index">Zero-based index of the selected item.</param>
 /// <param name="Item">The item value (string for built-in <c>List</c>).</param>
 public sealed record ListItemSelectedMsg(int Index, object Item) : IMsg;
+
+/// <summary>
+/// Dispatched when a command throws an unhandled exception.
+/// Models may handle this to display error state; unhandled it is silently dropped.
+/// </summary>
+/// <param name="Exception">The exception thrown by the command.</param>
+/// <param name="Source">Optional label identifying which command failed (for logging).</param>
+public sealed record CmdErrorMsg(Exception Exception, string? Source = null) : IMsg;

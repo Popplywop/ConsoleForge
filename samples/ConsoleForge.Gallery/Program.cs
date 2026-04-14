@@ -595,7 +595,7 @@ record GalleryModel(
 
 static class EntryPoint
 {
-    static void Main()
+    static async Task Main()
     {
         var theme = new Theme(
             name: "Gallery",
@@ -604,6 +604,6 @@ static class EntryPoint
             focusedStyle: Style.Default.BorderForeground(Color.Yellow)
         );
 
-        Program.Run(GalleryModel.Initial(), theme: theme);
+        await Program.Run(GalleryModel.Initial(), theme: theme);
     }
 }

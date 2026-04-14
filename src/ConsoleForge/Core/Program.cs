@@ -32,7 +32,7 @@ public sealed class Program
     private int _focusIndex = -1;
 
     /// <summary>
-    /// Run the application. Blocks until the model produces a <see cref="QuitMsg"/>.
+    /// Run the application asynchronously. Returns when the model produces a <see cref="QuitMsg"/>.
     /// </summary>
     /// <param name="model">Initial model. <c>Init()</c> is called before the loop starts.</param>
     /// <param name="terminal">
@@ -41,7 +41,7 @@ public sealed class Program
     /// </param>
     /// <param name="theme">Theme to use. Defaults to <see cref="Theme.Default"/>.</param>
     /// <param name="targetFps">Target frames per second (1–60). Default 30.</param>
-    public static void Run(
+    public static Task Run(
         IModel model,
         ITerminal? terminal = null,
         Theme? theme = null,
@@ -52,7 +52,7 @@ public sealed class Program
             _theme = theme ?? Theme.Default,
             _colorProfile = DetectColorProfile()
         };
-        program.RunInternal(model, terminal, targetFps);
+        return program.RunInternal(model, terminal, targetFps);
     }
 
     /// <summary>Update the active theme at runtime. Forces a re-render.</summary>
@@ -67,11 +67,15 @@ public sealed class Program
 
     private volatile bool _quitting;
     private readonly object _renderLock = new();
+    private readonly CancellationTokenSource _cts = new();
 
     /// <summary>Current model, updated by the event loop, read by the render timer.</summary>
     private IModel? _currentModel;
 
-    private void RunInternal(IModel model, ITerminal? terminal, int targetFps)
+    /// <summary>Active subscriptions: key → linked CancellationTokenSource.</summary>
+    private readonly Dictionary<string, CancellationTokenSource> _activeSubs = new();
+
+    private async Task RunInternal(IModel model, ITerminal? terminal, int targetFps)
     {
         var ownTerminal = terminal is null;
         _terminal = terminal ?? new AnsiTerminal();
@@ -103,6 +107,7 @@ public sealed class Program
             var initCmd = model.Init();
             DispatchCmd(initCmd);
             _currentModel = model;
+            ReconcileSubscriptions(model);
 
             // FPS render timer
             var frameMs = Math.Max(1, 1000 / Math.Clamp(targetFps, 1, 60));
@@ -116,7 +121,15 @@ public sealed class Program
             IModel currentModel = model;
             while (true)
             {
-                var msg = _channel.Reader.ReadAsync().AsTask().GetAwaiter().GetResult();
+                IMsg msg;
+                try
+                {
+                    msg = await _channel.Reader.ReadAsync(_cts.Token);
+                }
+                catch (OperationCanceledException)
+                {
+                    break;
+                }
 
                 try
                 {
@@ -157,11 +170,14 @@ public sealed class Program
             // further frames can be written to the normal screen after
             // ExitAlternateScreen is called.
             _quitting = true;
+            _cts.Cancel();
             timer.Dispose();
         }
         finally
         {
             _quitting = true;
+            _cts.Cancel();
+            StopAllSubscriptions();
             if (_terminal is not null)
                 _terminal.SetCursorVisible(true); // Restore cursor before exiting
             if (ownTerminal)
@@ -205,6 +221,7 @@ public sealed class Program
         model = newModel;
         _currentModel = newModel;
         DispatchCmd(cmd);
+        ReconcileSubscriptions(newModel);
 
         // Mark dirty whenever model changed or an explicit redraw is requested.
         if (!ReferenceEquals(newModel, prevModel) || msg is RedrawMsg)
@@ -250,28 +267,72 @@ public sealed class Program
         // Direct OnKeyEvent invocation is available via the FocusManager API.
     }
 
-    private void DispatchCmd(ICmd? cmd)
-    {
-        if (cmd is null) return;
+    private void DispatchCmd(ICmd? cmd) =>
+        CmdDispatcher.Dispatch(cmd, _channel.Writer, _cts.Token);
 
-        Task.Run(() =>
+    private void ReconcileSubscriptions(IModel model)
+    {
+        if (model is not IHasSubscriptions hasSubs) return;
+
+        var desired = hasSubs.Subscriptions();
+        var desiredKeys = new HashSet<string>(desired.Select(s => s.Key));
+
+        // Stop removed subscriptions
+        foreach (var key in _activeSubs.Keys.ToList())
         {
-            try
+            if (!desiredKeys.Contains(key))
             {
-                var result = cmd();
-                _channel.Writer.TryWrite(result);
+                _activeSubs[key].Cancel();
+                _activeSubs[key].Dispose();
+                _activeSubs.Remove(key);
             }
-            catch (Exception)
+        }
+
+        // Start new subscriptions
+        foreach (var (key, sub) in desired)
+        {
+            if (_activeSubs.ContainsKey(key)) continue;
+
+            var subCts = CancellationTokenSource.CreateLinkedTokenSource(_cts.Token);
+            _activeSubs[key] = subCts;
+
+            _ = Task.Run(async () =>
             {
-                // Cmd exceptions are swallowed; could log here in future
-            }
-        });
+                try
+                {
+                    await foreach (var msg in sub(subCts.Token).WithCancellation(subCts.Token))
+                    {
+                        _channel.Writer.TryWrite(msg);
+                    }
+                }
+                catch (OperationCanceledException) { /* clean shutdown */ }
+                catch (Exception ex)
+                {
+                    _channel.Writer.TryWrite(new CmdErrorMsg(ex, $"sub:{key}"));
+                }
+            }, subCts.Token);
+        }
+    }
+
+    private void StopAllSubscriptions()
+    {
+        foreach (var cts in _activeSubs.Values)
+        {
+            cts.Cancel();
+            cts.Dispose();
+        }
+        _activeSubs.Clear();
     }
 
     // ── Color profile detection ───────────────────────────────────────
 
     private static ColorProfile DetectColorProfile()
     {
+        // Windows Terminal sets WT_SESSION; treat as TrueColor.
+        if (OperatingSystem.IsWindows() &&
+            Environment.GetEnvironmentVariable("WT_SESSION") is { Length: > 0 })
+            return ColorProfile.TrueColor;
+
         var colorterm = Environment.GetEnvironmentVariable("COLORTERM") ?? "";
         if (colorterm.Equals("truecolor", StringComparison.OrdinalIgnoreCase) ||
             colorterm.Equals("24bit", StringComparison.OrdinalIgnoreCase))
