@@ -60,18 +60,31 @@ public sealed class Table : IWidget
     /// <summary>Zero-based index of the selected row. -1 means no selection.</summary>
     public int SelectedIndex { get; init; } = -1;
 
-    /// <summary>Character used to separate columns. Default '│'.</summary>
-    public char Separator { get; init; } = '│';
+    /// <summary>
+    /// Character used to separate columns. Defaults to <c>'\0'</c> (no separator).
+    /// When non-zero the separator is always rendered with the base row style so it
+    /// never inherits the selection highlight.
+    /// </summary>
+    public char Separator { get; init; } = '\0';
+
+    /// <summary>
+    /// Blank columns inserted to the left of each cell's text.
+    /// Provides breathing room between the column edge and the content.
+    /// Defaults to <c>1</c>, matching the Bubbles table convention.
+    /// </summary>
+    public int PaddingLeft { get; init; } = 1;
+
+    /// <summary>
+    /// Blank columns reserved to the right of each cell's text.
+    /// Defaults to <c>1</c>, matching the Bubbles table convention.
+    /// </summary>
+    public int PaddingRight { get; init; } = 1;
 
     // ── Cached render helpers (allocated once per Table instance) ────────────
 
     // Single-char string for the column separator — avoids Separator.ToString() per cell.
     private string? _separatorStr;
     private string SeparatorStr => _separatorStr ??= Separator.ToString();
-
-    // Cached separator line string, valid for the last seen region width.
-    private string? _cachedSepLine;
-    private int     _cachedSepLineWidth = -1;
 
     /// <summary>Object-initializer constructor.</summary>
     public Table() { }
@@ -82,13 +95,17 @@ public sealed class Table : IWidget
         IReadOnlyList<IReadOnlyList<string>> rows,
         int selectedIndex = -1,
         Style? headerStyle = null,
-        Style? rowStyle = null)
+        Style? rowStyle = null,
+        int paddingLeft = 1,
+        int paddingRight = 1)
     {
         Columns = columns;
         Rows = rows;
         SelectedIndex = selectedIndex;
         if (headerStyle is not null) HeaderStyle = headerStyle.Value;
         if (rowStyle is not null) RowStyle = rowStyle.Value;
+        PaddingLeft  = paddingLeft;
+        PaddingRight = paddingRight;
     }
 
     // ── Render ───────────────────────────────────────────────────────────────
@@ -128,23 +145,11 @@ public sealed class Table : IWidget
                 renderRow++;
             }
 
-            // Separator line — cached per region width
-            if (renderRow < maxRow)
-            {
-                if (_cachedSepLine is null || _cachedSepLineWidth != region.Width)
-                {
-                    _cachedSepLine      = BuildSeparatorLine(colWidths, region.Width);
-                    _cachedSepLineWidth = region.Width;
-                }
-                ctx.Write(region.Col, renderRow, _cachedSepLine, effectiveHeader);
-                renderRow++;
-            }
-
             // Data rows — iterate columns by index, no per-row ToList()
             for (var i = 0; i < Rows.Count && renderRow < maxRow; i++, renderRow++)
             {
                 var style = i == SelectedIndex ? effectiveSelected : effectiveRow;
-                RenderDataRow(ctx, region.Col, renderRow, colWidths, Rows[i], style);
+                RenderDataRow(ctx, region.Col, renderRow, colWidths, Rows[i], style, effectiveRow);
             }
         }
         finally
@@ -158,7 +163,8 @@ public sealed class Table : IWidget
 
     private void ResolveColumnWidths(int totalWidth, Span<int> colWidths)
     {
-        var separatorCount = Columns.Count - 1;
+        // Only reserve space for separator characters when one is actually configured.
+        var separatorCount = Separator != '\0' ? Columns.Count - 1 : 0;
         var availableWidth = totalWidth - separatorCount;
 
         int fixedTotal = 0;
@@ -185,11 +191,14 @@ public sealed class Table : IWidget
     private void RenderHeaderRow(IRenderContext ctx, int startCol, int row,
         Span<int> colWidths, Style style)
     {
-        var col = startCol;
+        var col    = startCol;
+        var padL   = Math.Max(0, PaddingLeft);
+        var padR   = Math.Max(0, PaddingRight);
         for (var i = 0; i < colWidths.Length; i++)
         {
-            if (i > 0)
+            if (i > 0 && Separator != '\0')
             {
+                // Separator always uses the base header style — never inherits selection.
                 ctx.Write(col, row, SeparatorStr, style);
                 col++;
             }
@@ -197,52 +206,51 @@ public sealed class Table : IWidget
             var w = colWidths[i];
             if (w <= 0) continue;
 
-            var text = Columns[i].Header;
-            if (text.Length > w) text = text[..w];
-            else if (text.Length < w) text = text.PadRight(w);
+            var textW = Math.Max(0, w - padL - padR);
+            var text  = Columns[i].Header;
+            if (text.Length > textW) text = text[..textW];
+            else if (text.Length < textW) text = text.PadRight(textW);
 
-            ctx.Write(col, row, text, style);
+            // Write: left-pad · text · right-pad — fills exactly w columns.
+            ctx.Write(col,          row, new string(' ', padL), style);
+            ctx.Write(col + padL,   row, text,                  style);
+            ctx.Write(col + padL + textW, row, new string(' ', padR), style);
             col += w;
         }
     }
 
     private void RenderDataRow(IRenderContext ctx, int startCol, int row,
-        Span<int> colWidths, IReadOnlyList<string> cells, Style style)
+        Span<int> colWidths, IReadOnlyList<string> cells, Style rowStyle, Style baseRowStyle)
     {
-        var col = startCol;
+        var col  = startCol;
+        var padL = Math.Max(0, PaddingLeft);
+        var padR = Math.Max(0, PaddingRight);
         for (var i = 0; i < colWidths.Length; i++)
         {
-            if (i > 0)
+            if (i > 0 && Separator != '\0')
             {
-                ctx.Write(col, row, SeparatorStr, style);
+                // Separator is always rendered with the neutral base row style so it
+                // never gets reverse-highlighted when the row is selected.
+                ctx.Write(col, row, SeparatorStr, baseRowStyle);
                 col++;
             }
 
             var w = colWidths[i];
             if (w <= 0) continue;
 
-            var text = i < cells.Count ? cells[i] : "";
-            if (text.Length > w) text = text[..w];
-            else if (text.Length < w) text = text.PadRight(w);
+            var textW = Math.Max(0, w - padL - padR);
+            var text  = i < cells.Count ? cells[i] : "";
+            if (text.Length > textW) text = text[..textW];
+            else if (text.Length < textW) text = text.PadRight(textW);
 
-            // Per-column style override
-            var cellStyle = (Columns[i].Style?.Inherit(style)) ?? style;
-            ctx.Write(col, row, text, cellStyle);
+            // Per-column style override (applied on top of rowStyle).
+            var cellStyle = (Columns[i].Style?.Inherit(rowStyle)) ?? rowStyle;
+
+            ctx.Write(col,          row, new string(' ', padL), rowStyle);
+            ctx.Write(col + padL,   row, text,                  cellStyle);
+            ctx.Write(col + padL + textW, row, new string(' ', padR), rowStyle);
             col += w;
         }
-    }
-
-    private string BuildSeparatorLine(Span<int> colWidths, int totalWidth)
-    {
-        var sb = new System.Text.StringBuilder(totalWidth);
-        for (var i = 0; i < colWidths.Length; i++)
-        {
-            if (i > 0) sb.Append('┼');
-            sb.Append('─', Math.Max(0, colWidths[i]));
-        }
-        // Pad or trim to exact width
-        if (sb.Length > totalWidth) return sb.ToString()[..totalWidth];
-        return sb.ToString().PadRight(totalWidth);
     }
 }
 

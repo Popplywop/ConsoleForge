@@ -48,7 +48,7 @@ record GalleryModel(
     int TickCount) : IModel
 {
     private static readonly string[] PageNames =
-        Enum.GetValues<Page>().Select(p => $"  {p}").ToArray();
+        Enum.GetValues<Page>().Select(p => p.ToString()).ToArray();
 
     public static GalleryModel Initial() => new(
         ActivePage:    Page.TextBlock,
@@ -195,13 +195,10 @@ record GalleryModel(
     {
         // NavList carries HasFocus so it renders with focus style when active.
         // The BorderBox fills full height — no external hint row needed.
-        var hintText = new TextBlock(FocusIndex == 0 ? " ↑↓ Enter·Tab" : " Tab to focus",
-            style: Style.Default.Foreground(Color.FromHex("#444444")));
 
         var navBorder = new BorderBox("Widgets",
             body: new Container(Axis.Vertical, [
                 new Container(Axis.Vertical, children: [NavList]),
-                new Container(Axis.Vertical, height: SizeConstraint.Fixed(1), children: [hintText]),
             ]),
             style: Style.Default
                 .Border(Borders.Rounded)
@@ -693,13 +690,13 @@ record GalleryModel(
             headerStyle: Style.Default.Bold().Foreground(Color.FromHex("#00D7FF")),
             rowStyle:    Style.Default.Foreground(Color.BrightWhite));
 
-        var tableWithSep = Section("Default separator (│)",
+        var tableWithSep = Section("Default style (no separators, cell padding)",
             new Container(Axis.Vertical,
-                height: SizeConstraint.Fixed(TableRows.Count + 3),
+                height: SizeConstraint.Fixed(TableRows.Count + 2),
                 children: [table]));
 
         // Custom separator
-        var tableNoSep = new Table(
+        var tableSep = new Table(
             columns: [
                 new TableColumn("Language", Width: 14),
                 new TableColumn("Paradigm", Width: 14),
@@ -714,13 +711,13 @@ record GalleryModel(
             selectedIndex: -1,
             headerStyle: Style.Default.Bold().Foreground(Color.Yellow))
         {
-            Separator = ' '
+            Separator = '│'
         };
 
-        var tableCustomSep = Section("Space separator (no lines)",
+        var tableCustomSep = Section("Explicit │ separator (opt-in)",
             new Container(Axis.Vertical,
-                height: SizeConstraint.Fixed(4 + 3),
-                children: [tableNoSep]));
+                height: SizeConstraint.Fixed(4 + 2),
+                children: [tableSep]));
 
         return new BorderBox("Table",
             body: new Container(Axis.Vertical, [
