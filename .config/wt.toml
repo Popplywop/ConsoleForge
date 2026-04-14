@@ -1,0 +1,8 @@
+# Project Configuration — ConsoleForge
+# https://worktrunk.dev/config/#project-configuration
+
+pre-start = "dotnet restore"
+
+[pre-merge]
+build = "dotnet build --no-restore"
+test  = "dotnet test --no-build"
