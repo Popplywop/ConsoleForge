@@ -198,32 +198,24 @@ record GalleryModel(
     private IWidget BuildSidebar()
     {
         // NavList carries HasFocus so it renders with focus style when active.
-        // The BorderBox provides the header title and a consistent border.
+        // The BorderBox fills full height — no external hint row needed.
+        var hintText = new TextBlock(FocusIndex == 0 ? " ↑↓ Enter·Tab" : " Tab to focus",
+            style: Style.Default.Foreground(Color.FromHex("#444444")));
+
         var navBorder = new BorderBox("Widgets",
-            body: new Container(Axis.Vertical,
-                style: Style.Default.Background(Color.FromHex("#1C1C1C")),
-                children: [NavList]),
+            body: new Container(Axis.Vertical, [
+                new Container(Axis.Vertical, children: [NavList]),
+                new Container(Axis.Vertical, height: SizeConstraint.Fixed(1), children: [hintText]),
+            ]),
             style: Style.Default
-                .Background(Color.FromHex("#1C1C1C"))
                 .Border(Borders.Rounded)
                 .BorderForeground(FocusIndex == 0
                     ? Color.FromHex("#00D7FF")
                     : Color.FromHex("#444444")));
 
-        var hint = new Container(Axis.Vertical,
-            height: SizeConstraint.Fixed(1),
-            style: Style.Default.Background(Color.FromHex("#1C1C1C")),
-            children: [
-                new TextBlock(FocusIndex == 0 ? " ↑↓ Enter·Tab" : " Tab to focus",
-                    style: Style.Default
-                        .Background(Color.FromHex("#1C1C1C"))
-                        .Foreground(Color.FromHex("#444444")))
-            ]);
-
         return new Container(Axis.Vertical,
             width: SizeConstraint.Fixed(22),
-            style: Style.Default.Background(Color.FromHex("#1C1C1C")),
-            children: [navBorder, hint]);
+            children: [navBorder]);
     }
 
     // ── Status bar ────────────────────────────────────────────────────────────
@@ -815,7 +807,7 @@ static class EntryPoint
     {
         var theme = new Theme(
             name: "Gallery",
-            baseStyle: Style.Default.Foreground(Color.BrightWhite),
+            baseStyle: Style.Default.Foreground(Color.BrightWhite).Background(Color.FromHex("#1C1C1C")),
             borderStyle: Style.Default.BorderForeground(Color.FromHex("#00D7FF")).Border(Borders.Rounded),
             focusedStyle: Style.Default.BorderForeground(Color.Yellow)
         );
