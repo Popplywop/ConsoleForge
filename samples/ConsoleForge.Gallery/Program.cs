@@ -185,12 +185,8 @@ record GalleryModel(
         var content    = BuildPageContent();
         var statusBar  = BuildStatusBar();
 
-        var body = new Container(Axis.Horizontal,
-            style: Style.Default.Background(Color.FromHex("#1C1C1C")),
-            children: [sidebar, content]);
-        return new Container(Axis.Vertical,
-            style: Style.Default.Background(Color.FromHex("#1C1C1C")),
-            children: [body, statusBar]);
+        var body = new Container(Axis.Horizontal, [sidebar, content]);
+        return new Container(Axis.Vertical, [body, statusBar]);
     }
 
     // ── Sidebar ───────────────────────────────────────────────────────────────
@@ -235,12 +231,9 @@ record GalleryModel(
 
         return new Container(Axis.Horizontal,
             height: SizeConstraint.Fixed(1),
-            style: Style.Default.Background(Color.FromHex("#1C1C1C")),
             children: [
                 new TextBlock(hint,
-                    style: Style.Default
-                        .Background(Color.FromHex("#1C1C1C"))
-                        .Foreground(Color.FromHex("#626262")))
+                    style: Style.Default.Foreground(Color.FromHex("#626262")))
             ]);
     }
 
@@ -807,7 +800,7 @@ static class EntryPoint
     {
         var theme = new Theme(
             name: "Gallery",
-            baseStyle: Style.Default.Foreground(Color.BrightWhite).Background(Color.FromHex("#1C1C1C")),
+            baseStyle: Style.Default.Foreground(Color.BrightWhite),
             borderStyle: Style.Default.BorderForeground(Color.FromHex("#00D7FF")).Border(Borders.Rounded),
             focusedStyle: Style.Default.BorderForeground(Color.Yellow)
         );
