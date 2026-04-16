@@ -94,7 +94,7 @@ public sealed record KeyInputEvent(KeyMsg Key) : InputEvent;
 /// <summary>Input event raised when the terminal is resized.</summary>
 public sealed record ResizeInputEvent(int Width, int Height) : InputEvent;
 /// <summary>Input event raised by a mouse action.</summary>
-public sealed record MouseInputEvent(ConsoleForge.Core.MouseMsg Mouse) : InputEvent;
+public sealed record MouseInputEvent(MouseMsg Mouse) : InputEvent;
 
 /// <summary>
 /// Mouse tracking mode passed to <see cref="ITerminal.EnableMouse"/>.

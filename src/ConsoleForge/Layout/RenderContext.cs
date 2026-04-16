@@ -192,7 +192,7 @@ public sealed class RenderContext : IRenderContext
 
     /// <summary>
     /// Record that <paramref name="widget"/> was rendered at <paramref name="region"/> this frame.
-    /// Called by <see cref="ConsoleForge.Widgets.Container"/> after rendering each child.
+    /// Called by <see cref="Widgets.Container"/> after rendering each child.
     /// </summary>
     public void RegisterWidget(IWidget widget, Region region)
     {

@@ -72,7 +72,7 @@ public class IComponentTests
             _          => (this, null),
         };
 
-        public IWidget View() => new ConsoleForge.Widgets.List(Items, SelectedIndex);
+        public IWidget View() => new List(Items, SelectedIndex);
     }
 
     // ── IComponent: basic contract ────────────────────────────────────────────

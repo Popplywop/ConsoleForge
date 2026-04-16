@@ -161,7 +161,7 @@ public class NewWidgetRenderBenchmarks
         var listItems = Enumerable.Range(0, 1000)
             .Select(i => $"Item {i:D4}")
             .ToArray();
-        _list1000 = new ConsoleForge.Widgets.List(
+        _list1000 = new List(
             listItems, selectedIndex: 500, scrollOffset: 490);
 
         var cols = new TableColumn[] { new("Name", Width: 20), new("Value", Width: 0) };

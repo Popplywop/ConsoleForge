@@ -2,7 +2,7 @@ namespace ConsoleForge.Layout;
 
 /// <summary>
 /// Implemented by widgets that wrap a single body child (e.g. <c>BorderBox</c>, <c>Modal</c>).
-/// Used by <see cref="ConsoleForge.Core.FocusManager"/> and <see cref="LayoutEngine"/> to
+/// Used by <see cref="Core.FocusManager"/> and <see cref="LayoutEngine"/> to
 /// traverse into the body for focus collection and region allocation.
 /// </summary>
 public interface ISingleBodyWidget : IWidget

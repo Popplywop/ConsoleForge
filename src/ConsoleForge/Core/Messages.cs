@@ -41,11 +41,11 @@ public sealed record ListItemSelectedMsg(int Index, object Item) : IMsg;
 
 /// <summary>
 /// Dispatched to change the active theme at runtime.
-/// <see cref="ConsoleForge.Core.Program"/> intercepts this message and calls
-/// <see cref="ConsoleForge.Core.Program.SetTheme"/> before forwarding to the model.
+/// <see cref="Program"/> intercepts this message and calls
+/// <see cref="Program.SetTheme"/> before forwarding to the model.
 /// The model should update any theme-tracking state in its own Update handler.
 /// </summary>
-public sealed record ThemeChangedMsg(ConsoleForge.Styling.Theme NewTheme) : IMsg;
+public sealed record ThemeChangedMsg(Styling.Theme NewTheme) : IMsg;
 
 /// <summary>
 /// Dispatched when a command throws an unhandled exception.

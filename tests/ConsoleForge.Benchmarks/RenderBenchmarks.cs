@@ -189,7 +189,7 @@ internal sealed class NullTerminal : ITerminal
     public void ExitAlternateScreen()                 { }
     public void EnterRawMode()                        { }
     public void ExitRawMode()                         { }
-    public void EnableMouse(ConsoleForge.Terminal.MouseMode mode = ConsoleForge.Terminal.MouseMode.ButtonEvents) { }
+    public void EnableMouse(MouseMode mode = ConsoleForge.Terminal.MouseMode.ButtonEvents) { }
     public void DisableMouse()                        { }
     public void Dispose()                             { }
     public IObservable<InputEvent> Input              => System.Reactive.Linq.Observable.Empty<InputEvent>();

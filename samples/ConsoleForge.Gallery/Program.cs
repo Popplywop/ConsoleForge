@@ -30,7 +30,7 @@ enum Page
 
 record GalleryModel(
     Page ActivePage,
-    ConsoleForge.Widgets.List NavList,
+    List NavList,
     int FocusIndex,
     // TextInput page (uses raw widget state — not converted to component
     // because it routes every keypress directly to the widget's OnKeyEvent)
@@ -81,7 +81,7 @@ record GalleryModel(
 
     public static GalleryModel Initial() => new(
         ActivePage:   Page.TextBlock,
-        NavList:      new ConsoleForge.Widgets.List(PageNames, selectedIndex: 0) { HasFocus = true },
+        NavList:      new List(PageNames, selectedIndex: 0) { HasFocus = true },
         FocusIndex:   0,
         Input1:       new TextInput(value: "", placeholder: "Type something…"),
         Input2:       new TextInput(value: "pre-filled text", placeholder: ""),
@@ -207,7 +207,7 @@ record GalleryModel(
             case ToggleFocusMsg:
             {
                 var newFocus = FocusIndex == 0 ? 1 : 0;
-                var newNav = new ConsoleForge.Widgets.List(
+                var newNav = new List(
                     NavList.Items, NavList.SelectedIndex) { HasFocus = newFocus == 0 };
                 return (this with { FocusIndex = newFocus, NavList = newNav }, null);
             }
@@ -217,7 +217,7 @@ record GalleryModel(
             {
                 var newIdx = Math.Max(0, NavList.SelectedIndex - 1);
                 return (this with {
-                    NavList = new ConsoleForge.Widgets.List(NavList.Items, newIdx) { HasFocus = true },
+                    NavList = new List(NavList.Items, newIdx) { HasFocus = true },
                     ActivePage = (Page)newIdx, FocusIndex = 0
                 }, null);
             }
@@ -225,13 +225,13 @@ record GalleryModel(
             {
                 var newIdx = Math.Min(PageNames.Length - 1, NavList.SelectedIndex + 1);
                 return (this with {
-                    NavList = new ConsoleForge.Widgets.List(NavList.Items, newIdx) { HasFocus = true },
+                    NavList = new List(NavList.Items, newIdx) { HasFocus = true },
                     ActivePage = (Page)newIdx, FocusIndex = 0
                 }, null);
             }
             case NavSelectMsg when FocusIndex == 0:
             {
-                var newNav = new ConsoleForge.Widgets.List(
+                var newNav = new List(
                     NavList.Items, NavList.SelectedIndex) { HasFocus = false };
                 return (this with { NavList = newNav, FocusIndex = 1 }, null);
             }
@@ -289,7 +289,7 @@ record GalleryModel(
             {
                 var page = (Page)newIdx;
                 return (this with {
-                    NavList = new ConsoleForge.Widgets.List(
+                    NavList = new List(
                         NavList.Items, newIdx) { HasFocus = NavList.HasFocus },
                     ActivePage = page
                 }, null);
@@ -299,7 +299,7 @@ record GalleryModel(
             case FocusIndexChangedMsg { Index: var idx }:
             {
                 var newFocus = idx == 0 ? 0 : 1;
-                var newNav = new ConsoleForge.Widgets.List(
+                var newNav = new List(
                     NavList.Items, NavList.SelectedIndex) { HasFocus = newFocus == 0 };
                 return (this with { FocusIndex = newFocus, NavList = newNav }, null);
             }
@@ -599,7 +599,7 @@ record GalleryModel(
         var heading = new TextBlock("List Widget",
             style: Heading);
 
-        var basicList = new ConsoleForge.Widgets.List(
+        var basicList = new List(
             items: ListItems,
             selectedIndex: ListPage.SelectedIndex,
             selectedItemStyle: Style.Default.Reverse(true));
@@ -611,7 +611,7 @@ record GalleryModel(
         var picked = new TextBlock(pickedText,
             style: T.Warning());
 
-        var customList = new ConsoleForge.Widgets.List(
+        var customList = new List(
             items: ["  ◆ Option Alpha", "  ◆ Option Beta", "  ◆ Option Gamma"],
             selectedIndex: 1,
             selectedItemStyle: Style.Default.Foreground(Color.FromHex("#00FF87")).Bold());
@@ -920,7 +920,7 @@ record GalleryModel(
             var newIdx  = Math.Clamp(NavList.SelectedIndex + dir, 0, PageNames.Length - 1);
             var newPage = (Page)newIdx;
             return (this with {
-                NavList    = new ConsoleForge.Widgets.List(NavList.Items, newIdx) { HasFocus = true },
+                NavList    = new List(NavList.Items, newIdx) { HasFocus = true },
                 ActivePage = newPage,
             }, null);
         }
@@ -1059,7 +1059,7 @@ record GalleryModel(
         var desc = new TextBlock(
             "Multiline editor \u2014 type, \u2191\u2193\u2190\u2192, Enter, Backspace, Delete, Home/End.",
             style: Muted);
-        var ta = new ConsoleForge.Widgets.TextArea(
+        var ta = new TextArea(
             lines: TextAreaPage.ActualLines,
             cursorRow: TextAreaPage.CursorRow,
             cursorCol: TextAreaPage.CursorCol,
@@ -1125,7 +1125,7 @@ record GalleryModel(
                 style: Muted),
         ]);
 
-        var modal = new ConsoleForge.Widgets.Modal(
+        var modal = new Modal(
             title: " Confirm Action ",
             body: modalBody,
             dialogWidth: 48,

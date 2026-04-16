@@ -46,7 +46,7 @@ sealed record ListPageComponent(
             : $"Last selected: \"{LastPicked}\"";
         return new Container(Axis.Vertical, [
             new Container(Axis.Vertical, height: SizeConstraint.Fixed(Items.Length + 1), children: [
-                new ConsoleForge.Widgets.List(Items, SelectedIndex,
+                new List(Items, SelectedIndex,
                     scrollOffset: ScrollOffset) { HasFocus = true }
             ]),
             new Container(Axis.Vertical, height: SizeConstraint.Fixed(1), children: [

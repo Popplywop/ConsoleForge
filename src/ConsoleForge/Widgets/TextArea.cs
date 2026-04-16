@@ -220,7 +220,7 @@ public sealed class TextArea : IFocusable
     /// Compute a new <see cref="ScrollRow"/> that keeps <paramref name="cursorRow"/>
     /// within the visible viewport.
     /// Call this from your model's Update handler when handling
-    /// <see cref="TextAreaChangedMsg"/> and <see cref="ConsoleForge.Core.WindowResizeMsg"/>.
+    /// <see cref="TextAreaChangedMsg"/> and <see cref="WindowResizeMsg"/>.
     /// </summary>
     /// <param name="cursorRow">The cursor row after the edit.</param>
     /// <param name="viewportHeight">Number of visible rows in the TextArea's region.</param>

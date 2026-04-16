@@ -83,13 +83,13 @@ public static class FocusManager
     /// in depth-first order wins (topmost layer).
     /// </summary>
     public static IFocusable? FindFocusableAt(
-        IWidget root, ConsoleForge.Layout.ResolvedLayout layout, int col, int row)
+        IWidget root, ResolvedLayout layout, int col, int row)
     {
         var all = CollectFocusable(root);
         IFocusable? best = null;
         foreach (var f in all)
         {
-            var region = layout.GetRegion((ConsoleForge.Layout.IWidget)f);
+            var region = layout.GetRegion((IWidget)f);
             if (region is null) continue;
             var r = region.Value;
             if (col >= r.Col && col < r.Col + r.Width &&
