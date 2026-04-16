@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['onkeyevent_0',['onkeyevent',['../interfaceConsoleForge_1_1Layout_1_1IFocusable.html#a6fd21ecae11f928020fc9aad3f00a203',1,'ConsoleForge.Layout.IFocusable.OnKeyEvent()'],['../classConsoleForge_1_1Widgets_1_1List.html#abb413858f92a65beba797f81ce052afd',1,'ConsoleForge.Widgets.List.OnKeyEvent()'],['../classConsoleForge_1_1Widgets_1_1TextInput.html#affe77f53bd9c1e737db8288840376fd7',1,'ConsoleForge.Widgets.TextInput.OnKeyEvent()']]]
+  ['keypattern_0',['KeyPattern',['../namespaceConsoleForge_1_1Core.html#a58f2e74b087ddfc28e1bc7ec3a863c49',1,'ConsoleForge::Core']]]
 ];

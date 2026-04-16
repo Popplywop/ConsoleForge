@@ -1,5 +1,6 @@
 var interfaceConsoleForge_1_1Layout_1_1IRenderContext =
 [
+    [ "TryReuseWidget", "interfaceConsoleForge_1_1Layout_1_1IRenderContext.html#a4dd35be9a18fe5230405a6f323d28b2a", null ],
     [ "Write", "interfaceConsoleForge_1_1Layout_1_1IRenderContext.html#a151bd2043038c18a67399a4b26df5643", null ],
     [ "ColorProfile", "interfaceConsoleForge_1_1Layout_1_1IRenderContext.html#ab2457ec75c3de5e7e45a522a106eaea0", null ],
     [ "Layout", "interfaceConsoleForge_1_1Layout_1_1IRenderContext.html#ab47b442c7707cbb4c2a543d215d8ba1f", null ],

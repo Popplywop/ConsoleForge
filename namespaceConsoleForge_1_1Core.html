@@ -25,7 +25,7 @@
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">ConsoleForge<span id="projectnumber">&#160;0.1.0</span>
+   <div id="projectname">ConsoleForge<span id="projectnumber">&#160;0.2.0</span>
    </div>
    <div id="projectbrief">Elm-architecture TUI framework for .NET 8</div>
   </td>
@@ -92,6 +92,7 @@ $(document).ready(function(){initNavTree('namespaceConsoleForge_1_1Core.html',''
 <div class="header">
   <div class="summary">
 <a href="#nested-classes">Classes</a> &#124;
+<a href="#enum-members">Enumerations</a> &#124;
 <a href="#func-members">Functions</a> &#124;
 <a href="#var-members">Variables</a>  </div>
   <div class="headertitle"><div class="title">ConsoleForge.Core Namespace Reference</div></div>
@@ -106,11 +107,14 @@ Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><b>CmdDispatcher</b></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Fires an ICmd on the thread pool and writes the resulting IMsg to <em>channel</em> . <br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classConsoleForge_1_1Core_1_1Component.html">Component</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Static helpers for working with IComponent and IComponent&lt;TResult&gt; in parent model <code>Update</code> methods.  <a href="classConsoleForge_1_1Core_1_1Component.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classConsoleForge_1_1Core_1_1FocusManager.html">FocusManager</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Stateless helper that traverses a widget tree depth-first and finds all IFocusable instances in declaration order.  <a href="classConsoleForge_1_1Core_1_1FocusManager.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">interface &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="interfaceConsoleForge_1_1Core_1_1IComponent.html">IComponent</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Interface for reusable sub-components that maintain their own state but do not own the program loop.  <a href="interfaceConsoleForge_1_1Core_1_1IComponent.html#details">More...</a><br /></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A self-contained sub-program: owns its own state, update logic, and view.  <a href="interfaceConsoleForge_1_1Core_1_1IComponent.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">interface &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="interfaceConsoleForge_1_1Core_1_1IHasSubscriptions.html">IHasSubscriptions</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Optional interface for models that declare long-running subscriptions.  <a href="interfaceConsoleForge_1_1Core_1_1IHasSubscriptions.html#details">More...</a><br /></td></tr>
@@ -120,6 +124,9 @@ Classes</h2></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">interface &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="interfaceConsoleForge_1_1Core_1_1IMsg.html">IMsg</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Marker interface for all messages flowing through the event loop.  <a href="interfaceConsoleForge_1_1Core_1_1IMsg.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classConsoleForge_1_1Core_1_1KeyMap.html">KeyMap</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Declarative input binding map.  <a href="classConsoleForge_1_1Core_1_1KeyMap.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classConsoleForge_1_1Core_1_1Program.html">Program</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Main event loop for a <a class="el" href="namespaceConsoleForge.html">ConsoleForge</a> application.  <a href="classConsoleForge_1_1Core_1_1Program.html#details">More...</a><br /></td></tr>
@@ -134,6 +141,27 @@ Classes</h2></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Immutable descriptor for a single rendered frame.  <a href="structConsoleForge_1_1Core_1_1ViewDescriptor.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="enum-members" name="enum-members"></a>
+Enumerations</h2></td></tr>
+<tr class="memitem:a41c27369bb8f4a11b68352b1c4ac51a9" id="r_a41c27369bb8f4a11b68352b1c4ac51a9"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceConsoleForge_1_1Core.html#a41c27369bb8f4a11b68352b1c4ac51a9">MouseButton</a> { <br />
+&#160;&#160;<a class="el" href="namespaceConsoleForge_1_1Core.html#a41c27369bb8f4a11b68352b1c4ac51a9a945d5e233cf7d6240f6b783b36a374ff">Left</a>
+, <a class="el" href="namespaceConsoleForge_1_1Core.html#a41c27369bb8f4a11b68352b1c4ac51a9ab1ca34f82e83c52b010f86955f264e05">Middle</a>
+, <a class="el" href="namespaceConsoleForge_1_1Core.html#a41c27369bb8f4a11b68352b1c4ac51a9a92b09c7c48c520c3c55e497875da437c">Right</a>
+, <a class="el" href="namespaceConsoleForge_1_1Core.html#a41c27369bb8f4a11b68352b1c4ac51a9a9426dc2b6341736ad0042b0367047e2b">ScrollUp</a>
+, <br />
+&#160;&#160;<a class="el" href="namespaceConsoleForge_1_1Core.html#a41c27369bb8f4a11b68352b1c4ac51a9a98fe5443327b84b86a98bc3472fadc79">ScrollDown</a>
+, <a class="el" href="namespaceConsoleForge_1_1Core.html#a41c27369bb8f4a11b68352b1c4ac51a9a6adf97f83acf6453d4a6a4b1070f3754">None</a>
+<br />
+ }</td></tr>
+<tr class="memdesc:a41c27369bb8f4a11b68352b1c4ac51a9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Dispatched by <code>List</code> when the user presses Enter on a selected item.  <a href="namespaceConsoleForge_1_1Core.html#a41c27369bb8f4a11b68352b1c4ac51a9">More...</a><br /></td></tr>
+<tr class="separator:a41c27369bb8f4a11b68352b1c4ac51a9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0b19fe63275c4899aaf1c92764fbb209" id="r_a0b19fe63275c4899aaf1c92764fbb209"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceConsoleForge_1_1Core.html#a0b19fe63275c4899aaf1c92764fbb209">MouseAction</a> { <a class="el" href="namespaceConsoleForge_1_1Core.html#a0b19fe63275c4899aaf1c92764fbb209a0610123bdd4ffc191a3ea05a847e1307">Press</a>
+, <a class="el" href="namespaceConsoleForge_1_1Core.html#a0b19fe63275c4899aaf1c92764fbb209ab8e7b465df7c5979dc731d06e84ce2cf">Release</a>
+, <a class="el" href="namespaceConsoleForge_1_1Core.html#a0b19fe63275c4899aaf1c92764fbb209a6bc362dbf494c61ea117fe3c71ca48a5">Move</a>
+ }</td></tr>
+<tr class="memdesc:a0b19fe63275c4899aaf1c92764fbb209"><td class="mdescLeft">&#160;</td><td class="mdescRight">The type of mouse action represented by a MouseMsg.  <a href="namespaceConsoleForge_1_1Core.html#a0b19fe63275c4899aaf1c92764fbb209">More...</a><br /></td></tr>
+<tr class="separator:a0b19fe63275c4899aaf1c92764fbb209"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
 Functions</h2></td></tr>
 <tr class="memitem:a45d6a05ca04f21a284e8ebc48a09fbb4" id="r_a45d6a05ca04f21a284e8ebc48a09fbb4"><td class="memItemLeft" align="right" valign="top">delegate Task&lt; <a class="el" href="interfaceConsoleForge_1_1Core_1_1IMsg.html">IMsg</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceConsoleForge_1_1Core.html#a45d6a05ca04f21a284e8ebc48a09fbb4">ICmd</a> ()</td></tr>
@@ -142,6 +170,9 @@ Functions</h2></td></tr>
 <tr class="memitem:a3423e4fa2afce76645b3d47bd39bdd07" id="r_a3423e4fa2afce76645b3d47bd39bdd07"><td class="memItemLeft" align="right" valign="top">delegate IAsyncEnumerable&lt; <a class="el" href="interfaceConsoleForge_1_1Core_1_1IMsg.html">IMsg</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceConsoleForge_1_1Core.html#a3423e4fa2afce76645b3d47bd39bdd07">ISub</a> (CancellationToken cancellationToken)</td></tr>
 <tr class="memdesc:a3423e4fa2afce76645b3d47bd39bdd07"><td class="mdescLeft">&#160;</td><td class="mdescRight">A subscription: a long-running async function that produces messages continuously until the supplied CancellationToken is cancelled.  <br /></td></tr>
 <tr class="separator:a3423e4fa2afce76645b3d47bd39bdd07"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a58f2e74b087ddfc28e1bc7ec3a863c49" id="r_a58f2e74b087ddfc28e1bc7ec3a863c49"><td class="memItemLeft" align="right" valign="top">readonly record struct&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceConsoleForge_1_1Core.html#a58f2e74b087ddfc28e1bc7ec3a863c49">KeyPattern</a> (ConsoleKey Key, bool? Shift=null, bool? Alt=null, bool? Ctrl=null)</td></tr>
+<tr class="memdesc:a58f2e74b087ddfc28e1bc7ec3a863c49"><td class="mdescLeft">&#160;</td><td class="mdescRight">Pattern for matching keyboard events.  <br /></td></tr>
+<tr class="separator:a58f2e74b087ddfc28e1bc7ec3a863c49"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a77f925cd6359324739aa3a3d44b2f140" id="r_a77f925cd6359324739aa3a3d44b2f140"><td class="memItemLeft" align="right" valign="top">readonly record struct&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceConsoleForge_1_1Core.html#a77f925cd6359324739aa3a3d44b2f140">CursorDescriptor</a> (bool Visible=true, int Col=0, int Row=0)</td></tr>
 <tr class="memdesc:a77f925cd6359324739aa3a3d44b2f140"><td class="mdescLeft">&#160;</td><td class="mdescRight">Cursor state for a rendered frame.  <br /></td></tr>
 <tr class="separator:a77f925cd6359324739aa3a3d44b2f140"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -156,6 +187,86 @@ record&#160;</td><td class="memItemRight" valign="bottom"><b>QuitMsg</b></td></t
 <tr class="memdesc:aa6b18bed318a8407b5b9630e4b352436"><td class="mdescLeft">&#160;</td><td class="mdescRight">A keyboard input event.  <br /></td></tr>
 <tr class="separator:aa6b18bed318a8407b5b9630e4b352436"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
+<h2 class="groupheader">Enumeration Type Documentation</h2>
+<a id="a0b19fe63275c4899aaf1c92764fbb209" name="a0b19fe63275c4899aaf1c92764fbb209"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0b19fe63275c4899aaf1c92764fbb209">&#9670;&#160;</a></span>MouseAction</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">enum <a class="el" href="namespaceConsoleForge_1_1Core.html#a0b19fe63275c4899aaf1c92764fbb209">ConsoleForge.Core.MouseAction</a></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>The type of mouse action represented by a MouseMsg. </p>
+<table class="fieldtable">
+<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a0b19fe63275c4899aaf1c92764fbb209a0610123bdd4ffc191a3ea05a847e1307" name="a0b19fe63275c4899aaf1c92764fbb209a0610123bdd4ffc191a3ea05a847e1307"></a>Press&#160;</td><td class="fielddoc"><p>Button pressed down. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a0b19fe63275c4899aaf1c92764fbb209ab8e7b465df7c5979dc731d06e84ce2cf" name="a0b19fe63275c4899aaf1c92764fbb209ab8e7b465df7c5979dc731d06e84ce2cf"></a>Release&#160;</td><td class="fielddoc"><p>Button released. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a0b19fe63275c4899aaf1c92764fbb209a6bc362dbf494c61ea117fe3c71ca48a5" name="a0b19fe63275c4899aaf1c92764fbb209a6bc362dbf494c61ea117fe3c71ca48a5"></a>Move&#160;</td><td class="fielddoc"><p>Cursor moved (button may or may not be held). </p>
+</td></tr>
+</table>
+
+</div>
+</div>
+<a id="a41c27369bb8f4a11b68352b1c4ac51a9" name="a41c27369bb8f4a11b68352b1c4ac51a9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a41c27369bb8f4a11b68352b1c4ac51a9">&#9670;&#160;</a></span>MouseButton</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">enum <a class="el" href="namespaceConsoleForge_1_1Core.html#a41c27369bb8f4a11b68352b1c4ac51a9">ConsoleForge.Core.MouseButton</a></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">sealed</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Dispatched by <code>List</code> when the user presses Enter on a selected item. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">Index</td><td>Zero-based index of the selected item.</td></tr>
+    <tr><td class="paramname">Item</td><td>The item value (string for built-in <code>List</code>).</td></tr>
+  </table>
+  </dd>
+</dl>
+<p>Dispatched to change the active theme at runtime. <a class="el" href="classConsoleForge_1_1Core_1_1Program.html" title="Main event loop for a ConsoleForge application.">ConsoleForge.Core.Program</a> intercepts this message and calls <a class="el" href="classConsoleForge_1_1Core_1_1Program.html#a7de62e8e675e32a6b8e5dc66d120970d" title="Update the active theme at runtime. Forces a re-render.">ConsoleForge.Core.Program.SetTheme</a> before forwarding to the model. The model should update any theme-tracking state in its own Update handler.</p>
+<p>Dispatched when a command throws an unhandled exception. Models may handle this to display error state; unhandled it is silently dropped.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">Exception</td><td>The exception thrown by the command.</td></tr>
+    <tr><td class="paramname">Source</td><td>Optional label identifying which command failed (for logging).</td></tr>
+  </table>
+  </dd>
+</dl>
+<p>Which mouse button was involved in an event. </p>
+<table class="fieldtable">
+<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a41c27369bb8f4a11b68352b1c4ac51a9a945d5e233cf7d6240f6b783b36a374ff" name="a41c27369bb8f4a11b68352b1c4ac51a9a945d5e233cf7d6240f6b783b36a374ff"></a>Left&#160;</td><td class="fielddoc"><p>Primary (left) button. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a41c27369bb8f4a11b68352b1c4ac51a9ab1ca34f82e83c52b010f86955f264e05" name="a41c27369bb8f4a11b68352b1c4ac51a9ab1ca34f82e83c52b010f86955f264e05"></a>Middle&#160;</td><td class="fielddoc"><p>Middle button or scroll-wheel click. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a41c27369bb8f4a11b68352b1c4ac51a9a92b09c7c48c520c3c55e497875da437c" name="a41c27369bb8f4a11b68352b1c4ac51a9a92b09c7c48c520c3c55e497875da437c"></a>Right&#160;</td><td class="fielddoc"><p>Secondary (right) button. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a41c27369bb8f4a11b68352b1c4ac51a9a9426dc2b6341736ad0042b0367047e2b" name="a41c27369bb8f4a11b68352b1c4ac51a9a9426dc2b6341736ad0042b0367047e2b"></a>ScrollUp&#160;</td><td class="fielddoc"><p>Scroll wheel rotated upward (away from user). </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a41c27369bb8f4a11b68352b1c4ac51a9a98fe5443327b84b86a98bc3472fadc79" name="a41c27369bb8f4a11b68352b1c4ac51a9a98fe5443327b84b86a98bc3472fadc79"></a>ScrollDown&#160;</td><td class="fielddoc"><p>Scroll wheel rotated downward (toward user). </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a41c27369bb8f4a11b68352b1c4ac51a9a6adf97f83acf6453d4a6a4b1070f3754" name="a41c27369bb8f4a11b68352b1c4ac51a9a6adf97f83acf6453d4a6a4b1070f3754"></a>None&#160;</td><td class="fielddoc"><p>No button — motion-only event. </p>
+</td></tr>
+</table>
+
+</div>
+</div>
 <h2 class="groupheader">Function Documentation</h2>
 <a id="a77f925cd6359324739aa3a3d44b2f140" name="a77f925cd6359324739aa3a3d44b2f140"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a77f925cd6359324739aa3a3d44b2f140">&#9670;&#160;</a></span>CursorDescriptor()</h2>
@@ -239,6 +350,59 @@ record&#160;</td><td class="memItemRight" valign="bottom"><b>QuitMsg</b></td></t
 
 <p>A subscription: a long-running async function that produces messages continuously until the supplied CancellationToken is cancelled. </p>
 <p>Return <code>null</code> from the callback to suppress dispatching a message (e.g. after an interval fires with no meaningful data). The framework will not write null messages to the channel. </p>
+
+</div>
+</div>
+<a id="a58f2e74b087ddfc28e1bc7ec3a863c49" name="a58f2e74b087ddfc28e1bc7ec3a863c49"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a58f2e74b087ddfc28e1bc7ec3a863c49">&#9670;&#160;</a></span>KeyPattern()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">readonly record struct ConsoleForge.Core.KeyPattern </td>
+          <td>(</td>
+          <td class="paramtype">ConsoleKey&#160;</td>
+          <td class="paramname"><em>Key</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool?&#160;</td>
+          <td class="paramname"><em>Shift</em> = <code>null</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool?&#160;</td>
+          <td class="paramname"><em>Alt</em> = <code>null</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool?&#160;</td>
+          <td class="paramname"><em>Ctrl</em> = <code>null</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Pattern for matching keyboard events. </p>
+<p>Null modifier fields act as wildcards (match regardless of that modifier's state).</p>
+<div class="fragment"><div class="line"><a class="code hl_function" href="namespaceConsoleForge_1_1Core.html#a58f2e74b087ddfc28e1bc7ec3a863c49">KeyPattern</a>.Of(ConsoleKey.Q)              <span class="comment">// Q, any modifiers</span></div>
+<div class="line"><a class="code hl_function" href="namespaceConsoleForge_1_1Core.html#a58f2e74b087ddfc28e1bc7ec3a863c49">KeyPattern</a>.WithCtrl(ConsoleKey.S)        <span class="comment">// Ctrl+S</span></div>
+<div class="line"><span class="keyword">new</span> <a class="code hl_function" href="namespaceConsoleForge_1_1Core.html#a58f2e74b087ddfc28e1bc7ec3a863c49">KeyPattern</a>(ConsoleKey.Tab, Shift: true)  <span class="comment">// Shift+Tab</span></div>
+<div class="ttc" id="anamespaceConsoleForge_1_1Core_html_a58f2e74b087ddfc28e1bc7ec3a863c49"><div class="ttname"><a href="namespaceConsoleForge_1_1Core.html#a58f2e74b087ddfc28e1bc7ec3a863c49">ConsoleForge.Core.KeyPattern</a></div><div class="ttdeci">readonly record struct KeyPattern(ConsoleKey Key, bool? Shift=null, bool? Alt=null, bool? Ctrl=null)</div><div class="ttdoc">Pattern for matching keyboard events.</div><div class="ttdef"><b>Definition</b> KeyPattern.cs:14</div></div>
+</div><!-- fragment --> <p>Returns true if <em>msg</em>  matches this pattern.</p>
+<p>Match the key with any modifier combination.</p>
+<p>Match Ctrl + key (Shift and Alt are wildcards).</p>
+<p>Match Alt + key (Shift and Ctrl are wildcards).</p>
+<p>Match Shift + key (Alt and Ctrl are wildcards).</p>
+<p>Match the key with no modifiers pressed.</p>
 
 </div>
 </div>

@@ -25,7 +25,7 @@
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">ConsoleForge<span id="projectnumber">&#160;0.1.0</span>
+   <div id="projectname">ConsoleForge<span id="projectnumber">&#160;0.2.0</span>
    </div>
    <div id="projectbrief">Elm-architecture TUI framework for .NET 8</div>
   </td>
@@ -118,6 +118,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a151bd2043038c18a67399a4b26df5643" id="r_a151bd2043038c18a67399a4b26df5643"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="interfaceConsoleForge_1_1Layout_1_1IRenderContext.html#a151bd2043038c18a67399a4b26df5643">Write</a> (int col, int row, string text, <a class="el" href="structConsoleForge_1_1Styling_1_1Style.html">Style</a> style)</td></tr>
 <tr class="memdesc:a151bd2043038c18a67399a4b26df5643"><td class="mdescLeft">&#160;</td><td class="mdescRight">Write a styled string at an absolute terminal position.  <br /></td></tr>
 <tr class="separator:a151bd2043038c18a67399a4b26df5643"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4dd35be9a18fe5230405a6f323d28b2a" id="r_a4dd35be9a18fe5230405a6f323d28b2a"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="interfaceConsoleForge_1_1Layout_1_1IRenderContext.html#a4dd35be9a18fe5230405a6f323d28b2a">TryReuseWidget</a> (<a class="el" href="interfaceConsoleForge_1_1Layout_1_1IWidget.html">IWidget</a> widget, <a class="el" href="interfaceConsoleForge_1_1Layout_1_1IRenderContext.html#a465492afff48533de0ab2ed6f0e9f16b">Region</a> region)</td></tr>
+<tr class="memdesc:a4dd35be9a18fe5230405a6f323d28b2a"><td class="mdescLeft">&#160;</td><td class="mdescRight">If <em>widget</em>  (same reference) was rendered at the same <em>region</em>  last frame, copy its cells from the previous buffer and return true.  <br /></td></tr>
+<tr class="separator:a4dd35be9a18fe5230405a6f323d28b2a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="properties" name="properties"></a>
 Properties</h2></td></tr>
@@ -138,6 +141,39 @@ Properties</h2></td></tr>
 <div class="textblock"><p>Passed to IWidget.Render(). </p>
 <p>Provides the allocated screen region and render-time context (theme, color profile, terminal writer). </p>
 </div><h2 class="groupheader">Member Function Documentation</h2>
+<a id="a4dd35be9a18fe5230405a6f323d28b2a" name="a4dd35be9a18fe5230405a6f323d28b2a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4dd35be9a18fe5230405a6f323d28b2a">&#9670;&#160;</a></span>TryReuseWidget()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool ConsoleForge.Layout.IRenderContext.TryReuseWidget </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="interfaceConsoleForge_1_1Layout_1_1IWidget.html">IWidget</a>&#160;</td>
+          <td class="paramname"><em>widget</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="interfaceConsoleForge_1_1Layout_1_1IRenderContext.html#a465492afff48533de0ab2ed6f0e9f16b">Region</a>&#160;</td>
+          <td class="paramname"><em>region</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>If <em>widget</em>  (same reference) was rendered at the same <em>region</em>  last frame, copy its cells from the previous buffer and return true. </p>
+<p>Caller should skip rendering that widget. Default implementation returns false (no caching). </p>
+
+<p>Implemented in <a class="el" href="classConsoleForge_1_1Layout_1_1RenderContext.html#a4e5782c4dbeaf1d5e32486a04c70ca03">ConsoleForge.Layout.RenderContext</a>.</p>
+
+</div>
+</div>
 <a id="a151bd2043038c18a67399a4b26df5643" name="a151bd2043038c18a67399a4b26df5643"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a151bd2043038c18a67399a4b26df5643">&#9670;&#160;</a></span>Write()</h2>
 

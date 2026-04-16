@@ -25,7 +25,7 @@
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">ConsoleForge<span id="projectnumber">&#160;0.1.0</span>
+   <div id="projectname">ConsoleForge<span id="projectnumber">&#160;0.2.0</span>
    </div>
    <div id="projectbrief">Elm-architecture TUI framework for .NET 8</div>
   </td>
@@ -92,6 +92,7 @@ $(document).ready(function(){initNavTree('namespaceConsoleForge_1_1Terminal.html
 <div class="header">
   <div class="summary">
 <a href="#nested-classes">Classes</a> &#124;
+<a href="#enum-members">Enumerations</a> &#124;
 <a href="#var-members">Variables</a>  </div>
   <div class="headertitle"><div class="title">ConsoleForge.Terminal Namespace Reference</div></div>
 </div><!--header-->
@@ -105,12 +106,14 @@ Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">interface &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="interfaceConsoleForge_1_1Terminal_1_1ITerminal.html">ITerminal</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Thin abstraction over a physical terminal.  <a href="interfaceConsoleForge_1_1Terminal_1_1ITerminal.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><b>Termios</b></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">P/Invoke shim for Unix terminal control (tcgetattr / tcsetattr / cfmakeraw). <br /></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><b>WindowsConsole</b></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Windows-only helper that P/Invokes into kernel32.dll to manage console mode: raw input mode (disable echo/line-input/processed-input) and Virtual Terminal Processing (ENABLE_VIRTUAL_TERMINAL_PROCESSING) for ANSI escape sequences. <br /></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="enum-members" name="enum-members"></a>
+Enumerations</h2></td></tr>
+<tr class="memitem:a3fe9b6b3dbab237937bec8897fcae6a2" id="r_a3fe9b6b3dbab237937bec8897fcae6a2"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceConsoleForge_1_1Terminal.html#a3fe9b6b3dbab237937bec8897fcae6a2">MouseMode</a> { <a class="el" href="namespaceConsoleForge_1_1Terminal.html#a3fe9b6b3dbab237937bec8897fcae6a2ac5b00cddd5289271d3216af06729c987">ButtonEvents</a>
+, <a class="el" href="namespaceConsoleForge_1_1Terminal.html#a3fe9b6b3dbab237937bec8897fcae6a2a2cc93f0f4123a56d8e391e89ed69200c">AllMotion</a>
+ }</td></tr>
+<tr class="memdesc:a3fe9b6b3dbab237937bec8897fcae6a2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Input event wrapping a keyboard keypress.  <a href="namespaceConsoleForge_1_1Terminal.html#a3fe9b6b3dbab237937bec8897fcae6a2">More...</a><br /></td></tr>
+<tr class="separator:a3fe9b6b3dbab237937bec8897fcae6a2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="var-members" name="var-members"></a>
 Variables</h2></td></tr>
@@ -119,6 +122,40 @@ record&#160;</td><td class="memItemRight" valign="bottom"><b>InputEvent</b></td>
 <tr class="memdesc:aa06fee791d6fdd746b59f104a2577adb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Base discriminated union for all terminal input events. <br /></td></tr>
 <tr class="separator:aa06fee791d6fdd746b59f104a2577adb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
+<h2 class="groupheader">Enumeration Type Documentation</h2>
+<a id="a3fe9b6b3dbab237937bec8897fcae6a2" name="a3fe9b6b3dbab237937bec8897fcae6a2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3fe9b6b3dbab237937bec8897fcae6a2">&#9670;&#160;</a></span>MouseMode</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">enum <a class="el" href="namespaceConsoleForge_1_1Terminal.html#a3fe9b6b3dbab237937bec8897fcae6a2">ConsoleForge.Terminal.MouseMode</a></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">sealed</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Input event wrapping a keyboard keypress. </p>
+<p>Input event raised when the terminal is resized.</p>
+<p>Input event raised by a mouse action.</p>
+<p>Mouse tracking mode passed to ITerminal.EnableMouse. </p>
+<table class="fieldtable">
+<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a3fe9b6b3dbab237937bec8897fcae6a2ac5b00cddd5289271d3216af06729c987" name="a3fe9b6b3dbab237937bec8897fcae6a2ac5b00cddd5289271d3216af06729c987"></a>ButtonEvents&#160;</td><td class="fielddoc"><p>Report button press and release events only. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a3fe9b6b3dbab237937bec8897fcae6a2a2cc93f0f4123a56d8e391e89ed69200c" name="a3fe9b6b3dbab237937bec8897fcae6a2a2cc93f0f4123a56d8e391e89ed69200c"></a>AllMotion&#160;</td><td class="fielddoc"><p>Report button events AND all mouse movement. </p>
+</td></tr>
+</table>
+
+</div>
+</div>
 </div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->

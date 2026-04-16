@@ -25,7 +25,7 @@
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">ConsoleForge<span id="projectnumber">&#160;0.1.0</span>
+   <div id="projectname">ConsoleForge<span id="projectnumber">&#160;0.2.0</span>
    </div>
    <div id="projectbrief">Elm-architecture TUI framework for .NET 8</div>
   </td>
@@ -116,13 +116,13 @@ $(document).ready(function(){initNavTree('classConsoleForge_1_1Terminal_1_1AnsiT
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
 <tr class="memitem:a3505ef316f27204f81cb33cbe6dca4c9" id="r_a3505ef316f27204f81cb33cbe6dca4c9"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classConsoleForge_1_1Terminal_1_1AnsiTerminal.html#a3505ef316f27204f81cb33cbe6dca4c9">Write</a> (string ansiText)</td></tr>
-<tr class="memdesc:a3505ef316f27204f81cb33cbe6dca4c9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Write a pre-rendered ANSI string to the terminal output buffer.  <br /></td></tr>
+<tr class="memdesc:a3505ef316f27204f81cb33cbe6dca4c9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Write a pre-rendered ANSI string to the terminal output buffer.Does not flush to the physical terminal until <a class="el" href="interfaceConsoleForge_1_1Terminal_1_1ITerminal.html#a445e49909114bb9a17a7c7bded12f136" title="Flush the buffered output to the physical terminal.">Flush()</a> is called.  <br /></td></tr>
 <tr class="separator:a3505ef316f27204f81cb33cbe6dca4c9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af2d3504fe4eb4ccefe906f935063b76f" id="r_af2d3504fe4eb4ccefe906f935063b76f"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classConsoleForge_1_1Terminal_1_1AnsiTerminal.html#af2d3504fe4eb4ccefe906f935063b76f">Clear</a> ()</td></tr>
 <tr class="memdesc:af2d3504fe4eb4ccefe906f935063b76f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Clear the internal output buffer (not the physical terminal).  <br /></td></tr>
 <tr class="separator:af2d3504fe4eb4ccefe906f935063b76f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aaca47525e5b96e70edec5e644408ac81" id="r_aaca47525e5b96e70edec5e644408ac81"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classConsoleForge_1_1Terminal_1_1AnsiTerminal.html#aaca47525e5b96e70edec5e644408ac81">Flush</a> ()</td></tr>
-<tr class="memdesc:aaca47525e5b96e70edec5e644408ac81"><td class="mdescLeft">&#160;</td><td class="mdescRight">Flush the buffered output to the physical terminal.  <br /></td></tr>
+<tr class="memdesc:aaca47525e5b96e70edec5e644408ac81"><td class="mdescLeft">&#160;</td><td class="mdescRight">Flush the buffered output to the physical terminal.Called by the renderer at most once per frame (≤60 fps).  <br /></td></tr>
 <tr class="separator:aaca47525e5b96e70edec5e644408ac81"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a92758c749112aab209ea4fdcda96d979" id="r_a92758c749112aab209ea4fdcda96d979"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classConsoleForge_1_1Terminal_1_1AnsiTerminal.html#a92758c749112aab209ea4fdcda96d979">SetCursorVisible</a> (bool visible)</td></tr>
 <tr class="memdesc:a92758c749112aab209ea4fdcda96d979"><td class="mdescLeft">&#160;</td><td class="mdescRight">Shows or hides the hardware cursor by writing directly to the terminal (bypasses the render buffer).  <br /></td></tr>
@@ -140,11 +140,17 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:a0cf7bdc3905c5f9eb057f24afeba29a3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Exit alternate screen buffer and restore previous content.  <br /></td></tr>
 <tr class="separator:a0cf7bdc3905c5f9eb057f24afeba29a3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae0f560e6106886eef309675605b91ca6" id="r_ae0f560e6106886eef309675605b91ca6"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classConsoleForge_1_1Terminal_1_1AnsiTerminal.html#ae0f560e6106886eef309675605b91ca6">EnterRawMode</a> ()</td></tr>
-<tr class="memdesc:ae0f560e6106886eef309675605b91ca6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Enter raw / no-echo mode.  <br /></td></tr>
+<tr class="memdesc:ae0f560e6106886eef309675605b91ca6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Enter raw / no-echo mode.Keyboard events are delivered via Input without waiting for newline. Ctrl+C is delivered as KeyMsg, not SIGINT.  <br /></td></tr>
 <tr class="separator:ae0f560e6106886eef309675605b91ca6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4b7ab90fd4fcb7970e26ad9fda9e1696" id="r_a4b7ab90fd4fcb7970e26ad9fda9e1696"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classConsoleForge_1_1Terminal_1_1AnsiTerminal.html#a4b7ab90fd4fcb7970e26ad9fda9e1696">ExitRawMode</a> ()</td></tr>
 <tr class="memdesc:a4b7ab90fd4fcb7970e26ad9fda9e1696"><td class="mdescLeft">&#160;</td><td class="mdescRight">Restore cooked (normal) input mode.  <br /></td></tr>
 <tr class="separator:a4b7ab90fd4fcb7970e26ad9fda9e1696"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aaf5d69c03f2b07e6fb483fb717521068" id="r_aaf5d69c03f2b07e6fb483fb717521068"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classConsoleForge_1_1Terminal_1_1AnsiTerminal.html#aaf5d69c03f2b07e6fb483fb717521068">EnableMouse</a> (<a class="el" href="namespaceConsoleForge_1_1Terminal.html#a3fe9b6b3dbab237937bec8897fcae6a2">MouseMode</a> mode=<a class="el" href="namespaceConsoleForge_1_1Terminal.html#a3fe9b6b3dbab237937bec8897fcae6a2ac5b00cddd5289271d3216af06729c987">MouseMode.ButtonEvents</a>)</td></tr>
+<tr class="memdesc:aaf5d69c03f2b07e6fb483fb717521068"><td class="mdescLeft">&#160;</td><td class="mdescRight">Enable terminal mouse tracking.Events arrive via <a class="el" href="interfaceConsoleForge_1_1Terminal_1_1ITerminal.html#ac57aeda8e36a0f675d455c64c7e8ea48" title="Observable stream of input events (keypresses, resize events).">Input</a> as MouseInputEvent. No-op if already enabled or not supported.  <br /></td></tr>
+<tr class="separator:aaf5d69c03f2b07e6fb483fb717521068"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ade017d32989aebd9f3f1f93b9af8a4f4" id="r_ade017d32989aebd9f3f1f93b9af8a4f4"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classConsoleForge_1_1Terminal_1_1AnsiTerminal.html#ade017d32989aebd9f3f1f93b9af8a4f4">DisableMouse</a> ()</td></tr>
+<tr class="memdesc:ade017d32989aebd9f3f1f93b9af8a4f4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Disable mouse tracking. No-op if not enabled.  <br /></td></tr>
+<tr class="separator:ade017d32989aebd9f3f1f93b9af8a4f4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a05dce60342501120f06a469c419dd886" id="r_a05dce60342501120f06a469c419dd886"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classConsoleForge_1_1Terminal_1_1AnsiTerminal.html#a05dce60342501120f06a469c419dd886">Dispose</a> ()</td></tr>
 <tr class="memdesc:a05dce60342501120f06a469c419dd886"><td class="mdescLeft">&#160;</td><td class="mdescRight">Restores raw mode and alternate screen, completes the input observable, and disposes the SIGWINCH registration.  <br /></td></tr>
 <tr class="separator:a05dce60342501120f06a469c419dd886"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -198,6 +204,27 @@ EventHandler&lt; TerminalResizedEventArgs &gt;?&#160;</td><td class="memItemRigh
 
 </div>
 </div>
+<a id="ade017d32989aebd9f3f1f93b9af8a4f4" name="ade017d32989aebd9f3f1f93b9af8a4f4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ade017d32989aebd9f3f1f93b9af8a4f4">&#9670;&#160;</a></span>DisableMouse()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void ConsoleForge.Terminal.AnsiTerminal.DisableMouse </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Disable mouse tracking. No-op if not enabled. </p>
+
+<p>Implements <a class="el" href="interfaceConsoleForge_1_1Terminal_1_1ITerminal.html#a82f7a140b22a7314e3ed7f731a1bbbf6">ConsoleForge.Terminal.ITerminal</a>.</p>
+
+</div>
+</div>
 <a id="a05dce60342501120f06a469c419dd886" name="a05dce60342501120f06a469c419dd886"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a05dce60342501120f06a469c419dd886">&#9670;&#160;</a></span>Dispose()</h2>
 
@@ -215,6 +242,28 @@ EventHandler&lt; TerminalResizedEventArgs &gt;?&#160;</td><td class="memItemRigh
 
 <p>Restores raw mode and alternate screen, completes the input observable, and disposes the SIGWINCH registration. </p>
 <p>Safe to call multiple times. </p>
+
+</div>
+</div>
+<a id="aaf5d69c03f2b07e6fb483fb717521068" name="aaf5d69c03f2b07e6fb483fb717521068"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aaf5d69c03f2b07e6fb483fb717521068">&#9670;&#160;</a></span>EnableMouse()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void ConsoleForge.Terminal.AnsiTerminal.EnableMouse </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="namespaceConsoleForge_1_1Terminal.html#a3fe9b6b3dbab237937bec8897fcae6a2">MouseMode</a>&#160;</td>
+          <td class="paramname"><em>mode</em> = <code><a class="el" href="namespaceConsoleForge_1_1Terminal.html#a3fe9b6b3dbab237937bec8897fcae6a2ac5b00cddd5289271d3216af06729c987">MouseMode::ButtonEvents</a></code></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Enable terminal mouse tracking.Events arrive via <a class="el" href="interfaceConsoleForge_1_1Terminal_1_1ITerminal.html#ac57aeda8e36a0f675d455c64c7e8ea48" title="Observable stream of input events (keypresses, resize events).">Input</a> as MouseInputEvent. No-op if already enabled or not supported. </p>
+
+<p>Implements <a class="el" href="interfaceConsoleForge_1_1Terminal_1_1ITerminal.html#ad8068d392f0acda421467045c9b373a0">ConsoleForge.Terminal.ITerminal</a>.</p>
 
 </div>
 </div>
@@ -254,8 +303,7 @@ EventHandler&lt; TerminalResizedEventArgs &gt;?&#160;</td><td class="memItemRigh
       </table>
 </div><div class="memdoc">
 
-<p>Enter raw / no-echo mode. </p>
-<p>Keyboard events are delivered via Input without waiting for newline. Ctrl+C is delivered as KeyMsg, not SIGINT. </p>
+<p>Enter raw / no-echo mode.Keyboard events are delivered via Input without waiting for newline. Ctrl+C is delivered as KeyMsg, not SIGINT. </p>
 
 <p>Implements <a class="el" href="interfaceConsoleForge_1_1Terminal_1_1ITerminal.html#a325d04b6438186a6a57254b3ce01d4ce">ConsoleForge.Terminal.ITerminal</a>.</p>
 
@@ -318,8 +366,7 @@ EventHandler&lt; TerminalResizedEventArgs &gt;?&#160;</td><td class="memItemRigh
       </table>
 </div><div class="memdoc">
 
-<p>Flush the buffered output to the physical terminal. </p>
-<p>Called by the renderer at most once per frame (≤60 fps). </p>
+<p>Flush the buffered output to the physical terminal.Called by the renderer at most once per frame (≤60 fps). </p>
 
 <p>Implements <a class="el" href="interfaceConsoleForge_1_1Terminal_1_1ITerminal.html#a445e49909114bb9a17a7c7bded12f136">ConsoleForge.Terminal.ITerminal</a>.</p>
 
@@ -417,8 +464,7 @@ EventHandler&lt; TerminalResizedEventArgs &gt;?&#160;</td><td class="memItemRigh
       </table>
 </div><div class="memdoc">
 
-<p>Write a pre-rendered ANSI string to the terminal output buffer. </p>
-<p>Does not flush to the physical terminal until Flush() is called. </p>
+<p>Write a pre-rendered ANSI string to the terminal output buffer.Does not flush to the physical terminal until <a class="el" href="interfaceConsoleForge_1_1Terminal_1_1ITerminal.html#a445e49909114bb9a17a7c7bded12f136" title="Flush the buffered output to the physical terminal.">Flush()</a> is called. </p>
 
 <p>Implements <a class="el" href="interfaceConsoleForge_1_1Terminal_1_1ITerminal.html#a417715f913a41a122c7946f8b25b543e">ConsoleForge.Terminal.ITerminal</a>.</p>
 

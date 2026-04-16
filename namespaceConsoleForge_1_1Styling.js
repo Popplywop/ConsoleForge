@@ -4,6 +4,7 @@ var namespaceConsoleForge_1_1Styling =
     [ "BorderSpec", "structConsoleForge_1_1Styling_1_1BorderSpec.html", "structConsoleForge_1_1Styling_1_1BorderSpec" ],
     [ "IColor", "interfaceConsoleForge_1_1Styling_1_1IColor.html", "interfaceConsoleForge_1_1Styling_1_1IColor" ],
     [ "Style", "structConsoleForge_1_1Styling_1_1Style.html", "structConsoleForge_1_1Styling_1_1Style" ],
+    [ "ThemeExtensions", "classConsoleForge_1_1Styling_1_1ThemeExtensions.html", "classConsoleForge_1_1Styling_1_1ThemeExtensions" ],
     [ "ColorProfile", "namespaceConsoleForge_1_1Styling.html#a9111dcd4dc77c663dd44d027bbc67946", [
       [ "NoColor", "namespaceConsoleForge_1_1Styling.html#a9111dcd4dc77c663dd44d027bbc67946a745ff66e655ea022e59182e15f301c8c", null ],
       [ "Ansi", "namespaceConsoleForge_1_1Styling.html#a9111dcd4dc77c663dd44d027bbc67946a0f94b628f89319fb787e49e325d8bac8", null ],

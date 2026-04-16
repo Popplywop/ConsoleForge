@@ -1,7 +1,9 @@
 var classConsoleForge_1_1Terminal_1_1AnsiTerminal =
 [
     [ "Clear", "classConsoleForge_1_1Terminal_1_1AnsiTerminal.html#af2d3504fe4eb4ccefe906f935063b76f", null ],
+    [ "DisableMouse", "classConsoleForge_1_1Terminal_1_1AnsiTerminal.html#ade017d32989aebd9f3f1f93b9af8a4f4", null ],
     [ "Dispose", "classConsoleForge_1_1Terminal_1_1AnsiTerminal.html#a05dce60342501120f06a469c419dd886", null ],
+    [ "EnableMouse", "classConsoleForge_1_1Terminal_1_1AnsiTerminal.html#aaf5d69c03f2b07e6fb483fb717521068", null ],
     [ "EnterAlternateScreen", "classConsoleForge_1_1Terminal_1_1AnsiTerminal.html#ad7413b68dfc679eb06469d361b7b95d6", null ],
     [ "EnterRawMode", "classConsoleForge_1_1Terminal_1_1AnsiTerminal.html#ae0f560e6106886eef309675605b91ca6", null ],
     [ "ExitAlternateScreen", "classConsoleForge_1_1Terminal_1_1AnsiTerminal.html#a0cf7bdc3905c5f9eb057f24afeba29a3", null ],

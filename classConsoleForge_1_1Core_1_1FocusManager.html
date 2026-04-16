@@ -25,7 +25,7 @@
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">ConsoleForge<span id="projectnumber">&#160;0.1.0</span>
+   <div id="projectname">ConsoleForge<span id="projectnumber">&#160;0.2.0</span>
    </div>
    <div id="projectbrief">Elm-architecture TUI framework for .NET 8</div>
   </td>
@@ -112,10 +112,64 @@ static IReadOnlyList&lt; <a class="el" href="interfaceConsoleForge_1_1Layout_1_1
 <tr class="memitem:aee9bcf1a9be6fb8151d98bca26f26c0a" id="r_aee9bcf1a9be6fb8151d98bca26f26c0a"><td class="memItemLeft" align="right" valign="top">static ? <a class="el" href="interfaceConsoleForge_1_1Layout_1_1IFocusable.html">IFocusable</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classConsoleForge_1_1Core_1_1FocusManager.html#aee9bcf1a9be6fb8151d98bca26f26c0a">GetPrev</a> (<a class="el" href="interfaceConsoleForge_1_1Layout_1_1IFocusable.html">IFocusable</a>? current, IReadOnlyList&lt; <a class="el" href="interfaceConsoleForge_1_1Layout_1_1IFocusable.html">IFocusable</a> &gt; all)</td></tr>
 <tr class="memdesc:aee9bcf1a9be6fb8151d98bca26f26c0a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return the previous focusable before <em>current</em>  (wrapping).  <br /></td></tr>
 <tr class="separator:aee9bcf1a9be6fb8151d98bca26f26c0a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a54e1fe177bbc1c0049a23a3da8a44c23" id="r_a54e1fe177bbc1c0049a23a3da8a44c23"><td class="memItemLeft" align="right" valign="top">static ? <a class="el" href="interfaceConsoleForge_1_1Layout_1_1IFocusable.html">IFocusable</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classConsoleForge_1_1Core_1_1FocusManager.html#a54e1fe177bbc1c0049a23a3da8a44c23">FindFocusableAt</a> (<a class="el" href="interfaceConsoleForge_1_1Layout_1_1IWidget.html">IWidget</a> root, <a class="el" href="classConsoleForge_1_1Layout_1_1ResolvedLayout.html">ConsoleForge.Layout.ResolvedLayout</a> layout, int col, int row)</td></tr>
+<tr class="memdesc:a54e1fe177bbc1c0049a23a3da8a44c23"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the IFocusable whose allocated region in <em>layout</em>  contains the point (<em>col</em> , <em>row</em> ), or null if none.  <br /></td></tr>
+<tr class="separator:a54e1fe177bbc1c0049a23a3da8a44c23"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Stateless helper that traverses a widget tree depth-first and finds all IFocusable instances in declaration order. </p>
 </div><h2 class="groupheader">Member Function Documentation</h2>
+<a id="a54e1fe177bbc1c0049a23a3da8a44c23" name="a54e1fe177bbc1c0049a23a3da8a44c23"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a54e1fe177bbc1c0049a23a3da8a44c23">&#9670;&#160;</a></span>FindFocusableAt()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">static ? <a class="el" href="interfaceConsoleForge_1_1Layout_1_1IFocusable.html">IFocusable</a> ConsoleForge.Core.FocusManager.FindFocusableAt </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="interfaceConsoleForge_1_1Layout_1_1IWidget.html">IWidget</a>&#160;</td>
+          <td class="paramname"><em>root</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classConsoleForge_1_1Layout_1_1ResolvedLayout.html">ConsoleForge::Layout::ResolvedLayout</a>&#160;</td>
+          <td class="paramname"><em>layout</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>col</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>row</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Returns the IFocusable whose allocated region in <em>layout</em>  contains the point (<em>col</em> , <em>row</em> ), or null if none. </p>
+<p>When multiple widgets overlap (e.g. inside a ZStack), the last one in depth-first order wins (topmost layer). </p>
+
+</div>
+</div>
 <a id="aab817d4dfb8bb1fce70e2f33d1e163f4" name="aab817d4dfb8bb1fce70e2f33d1e163f4"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#aab817d4dfb8bb1fce70e2f33d1e163f4">&#9670;&#160;</a></span>GetNext()</h2>
 

@@ -25,7 +25,7 @@
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">ConsoleForge<span id="projectnumber">&#160;0.1.0</span>
+   <div id="projectname">ConsoleForge<span id="projectnumber">&#160;0.2.0</span>
    </div>
    <div id="projectbrief">Elm-architecture TUI framework for .NET 8</div>
   </td>
@@ -123,9 +123,12 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a3a2255237cd6e364c149a756b6749b0d" id="r_a3a2255237cd6e364c149a756b6749b0d"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classConsoleForge_1_1Layout_1_1RenderContext.html#a3a2255237cd6e364c149a756b6749b0d">Write</a> (int col, int row, string text, <a class="el" href="structConsoleForge_1_1Styling_1_1Style.html">Style</a> style)</td></tr>
 <tr class="memdesc:a3a2255237cd6e364c149a756b6749b0d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Write a styled string at absolute terminal position (col, row).  <br /></td></tr>
 <tr class="separator:a3a2255237cd6e364c149a756b6749b0d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2a5b3834e9554a21d31a8c90d947f5aa" id="r_a2a5b3834e9554a21d31a8c90d947f5aa"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classConsoleForge_1_1Layout_1_1SubRenderContext.html">SubRenderContext</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classConsoleForge_1_1Layout_1_1RenderContext.html#a2a5b3834e9554a21d31a8c90d947f5aa">CreateSub</a> (<a class="el" href="classConsoleForge_1_1Layout_1_1RenderContext.html#acae2c8801d0bc5c6d99cbc3dd19c0141">Region</a> subRegion)</td></tr>
-<tr class="memdesc:a2a5b3834e9554a21d31a8c90d947f5aa"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create a sub-context restricted to a sub-region of this context.  <br /></td></tr>
-<tr class="separator:a2a5b3834e9554a21d31a8c90d947f5aa"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4e5782c4dbeaf1d5e32486a04c70ca03" id="r_a4e5782c4dbeaf1d5e32486a04c70ca03"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classConsoleForge_1_1Layout_1_1RenderContext.html#a4e5782c4dbeaf1d5e32486a04c70ca03">TryReuseWidget</a> (<a class="el" href="interfaceConsoleForge_1_1Layout_1_1IWidget.html">IWidget</a> widget, <a class="el" href="classConsoleForge_1_1Layout_1_1RenderContext.html#acae2c8801d0bc5c6d99cbc3dd19c0141">Region</a> region)</td></tr>
+<tr class="memdesc:a4e5782c4dbeaf1d5e32486a04c70ca03"><td class="mdescLeft">&#160;</td><td class="mdescRight">If <em>widget</em>  (same object reference) was rendered at exactly <em>region</em>  last frame AND the previous cell buffer exists, copy those cells into the current buffer and return <code>true</code> (caller should skip rendering).  <br /></td></tr>
+<tr class="separator:a4e5782c4dbeaf1d5e32486a04c70ca03"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac5cdb26d6a57248b4c612572c0a4c314" id="r_ac5cdb26d6a57248b4c612572c0a4c314"><td class="memItemLeft" align="right" valign="top">string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classConsoleForge_1_1Layout_1_1RenderContext.html#ac5cdb26d6a57248b4c612572c0a4c314">ToAnsiFrame</a> ()</td></tr>
+<tr class="memdesc:ac5cdb26d6a57248b4c612572c0a4c314"><td class="mdescLeft">&#160;</td><td class="mdescRight">Produce a minimal ANSI frame string by diffing current cell buffer against the previous frame.  <br /></td></tr>
+<tr class="separator:ac5cdb26d6a57248b4c612572c0a4c314"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="properties" name="properties"></a>
 Properties</h2></td></tr>
@@ -133,7 +136,7 @@ Properties</h2></td></tr>
 <tr class="memdesc:acae2c8801d0bc5c6d99cbc3dd19c0141"><td class="mdescLeft">&#160;</td><td class="mdescRight">The allocated region for this widget (absolute terminal coordinates).  <br /></td></tr>
 <tr class="separator:acae2c8801d0bc5c6d99cbc3dd19c0141"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5f5148ee1e285a21df07ee647f081761" id="r_a5f5148ee1e285a21df07ee647f081761"><td class="memItemLeft" align="right" valign="top">Theme&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classConsoleForge_1_1Layout_1_1RenderContext.html#a5f5148ee1e285a21df07ee647f081761">Theme</a><code> [get]</code></td></tr>
-<tr class="memdesc:a5f5148ee1e285a21df07ee647f081761"><td class="mdescLeft">&#160;</td><td class="mdescRight">Active theme for style inheritance.  <br /></td></tr>
+<tr class="memdesc:a5f5148ee1e285a21df07ee647f081761"><td class="mdescLeft">&#160;</td><td class="mdescRight">Active theme for style inheritance. Updated by Reset.  <br /></td></tr>
 <tr class="separator:a5f5148ee1e285a21df07ee647f081761"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad1de973e296526376f5a258e8dc82959" id="r_ad1de973e296526376f5a258e8dc82959"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespaceConsoleForge_1_1Styling.html#a9111dcd4dc77c663dd44d027bbc67946">ColorProfile</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classConsoleForge_1_1Layout_1_1RenderContext.html#ad1de973e296526376f5a258e8dc82959">ColorProfile</a><code> [get]</code></td></tr>
 <tr class="memdesc:ad1de973e296526376f5a258e8dc82959"><td class="mdescLeft">&#160;</td><td class="mdescRight">Detected terminal color capability.  <br /></td></tr>
@@ -200,27 +203,6 @@ Properties</h2></td></tr>
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
-<a id="a2a5b3834e9554a21d31a8c90d947f5aa" name="a2a5b3834e9554a21d31a8c90d947f5aa"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a2a5b3834e9554a21d31a8c90d947f5aa">&#9670;&#160;</a></span>CreateSub()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="classConsoleForge_1_1Layout_1_1SubRenderContext.html">SubRenderContext</a> ConsoleForge.Layout.RenderContext.CreateSub </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="classConsoleForge_1_1Layout_1_1RenderContext.html#acae2c8801d0bc5c6d99cbc3dd19c0141">Region</a>&#160;</td>
-          <td class="paramname"><em>subRegion</em></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Create a sub-context restricted to a sub-region of this context. </p>
-<p>Writes to the sub-context are forwarded to this context with adjusted coordinates. </p>
-
-</div>
-</div>
 <a id="acb202539e634d956adc508bcbce7a04b" name="acb202539e634d956adc508bcbce7a04b"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#acb202539e634d956adc508bcbce7a04b">&#9670;&#160;</a></span>Reset()</h2>
 
@@ -261,6 +243,59 @@ Properties</h2></td></tr>
 
 <p>Prepare this context for a new frame. </p>
 <p>Clears the current cell buffer (so stale content from last frame is not present) and updates Region/Layout/Theme. The previous frame buffer is preserved for diffing in ToAnsiFrame. If terminal dimensions changed, the previous buffer is discarded (forces full redraw). </p>
+
+</div>
+</div>
+<a id="ac5cdb26d6a57248b4c612572c0a4c314" name="ac5cdb26d6a57248b4c612572c0a4c314"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac5cdb26d6a57248b4c612572c0a4c314">&#9670;&#160;</a></span>ToAnsiFrame()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">string ConsoleForge.Layout.RenderContext.ToAnsiFrame </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Produce a minimal ANSI frame string by diffing current cell buffer against the previous frame. </p>
+<p>Only emits cells that changed. On first frame (no previous buffer) emits all cells. Pre-sizes StringBuilder to avoid repeated reallocations. After emitting, swaps current ↔ previous buffers. </p>
+
+</div>
+</div>
+<a id="a4e5782c4dbeaf1d5e32486a04c70ca03" name="a4e5782c4dbeaf1d5e32486a04c70ca03"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4e5782c4dbeaf1d5e32486a04c70ca03">&#9670;&#160;</a></span>TryReuseWidget()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool ConsoleForge.Layout.RenderContext.TryReuseWidget </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="interfaceConsoleForge_1_1Layout_1_1IWidget.html">IWidget</a>&#160;</td>
+          <td class="paramname"><em>widget</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classConsoleForge_1_1Layout_1_1RenderContext.html#acae2c8801d0bc5c6d99cbc3dd19c0141">Region</a>&#160;</td>
+          <td class="paramname"><em>region</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>If <em>widget</em>  (same object reference) was rendered at exactly <em>region</em>  last frame AND the previous cell buffer exists, copy those cells into the current buffer and return <code>true</code> (caller should skip rendering). </p>
+<p>Otherwise return <code>false</code>. </p>
+
+<p>Implements <a class="el" href="interfaceConsoleForge_1_1Layout_1_1IRenderContext.html#a4dd35be9a18fe5230405a6f323d28b2a">ConsoleForge.Layout.IRenderContext</a>.</p>
 
 </div>
 </div>
@@ -409,7 +444,7 @@ Properties</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Active theme for style inheritance. </p>
+<p>Active theme for style inheritance. Updated by Reset. </p>
 
 <p>Implements <a class="el" href="interfaceConsoleForge_1_1Layout_1_1IRenderContext.html#a1a5bbdcfff7bf88e34af47437d02e7e0">ConsoleForge.Layout.IRenderContext</a>.</p>
 

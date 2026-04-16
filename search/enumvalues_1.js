@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['left_0',['Left',['../namespaceConsoleForge_1_1Styling.html#a8167c1699668ce6c7ea5172d2423206aa945d5e233cf7d6240f6b783b36a374ff',1,'ConsoleForge::Styling']]]
+  ['buttonevents_0',['ButtonEvents',['../namespaceConsoleForge_1_1Terminal.html#a3fe9b6b3dbab237937bec8897fcae6a2ac5b00cddd5289271d3216af06729c987',1,'ConsoleForge::Terminal']]]
 ];

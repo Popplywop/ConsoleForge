@@ -25,7 +25,7 @@
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">ConsoleForge<span id="projectnumber">&#160;0.1.0</span>
+   <div id="projectname">ConsoleForge<span id="projectnumber">&#160;0.2.0</span>
    </div>
    <div id="projectbrief">Elm-architecture TUI framework for .NET 8</div>
   </td>
@@ -111,9 +111,9 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>SetTheme</b> (Theme t
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
-<tr class="memitem:a9412080c6d2bd890a93fca04772a46e5" id="r_a9412080c6d2bd890a93fca04772a46e5"><td class="memItemLeft" align="right" valign="top">static Task&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classConsoleForge_1_1Core_1_1Program.html#a9412080c6d2bd890a93fca04772a46e5">Run</a> (<a class="el" href="interfaceConsoleForge_1_1Core_1_1IModel.html">IModel</a> model, <a class="el" href="interfaceConsoleForge_1_1Terminal_1_1ITerminal.html">ITerminal</a>? terminal=null, Theme? theme=null, int targetFps=30)</td></tr>
-<tr class="memdesc:a9412080c6d2bd890a93fca04772a46e5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Run the application asynchronously.  <br /></td></tr>
-<tr class="separator:a9412080c6d2bd890a93fca04772a46e5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a71dc7b815399e7bd525477eea4379ba8" id="r_a71dc7b815399e7bd525477eea4379ba8"><td class="memItemLeft" align="right" valign="top">static Task&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classConsoleForge_1_1Core_1_1Program.html#a71dc7b815399e7bd525477eea4379ba8">Run</a> (<a class="el" href="interfaceConsoleForge_1_1Core_1_1IModel.html">IModel</a> model, <a class="el" href="interfaceConsoleForge_1_1Terminal_1_1ITerminal.html">ITerminal</a>? terminal=null, Theme? theme=null, int targetFps=30, bool enableMouse=false)</td></tr>
+<tr class="memdesc:a71dc7b815399e7bd525477eea4379ba8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Run the application asynchronously.  <br /></td></tr>
+<tr class="separator:a71dc7b815399e7bd525477eea4379ba8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="properties" name="properties"></a>
 Properties</h2></td></tr>
@@ -126,8 +126,8 @@ Properties</h2></td></tr>
 <div class="textblock"><p>Main event loop for a <a class="el" href="namespaceConsoleForge.html">ConsoleForge</a> application. </p>
 <p>Call Run to start the application. The method blocks until the model issues QuitMsg or the user force-quits. The terminal is guaranteed to be restored (raw mode exited, alternate screen exited) even if an unhandled exception occurs. </p>
 </div><h2 class="groupheader">Member Function Documentation</h2>
-<a id="a9412080c6d2bd890a93fca04772a46e5" name="a9412080c6d2bd890a93fca04772a46e5"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a9412080c6d2bd890a93fca04772a46e5">&#9670;&#160;</a></span>Run()</h2>
+<a id="a71dc7b815399e7bd525477eea4379ba8" name="a71dc7b815399e7bd525477eea4379ba8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a71dc7b815399e7bd525477eea4379ba8">&#9670;&#160;</a></span>Run()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -157,7 +157,13 @@ Properties</h2></td></tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">int&#160;</td>
-          <td class="paramname"><em>targetFps</em> = <code>30</code>&#160;</td>
+          <td class="paramname"><em>targetFps</em> = <code>30</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>enableMouse</em> = <code>false</code>&#160;</td>
         </tr>
         <tr>
           <td></td>

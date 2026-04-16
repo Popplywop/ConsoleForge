@@ -1,9 +1,6 @@
 var searchData=
 [
-  ['label_0',['Label',['../classConsoleForge_1_1Widgets_1_1Spinner.html#af3299545c8f44bada294186066e0d5a6',1,'ConsoleForge::Widgets::Spinner']]],
-  ['layout_1',['layout',['../interfaceConsoleForge_1_1Layout_1_1IRenderContext.html#ab47b442c7707cbb4c2a543d215d8ba1f',1,'ConsoleForge.Layout.IRenderContext.Layout'],['../classConsoleForge_1_1Layout_1_1RenderContext.html#a5408fdfcbe7a42353d90fdc3d9133c68',1,'ConsoleForge.Layout.RenderContext.Layout'],['../classConsoleForge_1_1Layout_1_1SubRenderContext.html#a69c88ee99f9dbe628e5357bffbb6fb31',1,'ConsoleForge.Layout.SubRenderContext.Layout']]],
-  ['layoutconstraintexception_2',['layoutconstraintexception',['../classConsoleForge_1_1Layout_1_1LayoutConstraintException.html',1,'ConsoleForge.Layout.LayoutConstraintException'],['../classConsoleForge_1_1Layout_1_1LayoutConstraintException.html#ae74949503568b09216654b336a10e6d7',1,'ConsoleForge.Layout.LayoutConstraintException.LayoutConstraintException(string message)'],['../classConsoleForge_1_1Layout_1_1LayoutConstraintException.html#a646f87d575208d3613f654aec4f63093',1,'ConsoleForge.Layout.LayoutConstraintException.LayoutConstraintException(string message, Exception inner)']]],
-  ['layoutengine_3',['LayoutEngine',['../classConsoleForge_1_1Layout_1_1LayoutEngine.html',1,'ConsoleForge::Layout']]],
-  ['left_4',['left',['../structConsoleForge_1_1Styling_1_1BorderSpec.html#a0377104921e06b6e298ccb75654812b1',1,'ConsoleForge.Styling.BorderSpec.Left'],['../namespaceConsoleForge_1_1Styling.html#a8167c1699668ce6c7ea5172d2423206aa945d5e233cf7d6240f6b783b36a374ff',1,'ConsoleForge.Styling.Left']]],
-  ['list_5',['list',['../classConsoleForge_1_1Widgets_1_1List.html',1,'ConsoleForge.Widgets.List'],['../classConsoleForge_1_1Widgets_1_1List.html#a6f92ab9b9a58a05d46b7b3b7b8a1d1ca',1,'ConsoleForge.Widgets.List.List()'],['../classConsoleForge_1_1Widgets_1_1List.html#aaa17670c8a3ec75243ad10a44149e0b4',1,'ConsoleForge.Widgets.List.List(IReadOnlyList&lt; string &gt; items, int selectedIndex=0, Style? style=null, Style? selectedItemStyle=null, int paddingLeft=1, int paddingRight=0)']]]
+  ['keybindingcount_0',['KeyBindingCount',['../classConsoleForge_1_1Core_1_1KeyMap.html#aa5c7d0945861d8e30ab974d1b6459ea8',1,'ConsoleForge::Core::KeyMap']]],
+  ['keymap_1',['KeyMap',['../classConsoleForge_1_1Core_1_1KeyMap.html',1,'ConsoleForge::Core']]],
+  ['keypattern_2',['KeyPattern',['../namespaceConsoleForge_1_1Core.html#a58f2e74b087ddfc28e1bc7ec3a863c49',1,'ConsoleForge::Core']]]
 ];

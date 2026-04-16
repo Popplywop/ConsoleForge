@@ -1,5 +1,8 @@
 var searchData=
 [
-  ['layoutconstraintexception_0',['layoutconstraintexception',['../classConsoleForge_1_1Layout_1_1LayoutConstraintException.html#ae74949503568b09216654b336a10e6d7',1,'ConsoleForge.Layout.LayoutConstraintException.LayoutConstraintException(string message)'],['../classConsoleForge_1_1Layout_1_1LayoutConstraintException.html#a646f87d575208d3613f654aec4f63093',1,'ConsoleForge.Layout.LayoutConstraintException.LayoutConstraintException(string message, Exception inner)']]],
-  ['list_1',['list',['../classConsoleForge_1_1Widgets_1_1List.html#a6f92ab9b9a58a05d46b7b3b7b8a1d1ca',1,'ConsoleForge.Widgets.List.List()'],['../classConsoleForge_1_1Widgets_1_1List.html#aaa17670c8a3ec75243ad10a44149e0b4',1,'ConsoleForge.Widgets.List.List(IReadOnlyList&lt; string &gt; items, int selectedIndex=0, Style? style=null, Style? selectedItemStyle=null, int paddingLeft=1, int paddingRight=0)']]]
+  ['icmd_0',['ICmd',['../namespaceConsoleForge_1_1Core.html#a45d6a05ca04f21a284e8ebc48a09fbb4',1,'ConsoleForge::Core']]],
+  ['init_1',['Init',['../interfaceConsoleForge_1_1Core_1_1IModel.html#ac2be962e432918488eed2b24a5dcc62e',1,'ConsoleForge::Core::IModel']]],
+  ['interval_2',['Interval',['../classConsoleForge_1_1Core_1_1Sub.html#a5d8429b9faafec153bea69bdb6d247ac',1,'ConsoleForge::Core::Sub']]],
+  ['iscompleted_3c_20tresult_20_3e_3',['IsCompleted&lt; TResult &gt;',['../classConsoleForge_1_1Core_1_1Component.html#a0a105f4539398fc046d3c8eae1b02065',1,'ConsoleForge::Core::Component']]],
+  ['isub_4',['ISub',['../namespaceConsoleForge_1_1Core.html#a3423e4fa2afce76645b3d47bd39bdd07',1,'ConsoleForge::Core']]]
 ];

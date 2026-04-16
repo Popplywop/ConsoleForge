@@ -25,7 +25,7 @@
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">ConsoleForge<span id="projectnumber">&#160;0.1.0</span>
+   <div id="projectname">ConsoleForge<span id="projectnumber">&#160;0.2.0</span>
    </div>
    <div id="projectbrief">Elm-architecture TUI framework for .NET 8</div>
   </td>
@@ -126,7 +126,7 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:affe77f53bd9c1e737db8288840376fd7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Handle printable char input, Backspace, and Left/Right cursor movement.  <br /></td></tr>
 <tr class="separator:affe77f53bd9c1e737db8288840376fd7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a13c6e3a8133d6c16125fc87a19f7e52e" id="r_a13c6e3a8133d6c16125fc87a19f7e52e"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classConsoleForge_1_1Widgets_1_1TextInput.html#a13c6e3a8133d6c16125fc87a19f7e52e">Render</a> (<a class="el" href="interfaceConsoleForge_1_1Layout_1_1IRenderContext.html">IRenderContext</a> ctx)</td></tr>
-<tr class="memdesc:a13c6e3a8133d6c16125fc87a19f7e52e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Render this widget into the provided context.  <br /></td></tr>
+<tr class="memdesc:a13c6e3a8133d6c16125fc87a19f7e52e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Render this widget into the provided context.The context carries the allocated region, theme, and color profile. Implementations MUST NOT write outside ctx.Region.  <br /></td></tr>
 <tr class="separator:a13c6e3a8133d6c16125fc87a19f7e52e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="properties" name="properties"></a>
@@ -262,8 +262,7 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>CursorPosition</b><cod
       </table>
 </div><div class="memdoc">
 
-<p>Render this widget into the provided context. </p>
-<p>The context carries the allocated region, theme, and color profile. Implementations MUST NOT write outside ctx.Region. </p>
+<p>Render this widget into the provided context.The context carries the allocated region, theme, and color profile. Implementations MUST NOT write outside ctx.Region. </p>
 
 <p>Implements <a class="el" href="interfaceConsoleForge_1_1Layout_1_1IWidget.html#a667c894a8e08971ea9c2d2f35bddb90d">ConsoleForge.Layout.IWidget</a>.</p>
 

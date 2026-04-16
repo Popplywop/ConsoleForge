@@ -1,6 +1,8 @@
 var interfaceConsoleForge_1_1Terminal_1_1ITerminal =
 [
     [ "Clear", "interfaceConsoleForge_1_1Terminal_1_1ITerminal.html#a4bd2d86cd6460c4df5f3a8d3cfe6660e", null ],
+    [ "DisableMouse", "interfaceConsoleForge_1_1Terminal_1_1ITerminal.html#a82f7a140b22a7314e3ed7f731a1bbbf6", null ],
+    [ "EnableMouse", "interfaceConsoleForge_1_1Terminal_1_1ITerminal.html#ad8068d392f0acda421467045c9b373a0", null ],
     [ "EnterAlternateScreen", "interfaceConsoleForge_1_1Terminal_1_1ITerminal.html#a856558689f7a236bb950ac26840b184b", null ],
     [ "EnterRawMode", "interfaceConsoleForge_1_1Terminal_1_1ITerminal.html#a325d04b6438186a6a57254b3ce01d4ce", null ],
     [ "ExitAlternateScreen", "interfaceConsoleForge_1_1Terminal_1_1ITerminal.html#a5823ba43bb41c92f1fc6001317910791", null ],

@@ -25,7 +25,7 @@
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">ConsoleForge<span id="projectnumber">&#160;0.1.0</span>
+   <div id="projectname">ConsoleForge<span id="projectnumber">&#160;0.2.0</span>
    </div>
    <div id="projectbrief">Elm-architecture TUI framework for .NET 8</div>
   </td>
@@ -92,6 +92,7 @@ $(document).ready(function(){initNavTree('classConsoleForge_1_1Widgets_1_1List.h
 <div class="header">
   <div class="summary">
 <a href="#pub-methods">Public Member Functions</a> &#124;
+<a href="#pub-static-methods">Static Public Member Functions</a> &#124;
 <a href="#properties">Properties</a> &#124;
 <a href="classConsoleForge_1_1Widgets_1_1List-members.html">List of all members</a>  </div>
   <div class="headertitle"><div class="title">ConsoleForge.Widgets.List Class Reference<span class="mlabels"><span class="mlabel">sealed</span></span></div></div>
@@ -119,15 +120,21 @@ Public Member Functions</h2></td></tr>
 &#160;</td><td class="memItemRight" valign="bottom"><b>List</b> ()</td></tr>
 <tr class="memdesc:a6f92ab9b9a58a05d46b7b3b7b8a1d1ca"><td class="mdescLeft">&#160;</td><td class="mdescRight">Object-initializer constructor; all properties default. <br /></td></tr>
 <tr class="separator:a6f92ab9b9a58a05d46b7b3b7b8a1d1ca"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aaa17670c8a3ec75243ad10a44149e0b4" id="r_aaa17670c8a3ec75243ad10a44149e0b4"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classConsoleForge_1_1Widgets_1_1List.html#aaa17670c8a3ec75243ad10a44149e0b4">List</a> (IReadOnlyList&lt; string &gt; items, int selectedIndex=0, <a class="el" href="structConsoleForge_1_1Styling_1_1Style.html">Style</a>? style=null, <a class="el" href="structConsoleForge_1_1Styling_1_1Style.html">Style</a>? selectedItemStyle=null, int paddingLeft=1, int paddingRight=0)</td></tr>
-<tr class="memdesc:aaa17670c8a3ec75243ad10a44149e0b4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Positional constructor for inline usage.  <br /></td></tr>
-<tr class="separator:aaa17670c8a3ec75243ad10a44149e0b4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0c414458dfe6e9f7ba116bc26fe36124" id="r_a0c414458dfe6e9f7ba116bc26fe36124"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classConsoleForge_1_1Widgets_1_1List.html#a0c414458dfe6e9f7ba116bc26fe36124">List</a> (IReadOnlyList&lt; string &gt; items, int selectedIndex=0, <a class="el" href="structConsoleForge_1_1Styling_1_1Style.html">Style</a>? style=null, <a class="el" href="structConsoleForge_1_1Styling_1_1Style.html">Style</a>? selectedItemStyle=null, int paddingLeft=1, int paddingRight=0, int scrollOffset=0)</td></tr>
+<tr class="memdesc:a0c414458dfe6e9f7ba116bc26fe36124"><td class="mdescLeft">&#160;</td><td class="mdescRight">Positional constructor for inline usage.  <br /></td></tr>
+<tr class="separator:a0c414458dfe6e9f7ba116bc26fe36124"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abb413858f92a65beba797f81ce052afd" id="r_abb413858f92a65beba797f81ce052afd"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classConsoleForge_1_1Widgets_1_1List.html#abb413858f92a65beba797f81ce052afd">OnKeyEvent</a> (KeyMsg key, Action&lt; <a class="el" href="interfaceConsoleForge_1_1Core_1_1IMsg.html">IMsg</a> &gt; dispatch)</td></tr>
-<tr class="memdesc:abb413858f92a65beba797f81ce052afd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Called by the runtime when a key is pressed and this widget has focus.  <br /></td></tr>
+<tr class="memdesc:abb413858f92a65beba797f81ce052afd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Called by the runtime when a key is pressed and this widget has focus.Call dispatch to inject a custom IMsg into the event loop.  <br /></td></tr>
 <tr class="separator:abb413858f92a65beba797f81ce052afd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad498ceebade8d708ae31d2500cf84a7d" id="r_ad498ceebade8d708ae31d2500cf84a7d"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classConsoleForge_1_1Widgets_1_1List.html#ad498ceebade8d708ae31d2500cf84a7d">Render</a> (<a class="el" href="interfaceConsoleForge_1_1Layout_1_1IRenderContext.html">IRenderContext</a> ctx)</td></tr>
-<tr class="memdesc:ad498ceebade8d708ae31d2500cf84a7d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Render this widget into the provided context.  <br /></td></tr>
+<tr class="memdesc:ad498ceebade8d708ae31d2500cf84a7d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Render this widget into the provided context.The context carries the allocated region, theme, and color profile. Implementations MUST NOT write outside ctx.Region.  <br /></td></tr>
 <tr class="separator:ad498ceebade8d708ae31d2500cf84a7d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
+Static Public Member Functions</h2></td></tr>
+<tr class="memitem:a2f86cd85da324c342f030411ae7776a8" id="r_a2f86cd85da324c342f030411ae7776a8"><td class="memItemLeft" align="right" valign="top">static int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classConsoleForge_1_1Widgets_1_1List.html#a2f86cd85da324c342f030411ae7776a8">ComputeScrollOffset</a> (int selectedIndex, int viewportHeight, int currentScrollOffset)</td></tr>
+<tr class="memdesc:a2f86cd85da324c342f030411ae7776a8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Computes a new ScrollOffset that keeps <em>selectedIndex</em>  within the visible viewport.  <br /></td></tr>
+<tr class="separator:a2f86cd85da324c342f030411ae7776a8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="properties" name="properties"></a>
 Properties</h2></td></tr>
@@ -161,6 +168,9 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>SelectedIndex</b><code
 <tr class="memitem:a53f3bb8273033110a660c705003e8d04" id="r_a53f3bb8273033110a660c705003e8d04"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classConsoleForge_1_1Widgets_1_1List.html#a53f3bb8273033110a660c705003e8d04">PaddingRight</a> = 0<code> [get]</code></td></tr>
 <tr class="memdesc:a53f3bb8273033110a660c705003e8d04"><td class="mdescLeft">&#160;</td><td class="mdescRight">Number of blank columns reserved to the right of each item's text.  <br /></td></tr>
 <tr class="separator:a53f3bb8273033110a660c705003e8d04"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7add2be0c22d0d186b1429855e640a7f" id="r_a7add2be0c22d0d186b1429855e640a7f"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classConsoleForge_1_1Widgets_1_1List.html#a7add2be0c22d0d186b1429855e640a7f">ScrollOffset</a><code> [get]</code></td></tr>
+<tr class="memdesc:a7add2be0c22d0d186b1429855e640a7f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Zero-based index of the first item rendered in the viewport.  <br /></td></tr>
+<tr class="separator:a7add2be0c22d0d186b1429855e640a7f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header properties_interfaceConsoleForge_1_1Layout_1_1IFocusable"><td colspan="2" onclick="javascript:toggleInherit('properties_interfaceConsoleForge_1_1Layout_1_1IFocusable')"><img src="closed.png" alt="-"/>&#160;Properties inherited from <a class="el" href="interfaceConsoleForge_1_1Layout_1_1IFocusable.html">ConsoleForge.Layout.IFocusable</a></td></tr>
 <tr class="inherit_header properties_interfaceConsoleForge_1_1Layout_1_1IWidget"><td colspan="2" onclick="javascript:toggleInherit('properties_interfaceConsoleForge_1_1Layout_1_1IWidget')"><img src="closed.png" alt="-"/>&#160;Properties inherited from <a class="el" href="interfaceConsoleForge_1_1Layout_1_1IWidget.html">ConsoleForge.Layout.IWidget</a></td></tr>
 </table>
@@ -168,8 +178,8 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>SelectedIndex</b><code
 <div class="textblock"><p>A scrollable list widget that displays items and highlights the selected one. </p>
 <p>Dispatches ListItemSelectedMsg when the user presses Enter. </p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
-<a id="aaa17670c8a3ec75243ad10a44149e0b4" name="aaa17670c8a3ec75243ad10a44149e0b4"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aaa17670c8a3ec75243ad10a44149e0b4">&#9670;&#160;</a></span>List()</h2>
+<a id="a0c414458dfe6e9f7ba116bc26fe36124" name="a0c414458dfe6e9f7ba116bc26fe36124"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0c414458dfe6e9f7ba116bc26fe36124">&#9670;&#160;</a></span>List()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -208,7 +218,13 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>SelectedIndex</b><code
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">int&#160;</td>
-          <td class="paramname"><em>paddingRight</em> = <code>0</code>&#160;</td>
+          <td class="paramname"><em>paddingRight</em> = <code>0</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>scrollOffset</em> = <code>0</code>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -227,6 +243,7 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>SelectedIndex</b><code
     <tr><td class="paramname">selectedItemStyle</td><td>Optional style for the highlighted row.</td></tr>
     <tr><td class="paramname">paddingLeft</td><td>Blank columns inserted to the left of each item's text. Provides breathing room when the list is placed inside a BorderBox. Defaults to <code>1</code>. </td></tr>
     <tr><td class="paramname">paddingRight</td><td>Blank columns reserved to the right of each item's text. Defaults to <code>0</code>. </td></tr>
+    <tr><td class="paramname">scrollOffset</td><td>First visible item index. Defaults to 0.</td></tr>
   </table>
   </dd>
 </dl>
@@ -234,6 +251,59 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>SelectedIndex</b><code
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
+<a id="a2f86cd85da324c342f030411ae7776a8" name="a2f86cd85da324c342f030411ae7776a8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2f86cd85da324c342f030411ae7776a8">&#9670;&#160;</a></span>ComputeScrollOffset()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">static int ConsoleForge.Widgets.List.ComputeScrollOffset </td>
+          <td>(</td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>selectedIndex</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>viewportHeight</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>currentScrollOffset</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Computes a new ScrollOffset that keeps <em>selectedIndex</em>  within the visible viewport. </p>
+<p>Call this from your model's Update handler when processing ListSelectionChangedMsg.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">selectedIndex</td><td>The newly selected item index.</td></tr>
+    <tr><td class="paramname">viewportHeight</td><td>Number of visible rows in the List's region.</td></tr>
+    <tr><td class="paramname">currentScrollOffset</td><td>Current ScrollOffset.</td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <a id="abb413858f92a65beba797f81ce052afd" name="abb413858f92a65beba797f81ce052afd"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#abb413858f92a65beba797f81ce052afd">&#9670;&#160;</a></span>OnKeyEvent()</h2>
 
@@ -260,8 +330,7 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>SelectedIndex</b><code
       </table>
 </div><div class="memdoc">
 
-<p>Called by the runtime when a key is pressed and this widget has focus. </p>
-<p>Call dispatch to inject a custom IMsg into the event loop. </p>
+<p>Called by the runtime when a key is pressed and this widget has focus.Call dispatch to inject a custom IMsg into the event loop. </p>
 
 <p>Implements <a class="el" href="interfaceConsoleForge_1_1Layout_1_1IFocusable.html#a6fd21ecae11f928020fc9aad3f00a203">ConsoleForge.Layout.IFocusable</a>.</p>
 
@@ -283,8 +352,7 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>SelectedIndex</b><code
       </table>
 </div><div class="memdoc">
 
-<p>Render this widget into the provided context. </p>
-<p>The context carries the allocated region, theme, and color profile. Implementations MUST NOT write outside ctx.Region. </p>
+<p>Render this widget into the provided context.The context carries the allocated region, theme, and color profile. Implementations MUST NOT write outside ctx.Region. </p>
 
 <p>Implements <a class="el" href="interfaceConsoleForge_1_1Layout_1_1IWidget.html#a667c894a8e08971ea9c2d2f35bddb90d">ConsoleForge.Layout.IWidget</a>.</p>
 
@@ -390,6 +458,31 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>SelectedIndex</b><code
 
 <p>Number of blank columns reserved to the right of each item's text. </p>
 <p>Defaults to <code>0</code>. </p>
+
+</div>
+</div>
+<a id="a7add2be0c22d0d186b1429855e640a7f" name="a7add2be0c22d0d186b1429855e640a7f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7add2be0c22d0d186b1429855e640a7f">&#9670;&#160;</a></span>ScrollOffset</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">int ConsoleForge.Widgets.List.ScrollOffset</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">get</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Zero-based index of the first item rendered in the viewport. </p>
+<p>Update via ComputeScrollOffset when handling ListSelectionChangedMsg to keep the selection visible. </p>
 
 </div>
 </div>

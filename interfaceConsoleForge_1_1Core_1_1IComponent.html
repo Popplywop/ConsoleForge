@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.9.8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>ConsoleForge: ConsoleForge.Core.IComponent&lt; TModel &gt; Interface Template Reference</title>
+<title>ConsoleForge: ConsoleForge.Core.IComponent&lt; out TResult &gt; Interface Template Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -25,7 +25,7 @@
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">ConsoleForge<span id="projectnumber">&#160;0.1.0</span>
+   <div id="projectname">ConsoleForge<span id="projectnumber">&#160;0.2.0</span>
    </div>
    <div id="projectbrief">Elm-architecture TUI framework for .NET 8</div>
   </td>
@@ -91,58 +91,146 @@ $(document).ready(function(){initNavTree('interfaceConsoleForge_1_1Core_1_1IComp
 
 <div class="header">
   <div class="summary">
-<a href="#pub-methods">Public Member Functions</a> &#124;
-<a href="#pub-attribs">Public Attributes</a> &#124;
+<a href="#properties">Properties</a> &#124;
 <a href="interfaceConsoleForge_1_1Core_1_1IComponent-members.html">List of all members</a>  </div>
-  <div class="headertitle"><div class="title">ConsoleForge.Core.IComponent&lt; TModel &gt; Interface Template Reference</div></div>
+  <div class="headertitle"><div class="title">ConsoleForge.Core.IComponent&lt; out TResult &gt; Interface Template Reference</div></div>
 </div><!--header-->
 <div class="contents">
 
-<p>Interface for reusable sub-components that maintain their own state but do not own the program loop.  
+<p>A self-contained sub-program: owns its own state, update logic, and view.  
  <a href="interfaceConsoleForge_1_1Core_1_1IComponent.html#details">More...</a></p>
+<div id="dynsection-0" onclick="return toggleVisibility(this)" class="dynheader closed" style="cursor:pointer;">
+  <img id="dynsection-0-trigger" src="closed.png" alt="+"/> Inheritance diagram for ConsoleForge.Core.IComponent&lt; out TResult &gt;:</div>
+<div id="dynsection-0-summary" class="dynsummary" style="display:block;">
+</div>
+<div id="dynsection-0-content" class="dyncontent" style="display:none;">
+ <div class="center">
+  <img src="interfaceConsoleForge_1_1Core_1_1IComponent.png" usemap="#ConsoleForge.Core.IComponent_3C_20out_20TResult_20_3E_map" alt=""/>
+  <map id="ConsoleForge.Core.IComponent_3C_20out_20TResult_20_3E_map" name="ConsoleForge.Core.IComponent_3C_20out_20TResult_20_3E_map">
+<area href="interfaceConsoleForge_1_1Core_1_1IModel.html" title="The root interface for all ConsoleForge application models." alt="ConsoleForge.Core.IModel" shape="rect" coords="0,0,281,24"/>
+  </map>
+</div></div>
 <table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
-Public Member Functions</h2></td></tr>
-<tr class="memitem:af6b4d0f9a310d45096a80b4b6071cd70" id="r_af6b4d0f9a310d45096a80b4b6071cd70"><td class="memItemLeft" align="right" valign="top"><a id="af6b4d0f9a310d45096a80b4b6071cd70" name="af6b4d0f9a310d45096a80b4b6071cd70"></a>
-TModel? <a class="el" href="namespaceConsoleForge_1_1Core.html#a45d6a05ca04f21a284e8ebc48a09fbb4">ICmd</a> <a class="el" href="classConsoleForge_1_1Core_1_1Cmd.html">Cmd</a>&#160;</td><td class="memItemRight" valign="bottom"><b>Update</b> (<a class="el" href="interfaceConsoleForge_1_1Core_1_1IMsg.html">IMsg</a> msg)</td></tr>
-<tr class="separator:af6b4d0f9a310d45096a80b4b6071cd70"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa90b81bb5c5109a2897152d105b71841" id="r_aa90b81bb5c5109a2897152d105b71841"><td class="memItemLeft" align="right" valign="top"><a id="aa90b81bb5c5109a2897152d105b71841" name="aa90b81bb5c5109a2897152d105b71841"></a>
-string&#160;</td><td class="memItemRight" valign="bottom"><b>View</b> ()</td></tr>
-<tr class="memdesc:aa90b81bb5c5109a2897152d105b71841"><td class="mdescLeft">&#160;</td><td class="mdescRight">Render this component to a string (not a full ViewDescriptor). <br /></td></tr>
-<tr class="separator:aa90b81bb5c5109a2897152d105b71841"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="properties" name="properties"></a>
+Properties</h2></td></tr>
+<tr class="memitem:ade232f57012c86044d47b3e95fc3e909" id="r_ade232f57012c86044d47b3e95fc3e909"><td class="memItemLeft" align="right" valign="top">TResult&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="interfaceConsoleForge_1_1Core_1_1IComponent.html#ade232f57012c86044d47b3e95fc3e909">Result</a><code> [get]</code></td></tr>
+<tr class="memdesc:ade232f57012c86044d47b3e95fc3e909"><td class="mdescLeft">&#160;</td><td class="mdescRight">The result value produced when this component completes.  <br /></td></tr>
+<tr class="separator:ade232f57012c86044d47b3e95fc3e909"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-attribs" name="pub-attribs"></a>
-Public Attributes</h2></td></tr>
-<tr class="memitem:ac1d06406f9419dc2126f08a7ec1480e2" id="r_ac1d06406f9419dc2126f08a7ec1480e2"><td class="memItemLeft" align="right" valign="top">TModel&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="interfaceConsoleForge_1_1Core_1_1IComponent.html#ac1d06406f9419dc2126f08a7ec1480e2">Model</a></td></tr>
-<tr class="memdesc:ac1d06406f9419dc2126f08a7ec1480e2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Handle a message.  <br /></td></tr>
-<tr class="separator:ac1d06406f9419dc2126f08a7ec1480e2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="inherited" name="inherited"></a>
+Additional Inherited Members</h2></td></tr>
+<tr class="inherit_header pub_methods_interfaceConsoleForge_1_1Core_1_1IModel"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_interfaceConsoleForge_1_1Core_1_1IModel')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="interfaceConsoleForge_1_1Core_1_1IModel.html">ConsoleForge.Core.IModel</a></td></tr>
+<tr class="memitem:ac2be962e432918488eed2b24a5dcc62e inherit pub_methods_interfaceConsoleForge_1_1Core_1_1IModel" id="r_ac2be962e432918488eed2b24a5dcc62e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespaceConsoleForge_1_1Core.html#a45d6a05ca04f21a284e8ebc48a09fbb4">ICmd</a>?&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="interfaceConsoleForge_1_1Core_1_1IModel.html#ac2be962e432918488eed2b24a5dcc62e">Init</a> ()</td></tr>
+<tr class="memdesc:ac2be962e432918488eed2b24a5dcc62e inherit pub_methods_interfaceConsoleForge_1_1Core_1_1IModel"><td class="mdescLeft">&#160;</td><td class="mdescRight">Called once at program start.  <br /></td></tr>
+<tr class="separator:ac2be962e432918488eed2b24a5dcc62e inherit pub_methods_interfaceConsoleForge_1_1Core_1_1IModel"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac10d1a14a46f542c10d6605d91e14e84 inherit pub_methods_interfaceConsoleForge_1_1Core_1_1IModel" id="r_ac10d1a14a46f542c10d6605d91e14e84"><td class="memItemLeft" align="right" valign="top">
+<a class="el" href="interfaceConsoleForge_1_1Core_1_1IModel.html">IModel</a>? <a class="el" href="namespaceConsoleForge_1_1Core.html#a45d6a05ca04f21a284e8ebc48a09fbb4">ICmd</a> <a class="el" href="classConsoleForge_1_1Core_1_1Cmd.html">Cmd</a>&#160;</td><td class="memItemRight" valign="bottom"><b>Update</b> (<a class="el" href="interfaceConsoleForge_1_1Core_1_1IMsg.html">IMsg</a> msg)</td></tr>
+<tr class="separator:ac10d1a14a46f542c10d6605d91e14e84 inherit pub_methods_interfaceConsoleForge_1_1Core_1_1IModel"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a32cf667a63b22052900ccf5a22c05ff5 inherit pub_methods_interfaceConsoleForge_1_1Core_1_1IModel" id="r_a32cf667a63b22052900ccf5a22c05ff5"><td class="memItemLeft" align="right" valign="top"><a class="el" href="interfaceConsoleForge_1_1Layout_1_1IWidget.html">IWidget</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="interfaceConsoleForge_1_1Core_1_1IModel.html#a32cf667a63b22052900ccf5a22c05ff5">View</a> ()</td></tr>
+<tr class="memdesc:a32cf667a63b22052900ccf5a22c05ff5 inherit pub_methods_interfaceConsoleForge_1_1Core_1_1IModel"><td class="mdescLeft">&#160;</td><td class="mdescRight">Produce the root widget for the current model state.  <br /></td></tr>
+<tr class="separator:a32cf667a63b22052900ccf5a22c05ff5 inherit pub_methods_interfaceConsoleForge_1_1Core_1_1IModel"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="inherit_header pub_attribs_interfaceConsoleForge_1_1Core_1_1IModel"><td colspan="2" onclick="javascript:toggleInherit('pub_attribs_interfaceConsoleForge_1_1Core_1_1IModel')"><img src="closed.png" alt="-"/>&#160;Public Attributes inherited from <a class="el" href="interfaceConsoleForge_1_1Core_1_1IModel.html">ConsoleForge.Core.IModel</a></td></tr>
+<tr class="memitem:a061db75f6f84b23b7d93f0dcacda8bac inherit pub_attribs_interfaceConsoleForge_1_1Core_1_1IModel" id="r_a061db75f6f84b23b7d93f0dcacda8bac"><td class="memItemLeft" align="right" valign="top"><a class="el" href="interfaceConsoleForge_1_1Core_1_1IModel.html">IModel</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="interfaceConsoleForge_1_1Core_1_1IModel.html#a061db75f6f84b23b7d93f0dcacda8bac">Model</a></td></tr>
+<tr class="memdesc:a061db75f6f84b23b7d93f0dcacda8bac inherit pub_attribs_interfaceConsoleForge_1_1Core_1_1IModel"><td class="mdescLeft">&#160;</td><td class="mdescRight">Pure update function.  <br /></td></tr>
+<tr class="separator:a061db75f6f84b23b7d93f0dcacda8bac inherit pub_attribs_interfaceConsoleForge_1_1Core_1_1IModel"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Interface for reusable sub-components that maintain their own state but do not own the program loop. </p>
-<p>Parent models hold TModel as a field and delegate Update calls. </p>
-<div class="typeconstraint">
-<dl><dt><b>Type Constraints</b></dt><dd>
-<table border="0" cellspacing="2" cellpadding="0">
-<tr><td valign="top"><em>TModel</em></td><td>&#160;:</td><td valign="top"><em><a class="el" href="interfaceConsoleForge_1_1Core_1_1IComponent.html">IComponent</a>&lt;TModel&gt;</em></td><td>&#160;</td></tr>
-</table>
-</dd>
+<div class="textblock"><p>A self-contained sub-program: owns its own state, update logic, and view. </p>
+<p>A self-contained sub-program that can signal completion by setting Result to a non-null value.</p>
+<p>Implements IModel so it can be run standalone via Program.Run or embedded inside a parent model. </p>
+<p>Use IComponent&lt;TResult&gt; when the component needs to signal completion and return a typed result to its parent. </p>
+<p><b>Pattern</b> — define one <code>sealed record</code> per logical screen or reusable interactive widget, implement IComponent, and embed it as a typed field in the parent model:</p>
+<div class="fragment"><div class="line"><span class="keyword">public</span> <span class="keyword">sealed</span> record MyPage : <a class="code hl_interface" href="interfaceConsoleForge_1_1Core_1_1IComponent.html">IComponent</a></div>
+<div class="line">{</div>
+<div class="line">    <span class="keyword">static</span> readonly <a class="code hl_class" href="classConsoleForge_1_1Core_1_1KeyMap.html">KeyMap</a> Keys = <span class="keyword">new</span> <a class="code hl_class" href="classConsoleForge_1_1Core_1_1KeyMap.html">KeyMap</a>()</div>
+<div class="line">        .<a class="code hl_function" href="classConsoleForge_1_1Core_1_1KeyMap.html#a0e5afa3c430fa57a0edb430d1b5f906f">On</a>(ConsoleKey.Escape, () =&gt; <span class="keyword">new</span> <a class="code hl_variable" href="namespaceConsoleForge_1_1Core.html#a30424b461ca34f7b670ddfdce24cf396">QuitMsg</a>());</div>
+<div class="line"> </div>
+<div class="line">    <span class="keyword">public</span> <span class="keywordtype">int</span> Counter { <span class="keyword">get</span>; init; }</div>
+<div class="line"> </div>
+<div class="line">    <span class="keyword">public</span> <a class="code hl_function" href="namespaceConsoleForge_1_1Core.html#a45d6a05ca04f21a284e8ebc48a09fbb4">ICmd</a>? Init() =&gt; <span class="keyword">null</span>;</div>
+<div class="line"> </div>
+<div class="line">    <span class="keyword">public</span> (<a class="code hl_interface" href="interfaceConsoleForge_1_1Core_1_1IModel.html">IModel</a> Model, <a class="code hl_function" href="namespaceConsoleForge_1_1Core.html#a45d6a05ca04f21a284e8ebc48a09fbb4">ICmd</a>? <a class="code hl_class" href="classConsoleForge_1_1Core_1_1Cmd.html">Cmd</a>) Update(<a class="code hl_interface" href="interfaceConsoleForge_1_1Core_1_1IMsg.html">IMsg</a> msg)</div>
+<div class="line">    {</div>
+<div class="line">        <span class="keywordflow">if</span> (Keys.Handle(msg) is { } action) msg = action;</div>
+<div class="line">        <span class="keywordflow">return</span> msg <span class="keywordflow">switch</span></div>
+<div class="line">        {</div>
+<div class="line">            NavUpMsg =&gt; (<span class="keyword">this</span> with { Counter = Counter + 1 }, <span class="keyword">null</span>),</div>
+<div class="line">            _        =&gt; (<span class="keyword">this</span>, <span class="keyword">null</span>),</div>
+<div class="line">        };</div>
+<div class="line">    }</div>
+<div class="line"> </div>
+<div class="line">    <span class="keyword">public</span> IWidget View() =&gt; <span class="keyword">new</span> TextBlock($<span class="stringliteral">&quot;Count: {Counter}&quot;</span>);</div>
+<div class="line">}</div>
+<div class="line"> </div>
+<div class="line"><span class="comment">// In the parent model:</span></div>
+<div class="line">record AppModel(MyPage Page, ...) : IModel</div>
+<div class="line">{</div>
+<div class="line">    <span class="keyword">public</span> (IModel Model, <a class="code hl_function" href="namespaceConsoleForge_1_1Core.html#a45d6a05ca04f21a284e8ebc48a09fbb4">ICmd</a>? Cmd) Update(IMsg msg)</div>
+<div class="line">    {</div>
+<div class="line">        var (next, cmd) = Component.Delegate(Page, msg);</div>
+<div class="line">        <span class="keywordflow">return</span> (<span class="keyword">this</span> with { Page = next }, cmd);</div>
+<div class="line">    }</div>
+<div class="line">}</div>
+<div class="ttc" id="aclassConsoleForge_1_1Core_1_1Cmd_html"><div class="ttname"><a href="classConsoleForge_1_1Core_1_1Cmd.html">ConsoleForge.Core.Cmd</a></div><div class="ttdoc">Factory for creating common command values.</div><div class="ttdef"><b>Definition</b> Cmd.cs:5</div></div>
+<div class="ttc" id="aclassConsoleForge_1_1Core_1_1KeyMap_html"><div class="ttname"><a href="classConsoleForge_1_1Core_1_1KeyMap.html">ConsoleForge.Core.KeyMap</a></div><div class="ttdoc">Declarative input binding map.</div><div class="ttdef"><b>Definition</b> KeyMap.cs:28</div></div>
+<div class="ttc" id="aclassConsoleForge_1_1Core_1_1KeyMap_html_a0e5afa3c430fa57a0edb430d1b5f906f"><div class="ttname"><a href="classConsoleForge_1_1Core_1_1KeyMap.html#a0e5afa3c430fa57a0edb430d1b5f906f">ConsoleForge.Core.KeyMap.On</a></div><div class="ttdeci">KeyMap On(ConsoleKey key, Func&lt; IMsg &gt; handler)</div><div class="ttdoc">Bind a key (any modifiers) to a message factory.</div><div class="ttdef"><b>Definition</b> KeyMap.cs:35</div></div>
+<div class="ttc" id="ainterfaceConsoleForge_1_1Core_1_1IComponent_html"><div class="ttname"><a href="interfaceConsoleForge_1_1Core_1_1IComponent.html">ConsoleForge.Core.IComponent</a></div><div class="ttdoc">A self-contained sub-program: owns its own state, update logic, and view.</div><div class="ttdef"><b>Definition</b> IComponent.cs:97</div></div>
+<div class="ttc" id="ainterfaceConsoleForge_1_1Core_1_1IModel_html"><div class="ttname"><a href="interfaceConsoleForge_1_1Core_1_1IModel.html">ConsoleForge.Core.IModel</a></div><div class="ttdoc">The root interface for all ConsoleForge application models.</div><div class="ttdef"><b>Definition</b> IModel.cs:10</div></div>
+<div class="ttc" id="ainterfaceConsoleForge_1_1Core_1_1IMsg_html"><div class="ttname"><a href="interfaceConsoleForge_1_1Core_1_1IMsg.html">ConsoleForge.Core.IMsg</a></div><div class="ttdoc">Marker interface for all messages flowing through the event loop.</div><div class="ttdef"><b>Definition</b> IMsg.cs:7</div></div>
+<div class="ttc" id="anamespaceConsoleForge_1_1Core_html_a30424b461ca34f7b670ddfdce24cf396"><div class="ttname"><a href="namespaceConsoleForge_1_1Core.html#a30424b461ca34f7b670ddfdce24cf396">ConsoleForge.Core.QuitMsg</a></div><div class="ttdeci">record QuitMsg</div><div class="ttdoc">Signals the program loop to exit cleanly.</div><div class="ttdef"><b>Definition</b> Messages.cs:6</div></div>
+<div class="ttc" id="anamespaceConsoleForge_1_1Core_html_a45d6a05ca04f21a284e8ebc48a09fbb4"><div class="ttname"><a href="namespaceConsoleForge_1_1Core.html#a45d6a05ca04f21a284e8ebc48a09fbb4">ConsoleForge.Core.ICmd</a></div><div class="ttdeci">delegate Task&lt; IMsg &gt; ICmd()</div><div class="ttdoc">A command: an async function that produces one message when complete.</div></div>
+</div><!-- fragment --> <dl class="tparams"><dt>Template Parameters</dt><dd>
+  <table class="tparams">
+    <tr><td class="paramname">TResult</td><td>The type of value produced when the component completes (e.g. <code>string</code> for a file picker, <code>bool</code> for a confirm dialog). </td></tr>
+  </table>
+  </dd>
 </dl>
-</div>
-</div><h2 class="groupheader">Member Data Documentation</h2>
-<a id="ac1d06406f9419dc2126f08a7ec1480e2" name="ac1d06406f9419dc2126f08a7ec1480e2"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ac1d06406f9419dc2126f08a7ec1480e2">&#9670;&#160;</a></span>Model</h2>
+<p>When Result is non-null the component is considered <em>completed</em>. The parent model should inspect the result in its own <code>Update</code> loop and transition state accordingly:</p>
+<div class="fragment"><div class="line"><span class="comment">// FilePicker returns the chosen path on completion</span></div>
+<div class="line"><span class="keyword">public</span> <span class="keyword">sealed</span> record FilePicker : <a class="code hl_interface" href="interfaceConsoleForge_1_1Core_1_1IComponent.html">IComponent&lt;string&gt;</a></div>
+<div class="line">{</div>
+<div class="line">    <span class="keyword">public</span> <span class="keywordtype">string</span>? Result { <span class="keyword">get</span>; init; }</div>
+<div class="line">    <span class="comment">// ... Init, Update, View</span></div>
+<div class="line">}</div>
+<div class="line"> </div>
+<div class="line"><span class="comment">// Parent model embeds the picker and handles its result</span></div>
+<div class="line">record AppModel(FilePicker? Picker, <span class="keywordtype">string</span>? ChosenFile) : IModel</div>
+<div class="line">{</div>
+<div class="line">    <span class="keyword">public</span> (IModel Model, ICmd? Cmd) Update(IMsg msg)</div>
+<div class="line">    {</div>
+<div class="line">        <span class="keywordflow">if</span> (Picker is not <span class="keyword">null</span>)</div>
+<div class="line">        {</div>
+<div class="line">            var (next, cmd) = Component.Delegate(Picker, msg);</div>
+<div class="line">            <span class="keywordflow">if</span> (next.IsCompleted())</div>
+<div class="line">                <span class="keywordflow">return</span> (<span class="keyword">this</span> with { Picker = <span class="keyword">null</span>, ChosenFile = next.Result }, cmd);</div>
+<div class="line">            <span class="keywordflow">return</span> (<span class="keyword">this</span> with { Picker = next }, cmd);</div>
+<div class="line">        }</div>
+<div class="line">        <span class="comment">// ... root-level handling</span></div>
+<div class="line">    }</div>
+<div class="line">}</div>
+</div><!-- fragment --> </div><h2 class="groupheader">Property Documentation</h2>
+<a id="ade232f57012c86044d47b3e95fc3e909" name="ade232f57012c86044d47b3e95fc3e909"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ade232f57012c86044d47b3e95fc3e909">&#9670;&#160;</a></span>Result</h2>
 
 <div class="memitem">
 <div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">TModel <a class="el" href="interfaceConsoleForge_1_1Core_1_1IComponent.html">ConsoleForge.Core.IComponent</a>&lt; TModel &gt;.Model</td>
+          <td class="memname">TResult <a class="el" href="interfaceConsoleForge_1_1Core_1_1IComponent.html">ConsoleForge.Core.IComponent</a>&lt; out TResult &gt;.Result</td>
         </tr>
       </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">get</span></span>  </td>
+  </tr>
+</table>
 </div><div class="memdoc">
 
-<p>Handle a message. </p>
-<p>Returns the updated component state and an optional command. </p>
+<p>The result value produced when this component completes. </p>
+<p><code>null</code> while the component is still running. Once non-null the component is considered done; the parent should read the result and decide what happens next. </p>
 
 </div>
 </div>

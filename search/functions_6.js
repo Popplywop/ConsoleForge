@@ -1,7 +1,6 @@
 var searchData=
 [
-  ['icmd_0',['ICmd',['../namespaceConsoleForge_1_1Core.html#a45d6a05ca04f21a284e8ebc48a09fbb4',1,'ConsoleForge::Core']]],
-  ['init_1',['Init',['../interfaceConsoleForge_1_1Core_1_1IModel.html#ac2be962e432918488eed2b24a5dcc62e',1,'ConsoleForge::Core::IModel']]],
-  ['interval_2',['Interval',['../classConsoleForge_1_1Core_1_1Sub.html#a5d8429b9faafec153bea69bdb6d247ac',1,'ConsoleForge::Core::Sub']]],
-  ['isub_3',['ISub',['../namespaceConsoleForge_1_1Core.html#a3423e4fa2afce76645b3d47bd39bdd07',1,'ConsoleForge::Core']]]
+  ['handle_0',['Handle',['../classConsoleForge_1_1Core_1_1KeyMap.html#a20e4b2b945ee015b583a281fe8effd0b',1,'ConsoleForge::Core::KeyMap']]],
+  ['handlekey_1',['HandleKey',['../classConsoleForge_1_1Core_1_1KeyMap.html#aab5b145ebfc479aa53297dbe043fb149',1,'ConsoleForge::Core::KeyMap']]],
+  ['handlemouse_2',['HandleMouse',['../classConsoleForge_1_1Core_1_1KeyMap.html#a3d243f852448897979fc2eb3e85e0f91',1,'ConsoleForge::Core::KeyMap']]]
 ];
