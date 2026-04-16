@@ -10,6 +10,13 @@ public static class Cmd
     public static ICmd Quit() => () => Task.FromResult<IMsg>(new QuitMsg());
 
     /// <summary>
+    /// Returns the given message immediately (synchronous, no async gap).
+    /// Useful when a model update needs to dispatch a follow-up message
+    /// (e.g. <see cref="ThemeChangedMsg"/>) in the same event-loop tick.
+    /// </summary>
+    public static ICmd Msg(IMsg msg) => () => Task.FromResult(msg);
+
+    /// <summary>
     /// Wrap an async function as a command.
     /// <paramref name="fn"/> receives a <see cref="CancellationToken"/> that is cancelled
     /// when the program is shutting down.

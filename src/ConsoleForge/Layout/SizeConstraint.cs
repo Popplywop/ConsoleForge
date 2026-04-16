@@ -24,9 +24,14 @@ public abstract record SizeConstraint
 
     // ── Subtypes ──────────────────────────────────────────────────────
 
+    /// <summary>Constraint that fixes the dimension to exactly <see cref="Size"/> characters.</summary>
     public sealed record FixedConstraint(int Size) : SizeConstraint;
+    /// <summary>Constraint that takes a proportional share of remaining space, weighted by <see cref="Weight"/>.</summary>
     public sealed record FlexConstraint(int Weight) : SizeConstraint;
+    /// <summary>Constraint that sizes the widget to its natural content size.</summary>
     public sealed record AutoConstraint : SizeConstraint;
+    /// <summary>Applies a minimum bound of <see cref="MinSize"/> to the resolved value of <see cref="Inner"/>.</summary>
     public sealed record MinConstraint(int MinSize, SizeConstraint Inner) : SizeConstraint;
+    /// <summary>Caps the resolved value of <see cref="Inner"/> at <see cref="MaxSize"/>.</summary>
     public sealed record MaxConstraint(int MaxSize, SizeConstraint Inner) : SizeConstraint;
 }

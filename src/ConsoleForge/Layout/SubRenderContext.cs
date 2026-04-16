@@ -11,9 +11,13 @@ public sealed class SubRenderContext : IRenderContext
 {
     private readonly IRenderContext _parent;
 
+    /// <summary>The allocated region this sub-context is restricted to.</summary>
     public Region Region { get; }
+    /// <inheritdoc/>
     public Theme Theme => _parent.Theme;
+    /// <inheritdoc/>
     public ColorProfile ColorProfile => _parent.ColorProfile;
+    /// <inheritdoc/>
     public ResolvedLayout Layout => _parent.Layout;
 
     /// <summary>
@@ -26,11 +30,19 @@ public sealed class SubRenderContext : IRenderContext
         Region = region;
     }
 
+    /// <inheritdoc/>
     public void Write(int col, int row, string text, Style style)
     {
-        // Clip to this sub-region before forwarding
         if (row < Region.Row || row >= Region.Row + Region.Height) return;
         if (col >= Region.Col + Region.Width) return;
         _parent.Write(col, row, text, style);
     }
+
+    /// <inheritdoc/>
+    public bool TryReuseWidget(IWidget widget, Region region) =>
+        _parent.TryReuseWidget(widget, region);
+
+    /// <inheritdoc/>
+    public void RegisterWidget(IWidget widget, Region region) =>
+        _parent.RegisterWidget(widget, region);
 }

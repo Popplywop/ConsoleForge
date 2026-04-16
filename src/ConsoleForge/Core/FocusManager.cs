@@ -57,10 +57,14 @@ public static class FocusManager
             foreach (var child in container.Children)
                 Collect(child, result);
         }
-        else if (widget is BorderBox box && box.Body is not null)
+        else if (widget is ILayeredContainer layered)
         {
-            // BorderBox is not IContainer but wraps a single body widget
-            Collect(box.Body, result);
+            foreach (var layer in layered.Layers)
+                Collect(layer, result);
+        }
+        else if (widget is ISingleBodyWidget wrapper && wrapper.Body is not null)
+        {
+            Collect(wrapper.Body, result);
         }
     }
 
@@ -69,5 +73,29 @@ public static class FocusManager
         for (var i = 0; i < all.Count; i++)
             if (ReferenceEquals(all[i], target)) return i;
         return -1;
+    }
+
+    /// <summary>
+    /// Returns the <see cref="IFocusable"/> whose allocated region in
+    /// <paramref name="layout"/> contains the point (<paramref name="col"/>,
+    /// <paramref name="row"/>), or null if none.
+    /// When multiple widgets overlap (e.g. inside a ZStack), the last one
+    /// in depth-first order wins (topmost layer).
+    /// </summary>
+    public static IFocusable? FindFocusableAt(
+        IWidget root, ConsoleForge.Layout.ResolvedLayout layout, int col, int row)
+    {
+        var all = CollectFocusable(root);
+        IFocusable? best = null;
+        foreach (var f in all)
+        {
+            var region = layout.GetRegion((ConsoleForge.Layout.IWidget)f);
+            if (region is null) continue;
+            var r = region.Value;
+            if (col >= r.Col && col < r.Col + r.Width &&
+                row >= r.Row && row < r.Row + r.Height)
+                best = f; // last match wins (topmost layer)
+        }
+        return best;
     }
 }

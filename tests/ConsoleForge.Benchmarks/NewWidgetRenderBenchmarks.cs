@@ -143,4 +143,71 @@ public class NewWidgetRenderBenchmarks
         var descriptor = ViewDescriptor.From(_table, existingCtx: _ctxTable, width: 80, height: 24);
         return descriptor.Content;
     }
+
+    // ── Large-dataset benchmarks — prove O(viewport) not O(total items) ──────
+
+    private IWidget _list1000     = null!;
+    private IWidget _table1000    = null!;
+    private RenderContext _ctxList1000  = null!;
+    private RenderContext _ctxTable1000 = null!;
+
+    [GlobalSetup(Targets = [
+        nameof(RenderList1000_Cold),
+        nameof(RenderTable1000_Cold),
+        nameof(RenderList1000_WarmSteady),
+        nameof(RenderTable1000_WarmSteady)])]
+    public void SetupLargeDataset()
+    {
+        var listItems = Enumerable.Range(0, 1000)
+            .Select(i => $"Item {i:D4}")
+            .ToArray();
+        _list1000 = new ConsoleForge.Widgets.List(
+            listItems, selectedIndex: 500, scrollOffset: 490);
+
+        var cols = new TableColumn[] { new("Name", Width: 20), new("Value", Width: 0) };
+        var tableRows = Enumerable.Range(0, 1000)
+            .Select(i => (IReadOnlyList<string>)new[] { $"Row {i:D4}", $"{i}" })
+            .ToList();
+        _table1000 = new Table(cols, tableRows, selectedIndex: 500, scrollOffset: 490);
+
+        _ctxList1000  = PrimeContext(_list1000,  width: 80, height: 24);
+        _ctxTable1000 = PrimeContext(_table1000, width: 80, height: 24);
+    }
+
+    /// <summary>
+    /// Cold: 1 000-item List, viewport 24 rows, scrolled to mid-list.
+    /// Cost must be flat (O(viewport)) regardless of total item count.
+    /// </summary>
+    [Benchmark]
+    public string RenderList1000_Cold()
+    {
+        var descriptor = ViewDescriptor.From(_list1000, width: 80, height: 24);
+        return descriptor.Content;
+    }
+
+    /// <summary>
+    /// Cold: 1 000-row Table, viewport 24 rows (1 header + 23 data), scrolled to mid.
+    /// </summary>
+    [Benchmark]
+    public string RenderTable1000_Cold()
+    {
+        var descriptor = ViewDescriptor.From(_table1000, width: 80, height: 24);
+        return descriptor.Content;
+    }
+
+    /// <summary>Warm-steady: 1 000-item List, no changes — only diff overhead.</summary>
+    [Benchmark]
+    public string RenderList1000_WarmSteady()
+    {
+        var descriptor = ViewDescriptor.From(_list1000, existingCtx: _ctxList1000, width: 80, height: 24);
+        return descriptor.Content;
+    }
+
+    /// <summary>Warm-steady: 1 000-row Table, no changes — only diff overhead.</summary>
+    [Benchmark]
+    public string RenderTable1000_WarmSteady()
+    {
+        var descriptor = ViewDescriptor.From(_table1000, existingCtx: _ctxTable1000, width: 80, height: 24);
+        return descriptor.Content;
+    }
 }

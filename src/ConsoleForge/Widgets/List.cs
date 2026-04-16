@@ -11,6 +11,7 @@ namespace ConsoleForge.Widgets;
 public sealed class List : IFocusable
 {
     // ── IFocusable ───────────────────────────────────────────────────────────
+    /// <inheritdoc/>
     public bool HasFocus { get; set; }
 
     // ── IWidget ─────────────────────────────────────────────────────────────
@@ -38,6 +39,13 @@ public sealed class List : IFocusable
     /// </summary>
     public int                   PaddingRight { get; init; } = 0;
 
+    /// <summary>
+    /// Zero-based index of the first item rendered in the viewport.
+    /// Update via <see cref="ComputeScrollOffset"/> when handling
+    /// <see cref="ListSelectionChangedMsg"/> to keep the selection visible.
+    /// </summary>
+    public int ScrollOffset { get; init; }
+
     /// <summary>Object-initializer constructor; all properties default.</summary>
     public List() { }
 
@@ -57,23 +65,27 @@ public sealed class List : IFocusable
     ///   Blank columns reserved to the right of each item's text.
     ///   Defaults to <c>0</c>.
     /// </param>
+    /// <param name="scrollOffset">First visible item index. Defaults to 0.</param>
     public List(
         IReadOnlyList<string> items,
         int selectedIndex = 0,
         Style? style = null,
         Style? selectedItemStyle = null,
         int paddingLeft = 1,
-        int paddingRight = 0)
+        int paddingRight = 0,
+        int scrollOffset = 0)
     {
         Items = items;
         SelectedIndex = Math.Clamp(selectedIndex, 0, Math.Max(0, items.Count - 1));
         if (style is not null) Style = style.Value;
         if (selectedItemStyle is not null) SelectedItemStyle = selectedItemStyle.Value;
-        PaddingLeft  = paddingLeft;
-        PaddingRight = paddingRight;
+        PaddingLeft   = paddingLeft;
+        PaddingRight  = paddingRight;
+        ScrollOffset  = Math.Max(0, scrollOffset);
     }
 
     // ── Key handling ─────────────────────────────────────────────────────────
+    /// <inheritdoc/>
     public void OnKeyEvent(KeyMsg key, Action<IMsg> dispatch)
     {
         switch (key.Key)
@@ -91,6 +103,7 @@ public sealed class List : IFocusable
     }
 
     // ── Render ───────────────────────────────────────────────────────────────
+    /// <inheritdoc/>
     public void Render(IRenderContext ctx)
     {
         var region = ctx.Region;
@@ -109,23 +122,19 @@ public sealed class List : IFocusable
         var leftPad  = new string(' ', padLeft);
         var rightPad = new string(' ', padRight);
 
-        var maxRows = Math.Min(Items.Count, region.Height);
+        var maxRows = Math.Min(Items.Count - ScrollOffset, region.Height);
         for (var i = 0; i < maxRows; i++)
         {
-            var rowStyle = i == SelectedIndex ? selectedStyle : baseStyle;
+            var itemIdx  = ScrollOffset + i;
+            var rowStyle = itemIdx == SelectedIndex ? selectedStyle : baseStyle;
 
             // 1. Fill the entire row so the background colour covers edge-to-edge
             ctx.Write(region.Col, region.Row + i, fill, rowStyle);
 
-            // 2. Write the padded text on top (truncated or space-padded to textWidth)
+            // 2. Write the padded text on top (fit to textWidth using visual width)
             if (textWidth > 0)
             {
-                var text = Items[i];
-                if (text.Length > textWidth)
-                    text = text[..textWidth];
-                else if (text.Length < textWidth)
-                    text = text.PadRight(textWidth);
-
+                var text = TextUtils.FitToWidth(Items[itemIdx], textWidth);
                 ctx.Write(region.Col + padLeft, region.Row + i, text, rowStyle);
             }
         }
@@ -133,6 +142,28 @@ public sealed class List : IFocusable
         // Fill rows below items with base style so background is uniform
         for (var i = maxRows; i < region.Height; i++)
             ctx.Write(region.Col, region.Row + i, fill, baseStyle);
+    }
+
+    // ── Scroll helper ──────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Computes a new <see cref="ScrollOffset"/> that keeps
+    /// <paramref name="selectedIndex"/> within the visible viewport.
+    /// Call this from your model's Update handler when processing
+    /// <see cref="ListSelectionChangedMsg"/>.
+    /// </summary>
+    /// <param name="selectedIndex">The newly selected item index.</param>
+    /// <param name="viewportHeight">Number of visible rows in the List's region.</param>
+    /// <param name="currentScrollOffset">Current <see cref="ScrollOffset"/>.</param>
+    public static int ComputeScrollOffset(
+        int selectedIndex, int viewportHeight, int currentScrollOffset)
+    {
+        if (viewportHeight <= 0) return currentScrollOffset;
+        if (selectedIndex < currentScrollOffset)
+            return selectedIndex;
+        if (selectedIndex >= currentScrollOffset + viewportHeight)
+            return selectedIndex - viewportHeight + 1;
+        return currentScrollOffset;
     }
 }
 

@@ -8,7 +8,7 @@ namespace ConsoleForge.Widgets;
 /// Default border style is <see cref="Borders.Normal"/> unless overridden by the widget
 /// style or theme.
 /// </summary>
-public sealed class BorderBox : IWidget
+public sealed class BorderBox : IWidget, ISingleBodyWidget
 {
     /// <summary>Positional/named constructor for inline usage.</summary>
     public BorderBox(string title = "", IWidget? body = null, Style? style = null)
@@ -22,10 +22,12 @@ public sealed class BorderBox : IWidget
     public string Title { get; init; } = "";
     /// <summary>Optional child widget rendered inside the border, in the inner region.</summary>
     public IWidget? Body { get; init; }
+    /// <summary>Visual style for the border and title. Defaults to <see cref="Borders.Normal"/>.</summary>
     public Style Style { get; init; } = Style.Default.Border(Borders.Normal);
     public SizeConstraint Width { get; init; } = SizeConstraint.Flex(1);
     public SizeConstraint Height { get; init; } = SizeConstraint.Flex(1);
 
+    /// <inheritdoc/>
     public void Render(IRenderContext ctx)
     {
         var effectiveStyle = Style.Inherit(ctx.Theme.BorderStyle);
@@ -38,6 +40,14 @@ public sealed class BorderBox : IWidget
             borderStyle = borderStyle.Foreground(bfg);
         if (effectiveStyle.BorderBg is { } bbg)
             borderStyle = borderStyle.Background(bbg);
+        else
+        {
+            // No explicit border bg — inherit theme background so border chars
+            // don’t punch holes showing the terminal’s default background.
+            var themeBg = ctx.Theme.BaseStyle.Bg;
+            if (themeBg is not null)
+                borderStyle = borderStyle.Background(themeBg);
+        }
 
         DrawBorder(ctx, region, border, borderStyle);
 
@@ -91,7 +101,7 @@ public sealed class BorderBox : IWidget
         var available = r.Width - 4;
         if (available <= 0) return;
 
-        var text = Title.Length > available ? Title[..available] : Title;
+        var text = TextUtils.TruncateToWidth(Title, available);
         // Position title starting at col+2 (corner + space)
         ctx.Write(r.Col + 2, r.Row, text, borderStyle);
     }

@@ -24,7 +24,18 @@ public sealed class RenderContext : IRenderContext
     private int _prevWidth;
     private int _prevHeight;
 
+    // Widget render cache: flat arrays for widget→region map from previous frame.
+    // Used by Container.Render to skip re-rendering unchanged model-stored widgets.
+    // Flat arrays are cheaper than Dictionary for typical widget counts (<100).
+    private IWidget?[]? _prevWidgets;
+    private Region[]?   _prevRegions;
+    private int         _prevWidgetCount;
+    private IWidget[]   _curWidgets  = new IWidget[32];
+    private Region[]    _curRegions  = new Region[32];
+    private int         _curWidgetCount;
+
     public Region         Region       { get; private set; }
+    /// <summary>Active theme for style inheritance. Updated by <see cref="Reset"/>.</summary>
     public Theme          Theme        { get; private set; }
     public ColorProfile   ColorProfile { get; private set; }
     public ResolvedLayout Layout       { get; private set; }
@@ -53,7 +64,8 @@ public sealed class RenderContext : IRenderContext
     /// </summary>
     public void Reset(Region region, Theme theme, ColorProfile colorProfile, ResolvedLayout layout)
     {
-        bool sizeChanged = region.Width != Region.Width || region.Height != Region.Height;
+        bool sizeChanged  = region.Width != Region.Width || region.Height != Region.Height;
+        bool themeChanged = !ReferenceEquals(theme, Theme);
 
         Region       = region;
         Theme        = theme;
@@ -62,14 +74,35 @@ public sealed class RenderContext : IRenderContext
 
         if (sizeChanged)
         {
-            // Dimension changed — allocate new buffers, discard prev (forces full redraw)
             _cells = new string[region.Width * region.Height];
             _prev  = null;
+            _prevWidgets = null;
+            _prevWidgetCount = 0;
         }
         else
         {
-            // Same dimensions — clear current buffer in place, prev buffer retained for diff
             Array.Clear(_cells, 0, _cells.Length);
+        }
+
+        // Swap widget maps: current → previous.
+        _prevWidgets     = _curWidgets;
+        _prevRegions     = _curRegions;
+        _prevWidgetCount = _curWidgetCount;
+        _curWidgetCount  = 0;
+        // Reuse arrays if large enough, else keep current allocation
+        if (_curWidgets.Length < 32)
+        {
+            _curWidgets = new IWidget[32];
+            _curRegions = new Region[32];
+        }
+
+        // Invalidate widget cache AFTER the swap so TryReuseWidget cannot
+        // serve stale cells from the old theme. Setting null here means the
+        // now-swapped _prevWidgets is discarded; all widgets render fresh.
+        if (themeChanged)
+        {
+            _prevWidgets     = null;
+            _prevWidgetCount = 0;
         }
     }
 
@@ -145,31 +178,73 @@ public sealed class RenderContext : IRenderContext
     }
 
     /// <summary>
-    /// Return the terminal display width of a Rune:
-    /// 2 for emoji and wide characters, 1 for everything else.
-    /// Uses codepoint arithmetic — no string/StringInfo allocation.
+    /// Return the terminal display width of a Rune. Delegates to <see cref="TextUtils.RuneDisplayWidth"/>.
     /// </summary>
-    private static int RuneDisplayWidth(Rune rune)
-    {
-        int v = rune.Value;
-        return v switch
-        {
-            >= 0x1F300 and <= 0x1FAFF => 2, // emoji / misc symbols
-            >= 0x2600 and <= 0x27BF   => 1, // dingbats (mostly narrow)
-            >= 0x3000 and <= 0x9FFF   => 2, // CJK
-            >= 0xF900 and <= 0xFAFF   => 2, // CJK compatibility ideographs
-            >= 0xFE30 and <= 0xFE4F   => 2, // CJK compatibility forms
-            >= 0xFF00 and <= 0xFF60   => 2, // fullwidth
-            >= 0x20000 and <= 0x2FA1F => 2, // CJK extensions
-            _ => 1
-        };
-    }
+    private static int RuneDisplayWidth(Rune rune) => TextUtils.RuneDisplayWidth(rune);
 
     /// <summary>
     /// Create a sub-context restricted to a sub-region of this context.
     /// Writes to the sub-context are forwarded to this context with adjusted coordinates.
     /// </summary>
     public SubRenderContext CreateSub(Region subRegion) => new(this, subRegion);
+
+    // ── Widget render cache ────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Record that <paramref name="widget"/> was rendered at <paramref name="region"/> this frame.
+    /// Called by <see cref="ConsoleForge.Widgets.Container"/> after rendering each child.
+    /// </summary>
+    public void RegisterWidget(IWidget widget, Region region)
+    {
+        if (_curWidgetCount >= _curWidgets.Length)
+        {
+            int newLen = _curWidgets.Length * 2;
+            Array.Resize(ref _curWidgets, newLen);
+            Array.Resize(ref _curRegions, newLen);
+        }
+        _curWidgets[_curWidgetCount] = widget;
+        _curRegions[_curWidgetCount] = region;
+        _curWidgetCount++;
+    }
+
+    /// <summary>
+    /// If <paramref name="widget"/> (same object reference) was rendered at exactly
+    /// <paramref name="region"/> last frame AND the previous cell buffer exists,
+    /// copy those cells into the current buffer and return <see langword="true"/>
+    /// (caller should skip rendering). Otherwise return <see langword="false"/>.
+    /// </summary>
+    public bool TryReuseWidget(IWidget widget, Region region)
+    {
+        if (_prev is null || _prevWidgets is null) return false;
+
+        // Linear scan — typical widget count < 100, faster than Dictionary for small N.
+        for (int i = 0; i < _prevWidgetCount; i++)
+        {
+            if (!ReferenceEquals(_prevWidgets[i], widget)) continue;
+            if (_prevRegions![i] != region) continue;
+
+            // Match! Copy cells from previous buffer.
+            int w = Region.Width;
+            int rStart = region.Row - Region.Row;
+            int rEnd   = rStart + region.Height;
+            int cStart = region.Col - Region.Col;
+            int cEnd   = Math.Min(cStart + region.Width, w);
+            for (int r = rStart; r < rEnd; r++)
+            {
+                if (r < 0 || r >= Region.Height) continue;
+                for (int c = cStart; c < cEnd; c++)
+                {
+                    int idx = r * w + c;
+                    if ((uint)idx < (uint)_cells.Length)
+                        _cells[idx] = _prev[idx];
+                }
+            }
+
+            RegisterWidget(widget, region);
+            return true;
+        }
+        return false;
+    }
 
     /// <summary>
     /// Produce a minimal ANSI frame string by diffing current cell buffer against
@@ -184,17 +259,20 @@ public sealed class RenderContext : IRenderContext
             || _prevWidth  != Region.Width
             || _prevHeight != Region.Height;
 
-        // Estimate capacity: full redraw worst-case; partial redraws will be smaller
+        // Pre-compute the themed default cell: a space rendered with the theme's base style.
+        // Any cell not written to by a widget will show this instead of a raw unstyled space,
+        // giving the entire terminal a uniform background colour.
+        var defaultCell = Theme.BaseStyle.RenderChar(' ', ColorProfile);
+
         int capacity = fullRedraw
             ? 6 + Region.Height * (10 + Region.Width * 6)
-            : Region.Width * Region.Height; // smaller estimate for partial redraws
+            : Region.Width * Region.Height;
 
         var sb = new StringBuilder(capacity);
 
         int w = Region.Width;
         int h = Region.Height;
 
-        // Cursor position tracking: only emit \x1b[row;colH when position is non-consecutive
         int lastEmittedRow = -1;
         int lastEmittedCol = -1;
 
@@ -204,12 +282,12 @@ public sealed class RenderContext : IRenderContext
             {
                 int idx = r * w + c;
                 var cell = _cells[idx];
-                string cellContent = cell is { Length: > 0 } ? cell : " ";
+                string cellContent = cell is { Length: > 0 } ? cell : defaultCell;
 
                 // Skip unchanged cells (diff against previous frame)
                 if (!fullRedraw && _prev![idx] is { } prevCell)
                 {
-                    string prevContent = prevCell is { Length: > 0 } ? prevCell : " ";
+                    string prevContent = prevCell is { Length: > 0 } ? prevCell : defaultCell;
                     if (cellContent == prevContent) continue;
                 }
 

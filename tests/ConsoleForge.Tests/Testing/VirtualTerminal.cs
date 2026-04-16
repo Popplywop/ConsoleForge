@@ -119,6 +119,12 @@ public sealed class VirtualTerminal : ITerminal
         _rawMode = false;
     }
 
+    /// <summary>No-op — mouse mode is not simulated by the virtual terminal.</summary>
+    public void EnableMouse(ConsoleForge.Terminal.MouseMode mode = ConsoleForge.Terminal.MouseMode.ButtonEvents) { }
+
+    /// <summary>No-op.</summary>
+    public void DisableMouse() { }
+
     // ── ITerminal: Input stream ───────────────────────────────────────
     /// <summary>Observable stream of input events. Inject events via <see cref="EnqueueKey"/> or <see cref="SimulateResize"/>.</summary>
     public IObservable<InputEvent> Input => _input;
@@ -188,6 +194,13 @@ public sealed class VirtualTerminal : ITerminal
     public IReadOnlyList<string> WriteHistory => _writeHistory.AsReadOnly();
 
     // ── Test injection surface ────────────────────────────────────────
+
+    /// <summary>Enqueue a synthetic mouse event to be delivered to the Input observable.</summary>
+    public void EnqueueMouse(ConsoleForge.Core.MouseMsg mouse)
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        _input.OnNext(new ConsoleForge.Terminal.MouseInputEvent(mouse));
+    }
 
     /// <summary>Enqueue a synthetic key event to be delivered to the Input observable.</summary>
     public void EnqueueKey(KeyMsg key)

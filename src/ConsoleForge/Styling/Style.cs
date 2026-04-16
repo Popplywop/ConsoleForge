@@ -339,10 +339,29 @@ public readonly struct Style : IEquatable<Style>
     internal BorderSpec BorderChars => _border;
     internal IColor? BorderFg => _borderFg;
     internal IColor? BorderBg => _borderBg;
-    internal int PaddingTop => _paddingTop;
-    internal int PaddingRight => _paddingRight;
+    internal bool HasPadding  => (_props & PaddingBit) != 0;
+    internal int PaddingTop    => _paddingTop;
+    internal int PaddingRight  => _paddingRight;
     internal int PaddingBottom => _paddingBottom;
-    internal int PaddingLeft => _paddingLeft;
+    internal int PaddingLeft   => _paddingLeft;
+    internal bool HasMargin   => (_props & MarginBit) != 0;
+    internal int MarginTop    => _marginTop;
+    internal int MarginRight  => _marginRight;
+    internal int MarginBottom => _marginBottom;
+    internal int MarginLeft   => _marginLeft;
+
+    // ── Public colour read-backs ──────────────────────────────────────────────
+    // Used by ThemeExtensions and application code to read colours back out of a
+    // Style without needing access to internal fields.
+
+    /// <summary>Foreground colour set on this style, or <see langword="null"/> if not set.</summary>
+    public IColor? Fg => (_props & FgBit) != 0 ? _fg : null;
+
+    /// <summary>Background colour set on this style, or <see langword="null"/> if not set.</summary>
+    public IColor? Bg => (_props & BgBit) != 0 ? _bg : null;
+
+    /// <summary>Border foreground colour set on this style, or <see langword="null"/> if not set.</summary>
+    public IColor? BorderColor => (_props & BorderFgBit) != 0 ? _borderFg : null;
 
     // ── IEquatable ───────────────────────────────────────────────────
     /// <summary>Returns true if this style is value-equal to <paramref name="other"/>.</summary>

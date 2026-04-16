@@ -35,6 +35,7 @@ public sealed class Container : IWidget, IContainer
 
     // ── IContainer ──────────────────────────────────────────────────────────
     public Axis Direction { get; init; }
+    /// <summary>Child widgets in declaration order.</summary>
     public IReadOnlyList<IWidget> Children { get; init; } = [];
 
     // ── IWidget ─────────────────────────────────────────────────────────────
@@ -66,7 +67,7 @@ public sealed class Container : IWidget, IContainer
         var region = ctx.Region;
         if (region.Width <= 0 || region.Height <= 0) return;
 
-        // T054: fill background using theme BaseStyle if the effective style has any properties
+        // Fill background using theme BaseStyle when the effective style has any properties
         var bgStyle = Style.Inherit(ctx.Theme.BaseStyle);
         if (!bgStyle.Equals(Styling.Style.Default))
         {
@@ -77,79 +78,108 @@ public sealed class Container : IWidget, IContainer
 
         if (Children.Count == 0) return;
 
-        // Re-run layout math relative to this context's region.
-        bool isHorizontal = Direction == Axis.Horizontal;
-        int available = isHorizontal ? region.Width : region.Height;
+        // ── Fast-path gate: no container padding and no child margins ───────────────
+        // Pre-check is O(1) + O(n) scan with early exit.
+        // When true, falls through to the original compact loop (zero overhead vs baseline).
+        if (!Style.HasPadding)
+        {
+            bool anyMargin = false;
+            for (int k = 0; k < Children.Count; k++)
+                if (Children[k].Style.HasMargin) { anyMargin = true; break; }
 
-        // Pass 1: resolve fixed sizes
+            if (!anyMargin)
+            {
+                // ── ORIGINAL TIGHT LOOP — exact baseline code ──────────────────
+                bool isHO = Direction == Axis.Horizontal;
+                int availO = isHO ? region.Width : region.Height;
+                var resO = new int[Children.Count];
+                int tFO = 0, tWO = 0;
+                for (var i = 0; i < Children.Count; i++)
+                {
+                    int sz = ResolveFixed(isHO ? Children[i].Width : Children[i].Height);
+                    if (sz >= 0) { resO[i] = sz; tFO += sz; }
+                    else { int w = GetFlexWeight(isHO ? Children[i].Width : Children[i].Height); resO[i] = -w; tWO += w; }
+                }
+                int frO = Math.Max(0, availO - tFO), dO = 0, lO = -1;
+                for (var i = 0; i < Children.Count; i++)
+                    if (resO[i] < 0) { int w = -resO[i]; int s = tWO > 0 ? frO * w / tWO : 0; resO[i] = s; dO += s; lO = i; }
+                if (lO >= 0) resO[lO] += frO - dO;
+
+                int curO = isHO ? region.Col : region.Row;
+                for (var i = 0; i < Children.Count; i++)
+                {
+                    int sz = Math.Max(0, resO[i]); if (sz == 0) { curO += sz; continue; }
+                    Region cr = isHO ? new Region(curO, region.Row, sz, region.Height)
+                                     : new Region(region.Col, curO, region.Width, sz);
+                    curO += sz;
+                    if (Scrollable && ScrollOffset > 0)
+                        cr = Direction == Axis.Vertical ? cr with { Row = cr.Row - ScrollOffset }
+                                                        : cr with { Col = cr.Col - ScrollOffset };
+                    if (!Overlaps(cr, region)) continue;
+                    Region cl = Clip(cr, region);
+                    if (cl.Width <= 0 || cl.Height <= 0) continue;
+                    if (!ctx.TryReuseWidget(Children[i], cl))
+                        Children[i].Render(new SubRenderContext(ctx, cl));
+                    ctx.RegisterWidget(Children[i], cl);
+                }
+                return; // ← fast path exits here
+            }
+        }
+
+        // ── Full path: container padding and/or at least one child has margin ────────
+        int cPL = Style.HasPadding ? Style.PaddingLeft   : 0;
+        int cPT = Style.HasPadding ? Style.PaddingTop    : 0;
+        int cPR = Style.HasPadding ? Style.PaddingRight  : 0;
+        int cPB = Style.HasPadding ? Style.PaddingBottom : 0;
+        int lW  = region.Width  - cPL - cPR;
+        int lH  = region.Height - cPT - cPB;
+        if (lW <= 0 || lH <= 0) return;
+        int lCol = region.Col + cPL, lRow = region.Row + cPT;
+        var lReg = new Region(lCol, lRow, lW, lH);
+
+        bool isH = Direction == Axis.Horizontal;
+        int avail = isH ? lW : lH;
         var resolved = new int[Children.Count];
-        int totalFixed = 0;
-        int totalFlexWeight = 0;
-
+        int tF = 0, tW = 0;
         for (var i = 0; i < Children.Count; i++)
         {
-            var constraint = isHorizontal ? Children[i].Width : Children[i].Height;
-            int size = ResolveFixed(constraint);
-            if (size >= 0)
-            {
-                resolved[i] = size;
-                totalFixed += size;
-            }
-            else
-            {
-                int weight = GetFlexWeight(constraint);
-                resolved[i] = -weight;
-                totalFlexWeight += weight;
-            }
+            var cs = Children[i].Style;
+            int mM = cs.HasMargin ? (isH ? cs.MarginLeft + cs.MarginRight : cs.MarginTop + cs.MarginBottom) : 0;
+            int sz = ResolveFixed(isH ? Children[i].Width : Children[i].Height);
+            if (sz >= 0) { resolved[i] = sz + mM; tF += sz + mM; }
+            else { int w = GetFlexWeight(isH ? Children[i].Width : Children[i].Height); resolved[i] = -w; tW += w; }
         }
+        int fr = Math.Max(0, avail - tF), di = 0, la = -1;
+        for (var i = 0; i < Children.Count; i++)
+            if (resolved[i] < 0) { int w = -resolved[i]; int s = tW > 0 ? fr * w / tW : 0; resolved[i] = s; di += s; la = i; }
+        if (la >= 0) resolved[la] += fr - di;
 
-        // Pass 2: distribute free space to flex children
-        int freeSpace = Math.Max(0, available - totalFixed);
-        int distributed = 0;
-        int lastFlexIndex = -1;
+        int cur = isH ? lCol : lRow, cross = isH ? lH : lW, crossO = isH ? lRow : lCol;
         for (var i = 0; i < Children.Count; i++)
         {
-            if (resolved[i] < 0)
-            {
-                int weight = -resolved[i];
-                int share = totalFlexWeight > 0 ? freeSpace * weight / totalFlexWeight : 0;
-                resolved[i] = share;
-                distributed += share;
-                lastFlexIndex = i;
-            }
-        }
-        if (lastFlexIndex >= 0)
-            resolved[lastFlexIndex] += freeSpace - distributed;
-
-        // Render each child in its computed sub-region
-        int cursor = isHorizontal ? region.Col : region.Row;
-        for (var i = 0; i < Children.Count; i++)
-        {
-            int size = Math.Max(0, resolved[i]);
-            if (size == 0) { cursor += size; continue; }
-
-            Region childRegion = isHorizontal
-                ? new Region(cursor, region.Row, size, region.Height)
-                : new Region(region.Col, cursor, region.Width, size);
-            cursor += size;
-
-            // Apply scroll offset for scrollable containers
+            int ts = Math.Max(0, resolved[i]); if (ts == 0) { cur += ts; continue; }
+            var cs = Children[i].Style;
+            int mS = cs.HasMargin ? (isH ? cs.MarginLeft   : cs.MarginTop)    : 0;
+            int mE = cs.HasMargin ? (isH ? cs.MarginRight  : cs.MarginBottom) : 0;
+            int cS = cs.HasMargin ? (isH ? cs.MarginTop    : cs.MarginLeft)   : 0;
+            int cE = cs.HasMargin ? (isH ? cs.MarginBottom : cs.MarginRight)  : 0;
+            Region cr = isH
+                ? new Region(cur + mS, crossO + cS, Math.Max(0, ts - mS - mE), Math.Max(0, cross - cS - cE))
+                : new Region(crossO + cS, cur + mS, Math.Max(0, cross - cS - cE), Math.Max(0, ts - mS - mE));
+            cur += ts;
             if (Scrollable && ScrollOffset > 0)
-            {
-                childRegion = Direction == Axis.Vertical
-                    ? childRegion with { Row = childRegion.Row - ScrollOffset }
-                    : childRegion with { Col = childRegion.Col - ScrollOffset };
-            }
-
-            // Skip children fully outside the container's region
-            if (!Overlaps(childRegion, region)) continue;
-            Region clipped = Clip(childRegion, region);
-            if (clipped.Width <= 0 || clipped.Height <= 0) continue;
-
-            var sub = new SubRenderContext(ctx, clipped);
-            Children[i].Render(sub);
+                cr = Direction == Axis.Vertical ? cr with { Row = cr.Row - ScrollOffset }
+                                                : cr with { Col = cr.Col - ScrollOffset };
+            if (!Overlaps(cr, lReg)) continue;
+            Region cl = Clip(cr, lReg);
+            if (cl.Width <= 0 || cl.Height <= 0) continue;
+            if (!ctx.TryReuseWidget(Children[i], cl))
+                Children[i].Render(new SubRenderContext(ctx, cl));
+            ctx.RegisterWidget(Children[i], cl);
         }
     }
+
+    // Removed helper methods — fast path and full path both inline above.
 
     // ── Layout helpers (mirrors LayoutEngine logic) ──────────────────────────
 

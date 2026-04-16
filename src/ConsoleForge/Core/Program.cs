@@ -18,6 +18,7 @@ public sealed class Program
 {
     private Theme _theme = Theme.Default;
     private ColorProfile _colorProfile = ColorProfile.TrueColor;
+    private bool _enableMouse;
 
     /// <summary>Detected color capability of the current terminal.</summary>
     public ColorProfile ColorProfile => _colorProfile;
@@ -45,12 +46,14 @@ public sealed class Program
         IModel model,
         ITerminal? terminal = null,
         Theme? theme = null,
-        int targetFps = 30)
+        int targetFps = 30,
+        bool enableMouse = false)
     {
         var program = new Program
         {
-            _theme = theme ?? Theme.Default,
-            _colorProfile = DetectColorProfile()
+            _theme      = theme ?? Theme.Default,
+            _colorProfile = DetectColorProfile(),
+            _enableMouse  = enableMouse,
         };
         return program.RunInternal(model, terminal, targetFps);
     }
@@ -86,6 +89,7 @@ public sealed class Program
             _terminal.EnterAlternateScreen();
             // Hide cursor once for the whole session — shown again in finally
             _terminal.SetCursorVisible(false);
+            if (_enableMouse) _terminal.EnableMouse();
 
             // Send initial resize
             _channel.Writer.TryWrite(new WindowResizeMsg(_terminal.Width, _terminal.Height));
@@ -101,6 +105,8 @@ public sealed class Program
                     _channel.Writer.TryWrite(k.Key);
                 else if (ev is ResizeInputEvent r)
                     _channel.Writer.TryWrite(new WindowResizeMsg(r.Width, r.Height));
+                else if (ev is MouseInputEvent m)
+                    _channel.Writer.TryWrite(m.Mouse);
             });
 
             // Init model
@@ -180,6 +186,7 @@ public sealed class Program
             StopAllSubscriptions();
             if (_terminal is not null)
             {
+                if (_enableMouse) _terminal.DisableMouse();
                 _terminal.SetCursorVisible(true); // Restore cursor before exiting
             }
             if (ownTerminal)
@@ -203,12 +210,21 @@ public sealed class Program
     {
         // QuitMsg is handled by the event loop directly; should not reach here.
 
+        // Intercept ThemeChangedMsg: update the runtime theme immediately,
+        // then fall through so the model can update its own theme-tracking state.
+        if (msg is ThemeChangedMsg themeChange)
+            SetTheme(themeChange.NewTheme);
+
         // Handle Tab for focus traversal, then fall through to model.Update
-        // so models can also react to Tab (e.g. page navigation).
         if (msg is KeyMsg { Key: ConsoleKey.Tab } tabKey)
         {
             HandleTabFocus(model, tabKey.Shift);
-            // Do NOT return — model.Update still receives the Tab key below.
+        }
+
+        // Click-to-focus: left-click press moves focus to the clicked widget
+        if (msg is MouseMsg { Button: MouseButton.Left, Action: MouseAction.Press } click)
+        {
+            HandleMouseFocus(model, click);
         }
 
         // Route key events to the focused widget
@@ -259,6 +275,25 @@ public sealed class Program
         _channel.Writer.TryWrite(new FocusIndexChangedMsg(_focusIndex));
     }
 
+    private void HandleMouseFocus(IModel model, MouseMsg click)
+    {
+        var rootWidget = model.View();
+        var layout     = Layout.LayoutEngine.Resolve(
+            rootWidget, _terminal!.Width, _terminal.Height);
+
+        var hit = FocusManager.FindFocusableAt(rootWidget, layout, click.Col, click.Row);
+        if (hit is null) return;
+
+        var focusable = FocusManager.CollectFocusable(rootWidget);
+        var idx = -1;
+        for (var i = 0; i < focusable.Count; i++)
+            if (ReferenceEquals(focusable[i], hit)) { idx = i; break; }
+
+        if (idx < 0 || idx == _focusIndex) return;
+        _focusIndex = idx;
+        _channel.Writer.TryWrite(new FocusIndexChangedMsg(_focusIndex));
+    }
+
     private void RouteKeyToFocused(IModel model, KeyMsg keyMsg)
     {
         // Key routing to focused widget: the widget is owned by the model.
@@ -269,8 +304,24 @@ public sealed class Program
         // Direct OnKeyEvent invocation is available via the FocusManager API.
     }
 
-    private void DispatchCmd(ICmd? cmd) =>
+    private void DispatchCmd(ICmd? cmd)
+    {
+        if (cmd is null) return;
+
+        // Fast path: if the cmd completes synchronously (e.g. Cmd.Msg, Cmd.Quit),
+        // write the result directly to the channel — no Task.Run scheduling delay.
+        // This ensures follow-up messages (like ThemeChangedMsg) arrive before the
+        // next render timer tick, preventing stale-cache frames.
+        var task = cmd();
+        if (task.IsCompletedSuccessfully)
+        {
+            _channel.Writer.TryWrite(task.Result);
+            return;
+        }
+
+        // Slow path: genuinely async commands go through the thread pool.
         CmdDispatcher.Dispatch(cmd, _channel.Writer, _cts.Token);
+    }
 
     private void ReconcileSubscriptions(IModel model)
     {

@@ -26,38 +26,31 @@ public sealed class TextBlock : IWidget
     public SizeConstraint Width { get; init; } = SizeConstraint.Auto;
     public SizeConstraint Height { get; init; } = SizeConstraint.Auto;
 
+    /// <inheritdoc/>
     public void Render(IRenderContext ctx)
     {
         var effectiveStyle = Style.Inherit(ctx.Theme.BaseStyle);
         var region = ctx.Region;
         if (region.Width <= 0 || region.Height <= 0) return;
 
-        var lines = WrapText(Text, region.Width);
-        var maxRows = Math.Min(lines.Count, region.Height);
+        // Apply widget's own padding (not inherited — padding is a local property)
+        int padT = Style.HasPadding ? Style.PaddingTop    : 0;
+        int padR = Style.HasPadding ? Style.PaddingRight  : 0;
+        int padB = Style.HasPadding ? Style.PaddingBottom : 0;
+        int padL = Style.HasPadding ? Style.PaddingLeft   : 0;
+
+        int textCol   = region.Col  + padL;
+        int textRow   = region.Row  + padT;
+        int textWidth = Math.Max(0, region.Width  - padL - padR);
+        int textHeight= Math.Max(0, region.Height - padT - padB);
+        if (textWidth <= 0 || textHeight <= 0) return;
+
+        var lines = WrapText(Text, textWidth);
+        var maxRows = Math.Min(lines.Count, textHeight);
         for (var i = 0; i < maxRows; i++)
-            ctx.Write(region.Col, region.Row + i, lines[i], effectiveStyle);
+            ctx.Write(textCol, textRow + i, lines[i], effectiveStyle);
     }
 
-    internal static List<string> WrapText(string text, int width)
-    {
-        if (width <= 0) return [];
-
-        var result = new List<string>();
-        foreach (var rawLine in text.Split('\n'))
-        {
-            if (rawLine.Length == 0)
-            {
-                result.Add("");
-                continue;
-            }
-            var remaining = rawLine.AsSpan();
-            while (remaining.Length > width)
-            {
-                result.Add(remaining[..width].ToString());
-                remaining = remaining[width..];
-            }
-            result.Add(remaining.ToString());
-        }
-        return result;
-    }
+    internal static List<string> WrapText(string text, int width) =>
+        TextUtils.WrapToWidth(text, width);
 }

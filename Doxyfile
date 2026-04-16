@@ -1,12 +1,13 @@
-# Doxyfile for ConsoleForge v1
+# Doxyfile for ConsoleForge v0.2.0
 # Generated for Doxygen 1.16.x
 
 #---------------------------------------------------------------------------
 # Project
 #---------------------------------------------------------------------------
 PROJECT_NAME           = "ConsoleForge"
-PROJECT_NUMBER         = 0.1.0
+PROJECT_NUMBER         = 0.2.0
 PROJECT_BRIEF          = "Elm-architecture TUI framework for .NET 8"
+PROJECT_LOGO           =
 OUTPUT_DIRECTORY       = docs
 CREATE_SUBDIRS         = NO
 OUTPUT_LANGUAGE        = English
@@ -20,8 +21,13 @@ FILE_PATTERNS          = *.cs
 RECURSIVE              = YES
 EXCLUDE_PATTERNS       = */bin/* */obj/*
 
+# Exclude terminal internals (Termios P/Invoke and Windows kernel details)
+# that are implementation details, not API surface.
+EXCLUDE                = src/ConsoleForge/Terminal/Termios.cs \
+                         src/ConsoleForge/Terminal/WindowsConsole.cs
+
 #---------------------------------------------------------------------------
-# Source parsing — C# XML doc via OPTIMIZE_OUTPUT_FOR_C / JAVADOC style
+# Source parsing — C# XML doc via JAVADOC-style bridge
 #---------------------------------------------------------------------------
 OPTIMIZE_OUTPUT_JAVA   = YES
 JAVADOC_AUTOBRIEF      = YES
@@ -35,6 +41,13 @@ SHOW_INCLUDE_FILES     = NO
 INLINE_SOURCES         = NO
 
 #---------------------------------------------------------------------------
+# Groups / namespaces
+#---------------------------------------------------------------------------
+# Map C# namespaces to Doxygen groups for cleaner navigation.
+ENABLE_PREPROCESSING   = YES
+MACRO_EXPANSION        = NO
+
+#---------------------------------------------------------------------------
 # HTML output
 #---------------------------------------------------------------------------
 GENERATE_HTML          = YES
@@ -42,11 +55,14 @@ HTML_OUTPUT            = html
 HTML_FILE_EXTENSION    = .html
 HTML_COLORSTYLE        = DARK
 GENERATE_TREEVIEW      = YES
-TREEVIEW_WIDTH         = 250
+TREEVIEW_WIDTH         = 280
 DISABLE_INDEX          = NO
 FULL_SIDEBAR           = NO
 HTML_DYNAMIC_SECTIONS  = YES
 SEARCHENGINE           = YES
+
+# Extra CSS tweaks for readability (optional, add docs/custom.css if desired)
+HTML_EXTRA_STYLESHEET  =
 
 #---------------------------------------------------------------------------
 # No LaTeX / RTF / man / XML
@@ -59,12 +75,14 @@ GENERATE_DOCBOOK       = NO
 GENERATE_AUTOGEN_DEF   = NO
 
 #---------------------------------------------------------------------------
-# Diagrams — use built-in dot if available, else skip
+# Diagrams — disabled (no Graphviz dependency required)
 #---------------------------------------------------------------------------
 HAVE_DOT               = NO
 COLLABORATION_GRAPH    = NO
 INCLUDE_GRAPH          = NO
 INCLUDED_BY_GRAPH      = NO
+CALL_GRAPH             = NO
+CALLER_GRAPH           = NO
 
 #---------------------------------------------------------------------------
 # Warnings
@@ -73,9 +91,18 @@ QUIET                  = NO
 WARNINGS               = YES
 WARN_IF_UNDOCUMENTED   = YES
 WARN_IF_DOC_ERROR      = YES
-WARN_NO_PARAMDOC       = NO
+WARN_NO_PARAMDOC       = YES
 WARN_AS_ERROR          = NO
 WARN_LOGFILE           = docs/doxygen-warnings.log
+
+#---------------------------------------------------------------------------
+# Namespace → module mapping (improves treeview grouping)
+#---------------------------------------------------------------------------
+# ConsoleForge.Core     — runtime loop, model, commands, components, keymaps
+# ConsoleForge.Layout   — layout engine, render context, widget interfaces
+# ConsoleForge.Styling  — styles, themes, colours, borders
+# ConsoleForge.Terminal — terminal abstraction and platform implementations
+# ConsoleForge.Widgets  — all built-in widget implementations
 
 #---------------------------------------------------------------------------
 # Misc
@@ -85,4 +112,6 @@ BUILTIN_STL_SUPPORT    = YES
 CPP_CLI_SUPPORT        = YES
 TAB_SIZE               = 4
 MARKDOWN_SUPPORT       = YES
+MARKDOWN_ID_STYLE      = DOXYGEN
 TOC_INCLUDE_HEADINGS   = 3
+TYPEDEF_HIDES_STRUCT   = NO

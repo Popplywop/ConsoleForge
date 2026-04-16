@@ -10,6 +10,7 @@ namespace ConsoleForge.Widgets;
 public sealed class TextInput : IFocusable
 {
     // ── IFocusable ───────────────────────────────────────────────────────────
+    /// <inheritdoc/>
     public bool HasFocus { get; set; }
 
     // ── IWidget ─────────────────────────────────────────────────────────────
@@ -92,6 +93,7 @@ public sealed class TextInput : IFocusable
     }
 
     // ── Render ───────────────────────────────────────────────────────────────
+    /// <inheritdoc/>
     public void Render(IRenderContext ctx)
     {
         var region = ctx.Region;
@@ -99,22 +101,29 @@ public sealed class TextInput : IFocusable
 
         var effectiveStyle = Style.Inherit(ctx.Theme.BaseStyle);
 
-        var display = Value.Length > 0 ? Value : Placeholder;
-        // Clip to region width
-        if (display.Length > region.Width)
-            display = display[..region.Width];
+        // Apply widget's own padding (not inherited — local property)
+        int padL = Style.HasPadding ? Style.PaddingLeft  : 0;
+        int padR = Style.HasPadding ? Style.PaddingRight : 0;
+        int textCol   = region.Col + padL;
+        int textWidth = Math.Max(0, region.Width - padL - padR);
+        if (textWidth <= 0) return;
 
-        ctx.Write(region.Col, region.Row, display, effectiveStyle);
+        var display = Value.Length > 0 ? Value : Placeholder;
+        // Clip to region width (visual-width-aware for wide chars)
+        display = TextUtils.TruncateToWidth(display, textWidth);
+        var displayVisualWidth = TextUtils.VisualWidth(display);
+
+        ctx.Write(textCol, region.Row, display, effectiveStyle);
 
         // Draw cursor when focused
         if (HasFocus)
         {
-            int cursorCol = region.Col + Math.Min(CursorPosition, region.Width - 1);
+            int cursorScreenCol = textCol + Math.Min(CursorPosition, textWidth - 1);
             var cursorChar = CursorPosition < display.Length
                 ? display[CursorPosition].ToString()
                 : " ";
             var cursorStyle = effectiveStyle.Reverse(true);
-            ctx.Write(cursorCol, region.Row, cursorChar, cursorStyle);
+            ctx.Write(cursorScreenCol, region.Row, cursorChar, cursorStyle);
         }
     }
 }

@@ -60,6 +60,16 @@ public interface ITerminal : IDisposable
     /// <summary>Restore cooked (normal) input mode.</summary>
     void ExitRawMode();
 
+    // ── Mouse ──────────────────────────────────────────────
+    /// <summary>
+    /// Enable terminal mouse tracking. Events arrive via <see cref="Input"/> as
+    /// <see cref="MouseInputEvent"/>. No-op if already enabled or not supported.
+    /// </summary>
+    void EnableMouse(MouseMode mode = MouseMode.ButtonEvents);
+
+    /// <summary>Disable mouse tracking. No-op if not enabled.</summary>
+    void DisableMouse();
+
     // ── Input stream ─────────────────────────────────────────────────
     /// <summary>
     /// Observable stream of input events (keypresses, resize events).
@@ -83,6 +93,19 @@ public abstract record InputEvent;
 public sealed record KeyInputEvent(KeyMsg Key) : InputEvent;
 /// <summary>Input event raised when the terminal is resized.</summary>
 public sealed record ResizeInputEvent(int Width, int Height) : InputEvent;
+/// <summary>Input event raised by a mouse action.</summary>
+public sealed record MouseInputEvent(ConsoleForge.Core.MouseMsg Mouse) : InputEvent;
+
+/// <summary>
+/// Mouse tracking mode passed to <see cref="ITerminal.EnableMouse"/>.
+/// </summary>
+public enum MouseMode
+{
+    /// <summary>Report button press and release events only.</summary>
+    ButtonEvents,
+    /// <summary>Report button events AND all mouse movement.</summary>
+    AllMotion,
+}
 
 /// <summary>
 /// Event arguments carrying the new terminal dimensions after a resize.

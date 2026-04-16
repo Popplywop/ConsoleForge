@@ -61,6 +61,14 @@ public sealed class Table : IWidget
     public int SelectedIndex { get; init; } = -1;
 
     /// <summary>
+    /// Zero-based index of the first data row rendered in the viewport.
+    /// The header row is not affected by this offset.
+    /// Update via <see cref="ComputeScrollOffset"/> when handling
+    /// <see cref="TableSelectionChangedMsg"/> to keep the selected row visible.
+    /// </summary>
+    public int ScrollOffset { get; init; }
+
+    /// <summary>
     /// Character used to separate columns. Defaults to <c>'\0'</c> (no separator).
     /// When non-zero the separator is always rendered with the base row style so it
     /// never inherits the selection highlight.
@@ -97,15 +105,17 @@ public sealed class Table : IWidget
         Style? headerStyle = null,
         Style? rowStyle = null,
         int paddingLeft = 1,
-        int paddingRight = 1)
+        int paddingRight = 1,
+        int scrollOffset = 0)
     {
-        Columns = columns;
-        Rows = rows;
+        Columns       = columns;
+        Rows          = rows;
         SelectedIndex = selectedIndex;
         if (headerStyle is not null) HeaderStyle = headerStyle.Value;
-        if (rowStyle is not null) RowStyle = rowStyle.Value;
-        PaddingLeft  = paddingLeft;
-        PaddingRight = paddingRight;
+        if (rowStyle is not null)    RowStyle    = rowStyle.Value;
+        PaddingLeft   = paddingLeft;
+        PaddingRight  = paddingRight;
+        ScrollOffset  = Math.Max(0, scrollOffset);
     }
 
     // ── Render ───────────────────────────────────────────────────────────────
@@ -145,8 +155,10 @@ public sealed class Table : IWidget
                 renderRow++;
             }
 
-            // Data rows — iterate columns by index, no per-row ToList()
-            for (var i = 0; i < Rows.Count && renderRow < maxRow; i++, renderRow++)
+            // Data rows — only render the visible window [ScrollOffset, ScrollOffset+visibleRows)
+            var visibleRows = maxRow - renderRow; // rows remaining after header
+            var lastRow     = Math.Min(ScrollOffset + visibleRows, Rows.Count);
+            for (var i = ScrollOffset; i < lastRow && renderRow < maxRow; i++, renderRow++)
             {
                 var style = i == SelectedIndex ? effectiveSelected : effectiveRow;
                 RenderDataRow(ctx, region.Col, renderRow, colWidths, Rows[i], style, effectiveRow);
@@ -208,8 +220,7 @@ public sealed class Table : IWidget
 
             var textW = Math.Max(0, w - padL - padR);
             var text  = Columns[i].Header;
-            if (text.Length > textW) text = text[..textW];
-            else if (text.Length < textW) text = text.PadRight(textW);
+            text = TextUtils.FitToWidth(text, textW);
 
             // Write: left-pad · text · right-pad — fills exactly w columns.
             ctx.Write(col,          row, new string(' ', padL), style);
@@ -240,8 +251,7 @@ public sealed class Table : IWidget
 
             var textW = Math.Max(0, w - padL - padR);
             var text  = i < cells.Count ? cells[i] : "";
-            if (text.Length > textW) text = text[..textW];
-            else if (text.Length < textW) text = text.PadRight(textW);
+            text = TextUtils.FitToWidth(text, textW);
 
             // Per-column style override (applied on top of rowStyle).
             var cellStyle = (Columns[i].Style?.Inherit(rowStyle)) ?? rowStyle;
@@ -252,10 +262,35 @@ public sealed class Table : IWidget
             col += w;
         }
     }
+
+    // ── Scroll helper ──────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Computes a new <see cref="ScrollOffset"/> that keeps
+    /// <paramref name="selectedIndex"/> within the visible data-row viewport.
+    /// Call this from your model's Update handler when processing
+    /// <see cref="TableSelectionChangedMsg"/>.
+    /// </summary>
+    /// <param name="selectedIndex">The newly selected row index.</param>
+    /// <param name="viewportHeight">
+    /// Number of rows in the Table's region minus 1 for the header row.
+    /// </param>
+    /// <param name="currentScrollOffset">Current <see cref="ScrollOffset"/>.</param>
+    public static int ComputeScrollOffset(
+        int selectedIndex, int viewportHeight, int currentScrollOffset)
+    {
+        if (viewportHeight <= 0) return currentScrollOffset;
+        if (selectedIndex < currentScrollOffset)
+            return selectedIndex;
+        if (selectedIndex >= currentScrollOffset + viewportHeight)
+            return selectedIndex - viewportHeight + 1;
+        return currentScrollOffset;
+    }
 }
 
 /// <summary>
 /// Dispatched when the selected row in a <see cref="Table"/> changes.
-/// The model should replace its Table reference with <c>table with { SelectedIndex = msg.NewIndex }</c>.
+/// The model should replace its Table reference with
+/// <c>table with { SelectedIndex = msg.NewIndex, ScrollOffset = Table.ComputeScrollOffset(...) }</c>.
 /// </summary>
 public sealed record TableSelectionChangedMsg(Table Source, int NewIndex) : IMsg;
