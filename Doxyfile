@@ -17,8 +17,7 @@ OUTPUT_LANGUAGE        = English
 #---------------------------------------------------------------------------
 INPUT                  = src/ConsoleForge \
                          src/ConsoleForge.SourceGen \
-                         README.md \
-                         src/ConsoleForge.SourceGen/README.md
+                         README.md
 INPUT_ENCODING         = UTF-8
 FILE_PATTERNS          = *.cs *.md
 RECURSIVE              = YES
@@ -125,7 +124,7 @@ WARN_LOGFILE           = docs/doxygen-warnings.log
 #---------------------------------------------------------------------------
 # Misc
 #---------------------------------------------------------------------------
-AUTOLINK_SUPPORT       = YES
+AUTOLINK_SUPPORT       = NO
 BUILTIN_STL_SUPPORT    = YES
 CPP_CLI_SUPPORT        = YES
 TAB_SIZE               = 4
