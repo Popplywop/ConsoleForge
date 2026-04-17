@@ -1,4 +1,5 @@
 var searchData=
 [
-  ['focusmanager_0',['FocusManager',['../classConsoleForge_1_1Core_1_1FocusManager.html',1,'ConsoleForge::Core']]]
+  ['dispatchupdateattribute_0',['DispatchUpdateAttribute',['../classConsoleForge_1_1Core_1_1DispatchUpdateAttribute.html',1,'ConsoleForge::Core']]],
+  ['dispatchupdategenerator_1',['DispatchUpdateGenerator',['../classDispatchUpdateGenerator.html',1,'']]]
 ];

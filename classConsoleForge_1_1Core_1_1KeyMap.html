@@ -25,7 +25,7 @@
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">ConsoleForge<span id="projectnumber">&#160;0.2.0</span>
+   <div id="projectname">ConsoleForge<span id="projectnumber">&#160;0.2.1</span>
    </div>
    <div id="projectbrief">Elm-architecture TUI framework for .NET 8</div>
   </td>
@@ -103,6 +103,20 @@ $(document).ready(function(){initNavTree('classConsoleForge_1_1Core_1_1KeyMap.ht
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
+<tr class="memitem:a20e4b2b945ee015b583a281fe8effd0b" id="r_a20e4b2b945ee015b583a281fe8effd0b"><td class="memItemLeft" align="right" valign="top"><a class="el" href="interfaceConsoleForge_1_1Core_1_1IMsg.html">IMsg</a>?&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classConsoleForge_1_1Core_1_1KeyMap.html#a20e4b2b945ee015b583a281fe8effd0b">Handle</a> (<a class="el" href="interfaceConsoleForge_1_1Core_1_1IMsg.html">IMsg</a> msg)</td></tr>
+<tr class="memdesc:a20e4b2b945ee015b583a281fe8effd0b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Try to resolve an input message to an application message.  <br /></td></tr>
+<tr class="separator:a20e4b2b945ee015b583a281fe8effd0b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aab5b145ebfc479aa53297dbe043fb149" id="r_aab5b145ebfc479aa53297dbe043fb149"><td class="memItemLeft" align="right" valign="top"><a id="aab5b145ebfc479aa53297dbe043fb149" name="aab5b145ebfc479aa53297dbe043fb149"></a>
+<a class="el" href="interfaceConsoleForge_1_1Core_1_1IMsg.html">IMsg</a>?&#160;</td><td class="memItemRight" valign="bottom"><b>HandleKey</b> (KeyMsg key)</td></tr>
+<tr class="memdesc:aab5b145ebfc479aa53297dbe043fb149"><td class="mdescLeft">&#160;</td><td class="mdescRight">Try to resolve a keyboard message. Returns null if no binding matches. <br /></td></tr>
+<tr class="separator:aab5b145ebfc479aa53297dbe043fb149"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3d243f852448897979fc2eb3e85e0f91" id="r_a3d243f852448897979fc2eb3e85e0f91"><td class="memItemLeft" align="right" valign="top"><a id="a3d243f852448897979fc2eb3e85e0f91" name="a3d243f852448897979fc2eb3e85e0f91"></a>
+<a class="el" href="interfaceConsoleForge_1_1Core_1_1IMsg.html">IMsg</a>?&#160;</td><td class="memItemRight" valign="bottom"><b>HandleMouse</b> (MouseMsg mouse)</td></tr>
+<tr class="memdesc:a3d243f852448897979fc2eb3e85e0f91"><td class="mdescLeft">&#160;</td><td class="mdescRight">Try to resolve a mouse message. Returns null if no binding matches. <br /></td></tr>
+<tr class="separator:a3d243f852448897979fc2eb3e85e0f91"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a79577b29f93e84cc7003cb21ab38f129" id="r_a79577b29f93e84cc7003cb21ab38f129"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classConsoleForge_1_1Core_1_1KeyMap.html">KeyMap</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classConsoleForge_1_1Core_1_1KeyMap.html#a79577b29f93e84cc7003cb21ab38f129">Merge</a> (<a class="el" href="classConsoleForge_1_1Core_1_1KeyMap.html">KeyMap</a> other)</td></tr>
+<tr class="memdesc:a79577b29f93e84cc7003cb21ab38f129"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create a new KeyMap containing all bindings from this map followed by all bindings from <em>other</em> .  <br /></td></tr>
+<tr class="separator:a79577b29f93e84cc7003cb21ab38f129"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0e5afa3c430fa57a0edb430d1b5f906f" id="r_a0e5afa3c430fa57a0edb430d1b5f906f"><td class="memItemLeft" align="right" valign="top"><a id="a0e5afa3c430fa57a0edb430d1b5f906f" name="a0e5afa3c430fa57a0edb430d1b5f906f"></a>
 <a class="el" href="classConsoleForge_1_1Core_1_1KeyMap.html">KeyMap</a>&#160;</td><td class="memItemRight" valign="bottom"><b>On</b> (ConsoleKey key, Func&lt; <a class="el" href="interfaceConsoleForge_1_1Core_1_1IMsg.html">IMsg</a> &gt; handler)</td></tr>
 <tr class="memdesc:a0e5afa3c430fa57a0edb430d1b5f906f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Bind a key (any modifiers) to a message factory. <br /></td></tr>
@@ -123,32 +137,18 @@ Public Member Functions</h2></td></tr>
 <a class="el" href="classConsoleForge_1_1Core_1_1KeyMap.html">KeyMap</a>&#160;</td><td class="memItemRight" valign="bottom"><b>OnClick</b> (Func&lt; MouseMsg, <a class="el" href="interfaceConsoleForge_1_1Core_1_1IMsg.html">IMsg</a> &gt; handler)</td></tr>
 <tr class="memdesc:a94827461ee6c5ab6ca35e51e902b4bed"><td class="mdescLeft">&#160;</td><td class="mdescRight">Bind left-click press events. <br /></td></tr>
 <tr class="separator:a94827461ee6c5ab6ca35e51e902b4bed"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a13e756688dcc5691f6cea79c542c6981" id="r_a13e756688dcc5691f6cea79c542c6981"><td class="memItemLeft" align="right" valign="top"><a id="a13e756688dcc5691f6cea79c542c6981" name="a13e756688dcc5691f6cea79c542c6981"></a>
-<a class="el" href="classConsoleForge_1_1Core_1_1KeyMap.html">KeyMap</a>&#160;</td><td class="memItemRight" valign="bottom"><b>OnScroll</b> (Func&lt; MouseMsg, <a class="el" href="interfaceConsoleForge_1_1Core_1_1IMsg.html">IMsg</a> &gt; handler)</td></tr>
-<tr class="memdesc:a13e756688dcc5691f6cea79c542c6981"><td class="mdescLeft">&#160;</td><td class="mdescRight">Bind scroll-wheel events (both up and down). <br /></td></tr>
-<tr class="separator:a13e756688dcc5691f6cea79c542c6981"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aad51b4b0a9b321820bd83ae37518f37f" id="r_aad51b4b0a9b321820bd83ae37518f37f"><td class="memItemLeft" align="right" valign="top"><a id="aad51b4b0a9b321820bd83ae37518f37f" name="aad51b4b0a9b321820bd83ae37518f37f"></a>
-<a class="el" href="classConsoleForge_1_1Core_1_1KeyMap.html">KeyMap</a>&#160;</td><td class="memItemRight" valign="bottom"><b>OnMouse</b> (<a class="el" href="namespaceConsoleForge_1_1Core.html#a41c27369bb8f4a11b68352b1c4ac51a9">MouseButton</a> button, <a class="el" href="namespaceConsoleForge_1_1Core.html#a0b19fe63275c4899aaf1c92764fbb209">MouseAction</a> action, Func&lt; MouseMsg, <a class="el" href="interfaceConsoleForge_1_1Core_1_1IMsg.html">IMsg</a> &gt; handler)</td></tr>
-<tr class="memdesc:aad51b4b0a9b321820bd83ae37518f37f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Bind a specific mouse button + action combination. <br /></td></tr>
-<tr class="separator:aad51b4b0a9b321820bd83ae37518f37f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a45ee2808f33951bdd17b6d01304f6e3d" id="r_a45ee2808f33951bdd17b6d01304f6e3d"><td class="memItemLeft" align="right" valign="top"><a id="a45ee2808f33951bdd17b6d01304f6e3d" name="a45ee2808f33951bdd17b6d01304f6e3d"></a>
 <a class="el" href="classConsoleForge_1_1Core_1_1KeyMap.html">KeyMap</a>&#160;</td><td class="memItemRight" valign="bottom"><b>OnMouse</b> (Func&lt; MouseMsg, bool &gt; predicate, Func&lt; MouseMsg, <a class="el" href="interfaceConsoleForge_1_1Core_1_1IMsg.html">IMsg</a> &gt; handler)</td></tr>
 <tr class="memdesc:a45ee2808f33951bdd17b6d01304f6e3d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Bind any mouse event matching <em>predicate</em> . <br /></td></tr>
 <tr class="separator:a45ee2808f33951bdd17b6d01304f6e3d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a20e4b2b945ee015b583a281fe8effd0b" id="r_a20e4b2b945ee015b583a281fe8effd0b"><td class="memItemLeft" align="right" valign="top"><a class="el" href="interfaceConsoleForge_1_1Core_1_1IMsg.html">IMsg</a>?&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classConsoleForge_1_1Core_1_1KeyMap.html#a20e4b2b945ee015b583a281fe8effd0b">Handle</a> (<a class="el" href="interfaceConsoleForge_1_1Core_1_1IMsg.html">IMsg</a> msg)</td></tr>
-<tr class="memdesc:a20e4b2b945ee015b583a281fe8effd0b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Try to resolve an input message to an application message.  <br /></td></tr>
-<tr class="separator:a20e4b2b945ee015b583a281fe8effd0b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aab5b145ebfc479aa53297dbe043fb149" id="r_aab5b145ebfc479aa53297dbe043fb149"><td class="memItemLeft" align="right" valign="top"><a id="aab5b145ebfc479aa53297dbe043fb149" name="aab5b145ebfc479aa53297dbe043fb149"></a>
-<a class="el" href="interfaceConsoleForge_1_1Core_1_1IMsg.html">IMsg</a>?&#160;</td><td class="memItemRight" valign="bottom"><b>HandleKey</b> (KeyMsg key)</td></tr>
-<tr class="memdesc:aab5b145ebfc479aa53297dbe043fb149"><td class="mdescLeft">&#160;</td><td class="mdescRight">Try to resolve a keyboard message. Returns null if no binding matches. <br /></td></tr>
-<tr class="separator:aab5b145ebfc479aa53297dbe043fb149"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3d243f852448897979fc2eb3e85e0f91" id="r_a3d243f852448897979fc2eb3e85e0f91"><td class="memItemLeft" align="right" valign="top"><a id="a3d243f852448897979fc2eb3e85e0f91" name="a3d243f852448897979fc2eb3e85e0f91"></a>
-<a class="el" href="interfaceConsoleForge_1_1Core_1_1IMsg.html">IMsg</a>?&#160;</td><td class="memItemRight" valign="bottom"><b>HandleMouse</b> (MouseMsg mouse)</td></tr>
-<tr class="memdesc:a3d243f852448897979fc2eb3e85e0f91"><td class="mdescLeft">&#160;</td><td class="mdescRight">Try to resolve a mouse message. Returns null if no binding matches. <br /></td></tr>
-<tr class="separator:a3d243f852448897979fc2eb3e85e0f91"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a79577b29f93e84cc7003cb21ab38f129" id="r_a79577b29f93e84cc7003cb21ab38f129"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classConsoleForge_1_1Core_1_1KeyMap.html">KeyMap</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classConsoleForge_1_1Core_1_1KeyMap.html#a79577b29f93e84cc7003cb21ab38f129">Merge</a> (<a class="el" href="classConsoleForge_1_1Core_1_1KeyMap.html">KeyMap</a> other)</td></tr>
-<tr class="memdesc:a79577b29f93e84cc7003cb21ab38f129"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create a new KeyMap containing all bindings from this map followed by all bindings from <em>other</em> .  <br /></td></tr>
-<tr class="separator:a79577b29f93e84cc7003cb21ab38f129"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aad51b4b0a9b321820bd83ae37518f37f" id="r_aad51b4b0a9b321820bd83ae37518f37f"><td class="memItemLeft" align="right" valign="top"><a id="aad51b4b0a9b321820bd83ae37518f37f" name="aad51b4b0a9b321820bd83ae37518f37f"></a>
+<a class="el" href="classConsoleForge_1_1Core_1_1KeyMap.html">KeyMap</a>&#160;</td><td class="memItemRight" valign="bottom"><b>OnMouse</b> (<a class="el" href="namespaceConsoleForge_1_1Core.html#a41c27369bb8f4a11b68352b1c4ac51a9">MouseButton</a> button, <a class="el" href="namespaceConsoleForge_1_1Core.html#a0b19fe63275c4899aaf1c92764fbb209">MouseAction</a> action, Func&lt; MouseMsg, <a class="el" href="interfaceConsoleForge_1_1Core_1_1IMsg.html">IMsg</a> &gt; handler)</td></tr>
+<tr class="memdesc:aad51b4b0a9b321820bd83ae37518f37f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Bind a specific mouse button + action combination. <br /></td></tr>
+<tr class="separator:aad51b4b0a9b321820bd83ae37518f37f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a13e756688dcc5691f6cea79c542c6981" id="r_a13e756688dcc5691f6cea79c542c6981"><td class="memItemLeft" align="right" valign="top"><a id="a13e756688dcc5691f6cea79c542c6981" name="a13e756688dcc5691f6cea79c542c6981"></a>
+<a class="el" href="classConsoleForge_1_1Core_1_1KeyMap.html">KeyMap</a>&#160;</td><td class="memItemRight" valign="bottom"><b>OnScroll</b> (Func&lt; MouseMsg, <a class="el" href="interfaceConsoleForge_1_1Core_1_1IMsg.html">IMsg</a> &gt; handler)</td></tr>
+<tr class="memdesc:a13e756688dcc5691f6cea79c542c6981"><td class="mdescLeft">&#160;</td><td class="mdescRight">Bind scroll-wheel events (both up and down). <br /></td></tr>
+<tr class="separator:a13e756688dcc5691f6cea79c542c6981"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="properties" name="properties"></a>
 Properties</h2></td></tr>

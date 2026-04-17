@@ -25,7 +25,7 @@
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">ConsoleForge<span id="projectnumber">&#160;0.2.0</span>
+   <div id="projectname">ConsoleForge<span id="projectnumber">&#160;0.2.1</span>
    </div>
    <div id="projectbrief">Elm-architecture TUI framework for .NET 8</div>
   </td>
@@ -115,6 +115,13 @@ $(document).ready(function(){initNavTree('classConsoleForge_1_1Widgets_1_1Tabs.h
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
+<tr class="memitem:aea823c994e81f9819bf7155839e438ec" id="r_aea823c994e81f9819bf7155839e438ec"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classConsoleForge_1_1Widgets_1_1Tabs.html#aea823c994e81f9819bf7155839e438ec">OnKeyEvent</a> (KeyMsg key, Action&lt; <a class="el" href="interfaceConsoleForge_1_1Core_1_1IMsg.html">IMsg</a> &gt; dispatch)</td></tr>
+<tr class="memdesc:aea823c994e81f9819bf7155839e438ec"><td class="mdescLeft">&#160;</td><td class="mdescRight">Left/Right arrows cycle tabs.  <br /></td></tr>
+<tr class="separator:aea823c994e81f9819bf7155839e438ec"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6b8df02f21cc150e12bf31e2047fe44a" id="r_a6b8df02f21cc150e12bf31e2047fe44a"><td class="memItemLeft" align="right" valign="top"><a id="a6b8df02f21cc150e12bf31e2047fe44a" name="a6b8df02f21cc150e12bf31e2047fe44a"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>Render</b> (<a class="el" href="interfaceConsoleForge_1_1Layout_1_1IRenderContext.html">IRenderContext</a> ctx)</td></tr>
+<tr class="memdesc:a6b8df02f21cc150e12bf31e2047fe44a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Renders the tab bar on row 0 of the allocated region, then delegates Body into the remaining rows. <br /></td></tr>
+<tr class="separator:a6b8df02f21cc150e12bf31e2047fe44a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4955804e20b6f50cdb0b964ce81b1f3f" id="r_a4955804e20b6f50cdb0b964ce81b1f3f"><td class="memItemLeft" align="right" valign="top"><a id="a4955804e20b6f50cdb0b964ce81b1f3f" name="a4955804e20b6f50cdb0b964ce81b1f3f"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><b>Tabs</b> ()</td></tr>
 <tr class="memdesc:a4955804e20b6f50cdb0b964ce81b1f3f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Object-initializer constructor; all properties default. <br /></td></tr>
@@ -122,31 +129,28 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:afed827dd52f0d86124248ecb8d16d4ce" id="r_afed827dd52f0d86124248ecb8d16d4ce"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classConsoleForge_1_1Widgets_1_1Tabs.html#afed827dd52f0d86124248ecb8d16d4ce">Tabs</a> (IReadOnlyList&lt; string &gt; labels, int activeIndex=0, <a class="el" href="interfaceConsoleForge_1_1Layout_1_1IWidget.html">IWidget</a>? body=null, <a class="el" href="structConsoleForge_1_1Styling_1_1Style.html">Style</a>? style=null, <a class="el" href="structConsoleForge_1_1Styling_1_1Style.html">Style</a>? activeTabStyle=null, <a class="el" href="structConsoleForge_1_1Styling_1_1Style.html">Style</a>? inactiveTabStyle=null)</td></tr>
 <tr class="memdesc:afed827dd52f0d86124248ecb8d16d4ce"><td class="mdescLeft">&#160;</td><td class="mdescRight">Positional constructor for inline usage.  <br /></td></tr>
 <tr class="separator:afed827dd52f0d86124248ecb8d16d4ce"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aea823c994e81f9819bf7155839e438ec" id="r_aea823c994e81f9819bf7155839e438ec"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classConsoleForge_1_1Widgets_1_1Tabs.html#aea823c994e81f9819bf7155839e438ec">OnKeyEvent</a> (KeyMsg key, Action&lt; <a class="el" href="interfaceConsoleForge_1_1Core_1_1IMsg.html">IMsg</a> &gt; dispatch)</td></tr>
-<tr class="memdesc:aea823c994e81f9819bf7155839e438ec"><td class="mdescLeft">&#160;</td><td class="mdescRight">Left/Right arrows cycle tabs.  <br /></td></tr>
-<tr class="separator:aea823c994e81f9819bf7155839e438ec"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6b8df02f21cc150e12bf31e2047fe44a" id="r_a6b8df02f21cc150e12bf31e2047fe44a"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classConsoleForge_1_1Widgets_1_1Tabs.html#a6b8df02f21cc150e12bf31e2047fe44a">Render</a> (<a class="el" href="interfaceConsoleForge_1_1Layout_1_1IRenderContext.html">IRenderContext</a> ctx)</td></tr>
-<tr class="memdesc:a6b8df02f21cc150e12bf31e2047fe44a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Renders the tab bar on row 0 of the allocated region, then delegates Body into the remaining rows.  <br /></td></tr>
-<tr class="separator:a6b8df02f21cc150e12bf31e2047fe44a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="properties" name="properties"></a>
 Properties</h2></td></tr>
-<tr class="memitem:a17c6226c13d90f0e5acd8ca972bc32f8" id="r_a17c6226c13d90f0e5acd8ca972bc32f8"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classConsoleForge_1_1Widgets_1_1Tabs.html#a17c6226c13d90f0e5acd8ca972bc32f8">HasFocus</a><code> [get, set]</code></td></tr>
-<tr class="memdesc:a17c6226c13d90f0e5acd8ca972bc32f8"><td class="mdescLeft">&#160;</td><td class="mdescRight">True when this widget holds keyboard focus.  <br /></td></tr>
-<tr class="separator:a17c6226c13d90f0e5acd8ca972bc32f8"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5b3cd73b8b7d5b07a6f7f605cfabcda6" id="r_a5b3cd73b8b7d5b07a6f7f605cfabcda6"><td class="memItemLeft" align="right" valign="top">SizeConstraint&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classConsoleForge_1_1Widgets_1_1Tabs.html#a5b3cd73b8b7d5b07a6f7f605cfabcda6">Width</a> = SizeConstraint.Flex(1)<code> [get]</code></td></tr>
-<tr class="memdesc:a5b3cd73b8b7d5b07a6f7f605cfabcda6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Width constraint used by the layout engine.  <br /></td></tr>
-<tr class="separator:a5b3cd73b8b7d5b07a6f7f605cfabcda6"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4c6797e14f9c245f4b63cf9c87760d1b" id="r_a4c6797e14f9c245f4b63cf9c87760d1b"><td class="memItemLeft" align="right" valign="top">SizeConstraint&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classConsoleForge_1_1Widgets_1_1Tabs.html#a4c6797e14f9c245f4b63cf9c87760d1b">Height</a> = SizeConstraint.Flex(1)<code> [get]</code></td></tr>
-<tr class="memdesc:a4c6797e14f9c245f4b63cf9c87760d1b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Height constraint used by the layout engine.  <br /></td></tr>
-<tr class="separator:a4c6797e14f9c245f4b63cf9c87760d1b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4c424dbd2c106a2cf68602e5922b0666" id="r_a4c424dbd2c106a2cf68602e5922b0666"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structConsoleForge_1_1Styling_1_1Style.html">Style</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classConsoleForge_1_1Widgets_1_1Tabs.html#a4c424dbd2c106a2cf68602e5922b0666">Style</a> = Style.Default<code> [get]</code></td></tr>
-<tr class="memdesc:a4c424dbd2c106a2cf68602e5922b0666"><td class="mdescLeft">&#160;</td><td class="mdescRight">Visual style for the tab bar row. Inherits theme base style when unset.  <br /></td></tr>
-<tr class="separator:a4c424dbd2c106a2cf68602e5922b0666"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2022f8f8134b2110524a65f0e26abbbc" id="r_a2022f8f8134b2110524a65f0e26abbbc"><td class="memItemLeft" align="right" valign="top"><a id="a2022f8f8134b2110524a65f0e26abbbc" name="a2022f8f8134b2110524a65f0e26abbbc"></a>
+int&#160;</td><td class="memItemRight" valign="bottom"><b>ActiveIndex</b><code> [get]</code></td></tr>
+<tr class="memdesc:a2022f8f8134b2110524a65f0e26abbbc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Zero-based index of the currently active tab. <br /></td></tr>
+<tr class="separator:a2022f8f8134b2110524a65f0e26abbbc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a33538e97f6304790381310c5a99c9aaf" id="r_a33538e97f6304790381310c5a99c9aaf"><td class="memItemLeft" align="right" valign="top"><a id="a33538e97f6304790381310c5a99c9aaf" name="a33538e97f6304790381310c5a99c9aaf"></a>
 <a class="el" href="structConsoleForge_1_1Styling_1_1Style.html">Style</a>&#160;</td><td class="memItemRight" valign="bottom"><b>ActiveTabStyle</b> = Style.Default.Bold(true).Underline(true)<code> [get]</code></td></tr>
 <tr class="memdesc:a33538e97f6304790381310c5a99c9aaf"><td class="mdescLeft">&#160;</td><td class="mdescRight">Style applied to the active tab label. <br /></td></tr>
 <tr class="separator:a33538e97f6304790381310c5a99c9aaf"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae83b1ab38728c21047f5ca32b61f1beb" id="r_ae83b1ab38728c21047f5ca32b61f1beb"><td class="memItemLeft" align="right" valign="top"><a class="el" href="interfaceConsoleForge_1_1Layout_1_1IWidget.html">IWidget</a>?&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classConsoleForge_1_1Widgets_1_1Tabs.html#ae83b1ab38728c21047f5ca32b61f1beb">Body</a><code> [get]</code></td></tr>
+<tr class="memdesc:ae83b1ab38728c21047f5ca32b61f1beb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Content widget to render below the tab bar.  <br /></td></tr>
+<tr class="separator:ae83b1ab38728c21047f5ca32b61f1beb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a17c6226c13d90f0e5acd8ca972bc32f8" id="r_a17c6226c13d90f0e5acd8ca972bc32f8"><td class="memItemLeft" align="right" valign="top"><a id="a17c6226c13d90f0e5acd8ca972bc32f8" name="a17c6226c13d90f0e5acd8ca972bc32f8"></a>
+bool&#160;</td><td class="memItemRight" valign="bottom"><b>HasFocus</b><code> [get, set]</code></td></tr>
+<tr class="memdesc:a17c6226c13d90f0e5acd8ca972bc32f8"><td class="mdescLeft">&#160;</td><td class="mdescRight">True when this widget holds keyboard focus. <br /></td></tr>
+<tr class="separator:a17c6226c13d90f0e5acd8ca972bc32f8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4c6797e14f9c245f4b63cf9c87760d1b" id="r_a4c6797e14f9c245f4b63cf9c87760d1b"><td class="memItemLeft" align="right" valign="top"><a id="a4c6797e14f9c245f4b63cf9c87760d1b" name="a4c6797e14f9c245f4b63cf9c87760d1b"></a>
+SizeConstraint&#160;</td><td class="memItemRight" valign="bottom"><b>Height</b> = SizeConstraint.Flex(1)<code> [get]</code></td></tr>
+<tr class="memdesc:a4c6797e14f9c245f4b63cf9c87760d1b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Height constraint used by the layout engine. <br /></td></tr>
+<tr class="separator:a4c6797e14f9c245f4b63cf9c87760d1b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab35384311faa3a02ea7a8fd41a2d05c3" id="r_ab35384311faa3a02ea7a8fd41a2d05c3"><td class="memItemLeft" align="right" valign="top"><a id="ab35384311faa3a02ea7a8fd41a2d05c3" name="ab35384311faa3a02ea7a8fd41a2d05c3"></a>
 <a class="el" href="structConsoleForge_1_1Styling_1_1Style.html">Style</a>&#160;</td><td class="memItemRight" valign="bottom"><b>InactiveTabStyle</b> = Style.Default<code> [get]</code></td></tr>
 <tr class="memdesc:ab35384311faa3a02ea7a8fd41a2d05c3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Style applied to inactive tab labels. <br /></td></tr>
@@ -155,16 +159,17 @@ Properties</h2></td></tr>
 IReadOnlyList&lt; string &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>Labels</b> = []<code> [get]</code></td></tr>
 <tr class="memdesc:acf76ed455be0de8479c5c49fd6cb5a8c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Tab label strings in declaration order. <br /></td></tr>
 <tr class="separator:acf76ed455be0de8479c5c49fd6cb5a8c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2022f8f8134b2110524a65f0e26abbbc" id="r_a2022f8f8134b2110524a65f0e26abbbc"><td class="memItemLeft" align="right" valign="top"><a id="a2022f8f8134b2110524a65f0e26abbbc" name="a2022f8f8134b2110524a65f0e26abbbc"></a>
-int&#160;</td><td class="memItemRight" valign="bottom"><b>ActiveIndex</b><code> [get]</code></td></tr>
-<tr class="memdesc:a2022f8f8134b2110524a65f0e26abbbc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Zero-based index of the currently active tab. <br /></td></tr>
-<tr class="separator:a2022f8f8134b2110524a65f0e26abbbc"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae83b1ab38728c21047f5ca32b61f1beb" id="r_ae83b1ab38728c21047f5ca32b61f1beb"><td class="memItemLeft" align="right" valign="top"><a class="el" href="interfaceConsoleForge_1_1Layout_1_1IWidget.html">IWidget</a>?&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classConsoleForge_1_1Widgets_1_1Tabs.html#ae83b1ab38728c21047f5ca32b61f1beb">Body</a><code> [get]</code></td></tr>
-<tr class="memdesc:ae83b1ab38728c21047f5ca32b61f1beb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Content widget to render below the tab bar.  <br /></td></tr>
-<tr class="separator:ae83b1ab38728c21047f5ca32b61f1beb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a645e3e967c551c5353e5f0020b6b44d5" id="r_a645e3e967c551c5353e5f0020b6b44d5"><td class="memItemLeft" align="right" valign="top">char&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classConsoleForge_1_1Widgets_1_1Tabs.html#a645e3e967c551c5353e5f0020b6b44d5">Separator</a> = '│'<code> [get]</code></td></tr>
 <tr class="memdesc:a645e3e967c551c5353e5f0020b6b44d5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Character used to separate tab labels in the bar.  <br /></td></tr>
 <tr class="separator:a645e3e967c551c5353e5f0020b6b44d5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4c424dbd2c106a2cf68602e5922b0666" id="r_a4c424dbd2c106a2cf68602e5922b0666"><td class="memItemLeft" align="right" valign="top"><a id="a4c424dbd2c106a2cf68602e5922b0666" name="a4c424dbd2c106a2cf68602e5922b0666"></a>
+<a class="el" href="structConsoleForge_1_1Styling_1_1Style.html">Style</a>&#160;</td><td class="memItemRight" valign="bottom"><b>Style</b> = Style.Default<code> [get]</code></td></tr>
+<tr class="memdesc:a4c424dbd2c106a2cf68602e5922b0666"><td class="mdescLeft">&#160;</td><td class="mdescRight">Visual style for the tab bar row. Inherits theme base style when unset. <br /></td></tr>
+<tr class="separator:a4c424dbd2c106a2cf68602e5922b0666"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5b3cd73b8b7d5b07a6f7f605cfabcda6" id="r_a5b3cd73b8b7d5b07a6f7f605cfabcda6"><td class="memItemLeft" align="right" valign="top"><a id="a5b3cd73b8b7d5b07a6f7f605cfabcda6" name="a5b3cd73b8b7d5b07a6f7f605cfabcda6"></a>
+SizeConstraint&#160;</td><td class="memItemRight" valign="bottom"><b>Width</b> = SizeConstraint.Flex(1)<code> [get]</code></td></tr>
+<tr class="memdesc:a5b3cd73b8b7d5b07a6f7f605cfabcda6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Width constraint used by the layout engine. <br /></td></tr>
+<tr class="separator:a5b3cd73b8b7d5b07a6f7f605cfabcda6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header properties_interfaceConsoleForge_1_1Layout_1_1IFocusable"><td colspan="2" onclick="javascript:toggleInherit('properties_interfaceConsoleForge_1_1Layout_1_1IFocusable')"><img src="closed.png" alt="-"/>&#160;Properties inherited from <a class="el" href="interfaceConsoleForge_1_1Layout_1_1IFocusable.html">ConsoleForge.Layout.IFocusable</a></td></tr>
 <tr class="inherit_header properties_interfaceConsoleForge_1_1Layout_1_1IWidget"><td colspan="2" onclick="javascript:toggleInherit('properties_interfaceConsoleForge_1_1Layout_1_1IWidget')"><img src="closed.png" alt="-"/>&#160;Properties inherited from <a class="el" href="interfaceConsoleForge_1_1Layout_1_1IWidget.html">ConsoleForge.Layout.IWidget</a></td></tr>
 </table>
@@ -279,28 +284,6 @@ Number keys 1–9 — jump directly to tab N-1. </li>
 
 </div>
 </div>
-<a id="a6b8df02f21cc150e12bf31e2047fe44a" name="a6b8df02f21cc150e12bf31e2047fe44a"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a6b8df02f21cc150e12bf31e2047fe44a">&#9670;&#160;</a></span>Render()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">void ConsoleForge.Widgets.Tabs.Render </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="interfaceConsoleForge_1_1Layout_1_1IRenderContext.html">IRenderContext</a>&#160;</td>
-          <td class="paramname"><em>ctx</em></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Renders the tab bar on row 0 of the allocated region, then delegates Body into the remaining rows. </p>
-
-<p>Implements <a class="el" href="interfaceConsoleForge_1_1Layout_1_1IWidget.html#a667c894a8e08971ea9c2d2f35bddb90d">ConsoleForge.Layout.IWidget</a>.</p>
-
-</div>
-</div>
 <h2 class="groupheader">Property Documentation</h2>
 <a id="ae83b1ab38728c21047f5ca32b61f1beb" name="ae83b1ab38728c21047f5ca32b61f1beb"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ae83b1ab38728c21047f5ca32b61f1beb">&#9670;&#160;</a></span>Body</h2>
@@ -327,58 +310,6 @@ Number keys 1–9 — jump directly to tab N-1. </li>
 
 </div>
 </div>
-<a id="a17c6226c13d90f0e5acd8ca972bc32f8" name="a17c6226c13d90f0e5acd8ca972bc32f8"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a17c6226c13d90f0e5acd8ca972bc32f8">&#9670;&#160;</a></span>HasFocus</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">bool ConsoleForge.Widgets.Tabs.HasFocus</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">get</span><span class="mlabel">set</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>True when this widget holds keyboard focus. </p>
-
-<p>Implements <a class="el" href="interfaceConsoleForge_1_1Layout_1_1IFocusable.html#acff7515203359e3faf0188fe3294d2ea">ConsoleForge.Layout.IFocusable</a>.</p>
-
-</div>
-</div>
-<a id="a4c6797e14f9c245f4b63cf9c87760d1b" name="a4c6797e14f9c245f4b63cf9c87760d1b"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a4c6797e14f9c245f4b63cf9c87760d1b">&#9670;&#160;</a></span>Height</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">SizeConstraint ConsoleForge.Widgets.Tabs.Height = SizeConstraint.Flex(1)</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">get</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Height constraint used by the layout engine. </p>
-
-<p>Implements <a class="el" href="interfaceConsoleForge_1_1Layout_1_1IWidget.html#a6753e2b9c2ab70d7f9c1914fbee562cd">ConsoleForge.Layout.IWidget</a>.</p>
-
-</div>
-</div>
 <a id="a645e3e967c551c5353e5f0020b6b44d5" name="a645e3e967c551c5353e5f0020b6b44d5"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a645e3e967c551c5353e5f0020b6b44d5">&#9670;&#160;</a></span>Separator</h2>
 
@@ -401,58 +332,6 @@ Number keys 1–9 — jump directly to tab N-1. </li>
 
 <p>Character used to separate tab labels in the bar. </p>
 <p>Default <code>'│'</code>. Set to <code>'\0'</code> to disable separators. </p>
-
-</div>
-</div>
-<a id="a4c424dbd2c106a2cf68602e5922b0666" name="a4c424dbd2c106a2cf68602e5922b0666"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a4c424dbd2c106a2cf68602e5922b0666">&#9670;&#160;</a></span>Style</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="structConsoleForge_1_1Styling_1_1Style.html">Style</a> ConsoleForge.Widgets.Tabs.Style = Style.Default</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">get</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Visual style for the tab bar row. Inherits theme base style when unset. </p>
-
-<p>Implements <a class="el" href="interfaceConsoleForge_1_1Layout_1_1IWidget.html#a6f793d12abc011f0684aa6b530bfbcec">ConsoleForge.Layout.IWidget</a>.</p>
-
-</div>
-</div>
-<a id="a5b3cd73b8b7d5b07a6f7f605cfabcda6" name="a5b3cd73b8b7d5b07a6f7f605cfabcda6"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a5b3cd73b8b7d5b07a6f7f605cfabcda6">&#9670;&#160;</a></span>Width</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">SizeConstraint ConsoleForge.Widgets.Tabs.Width = SizeConstraint.Flex(1)</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">get</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Width constraint used by the layout engine. </p>
-
-<p>Implements <a class="el" href="interfaceConsoleForge_1_1Layout_1_1IWidget.html#a4755d176a57385eda84dc972fe0f2848">ConsoleForge.Layout.IWidget</a>.</p>
 
 </div>
 </div>

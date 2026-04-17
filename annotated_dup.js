@@ -4,6 +4,8 @@ var annotated_dup =
       [ "Core", "namespaceConsoleForge_1_1Core.html", [
         [ "Cmd", "classConsoleForge_1_1Core_1_1Cmd.html", "classConsoleForge_1_1Core_1_1Cmd" ],
         [ "Component", "classConsoleForge_1_1Core_1_1Component.html", "classConsoleForge_1_1Core_1_1Component" ],
+        [ "ComponentAttribute", "classConsoleForge_1_1Core_1_1ComponentAttribute.html", null ],
+        [ "DispatchUpdateAttribute", "classConsoleForge_1_1Core_1_1DispatchUpdateAttribute.html", null ],
         [ "FocusManager", "classConsoleForge_1_1Core_1_1FocusManager.html", "classConsoleForge_1_1Core_1_1FocusManager" ],
         [ "IComponent", "interfaceConsoleForge_1_1Core_1_1IComponent.html", "interfaceConsoleForge_1_1Core_1_1IComponent" ],
         [ "IHasSubscriptions", "interfaceConsoleForge_1_1Core_1_1IHasSubscriptions.html", "interfaceConsoleForge_1_1Core_1_1IHasSubscriptions" ],
@@ -54,5 +56,7 @@ var annotated_dup =
         [ "TextInput", "classConsoleForge_1_1Widgets_1_1TextInput.html", "classConsoleForge_1_1Widgets_1_1TextInput" ],
         [ "ZStack", "classConsoleForge_1_1Widgets_1_1ZStack.html", "classConsoleForge_1_1Widgets_1_1ZStack" ]
       ] ]
-    ] ]
+    ] ],
+    [ "ComponentGenerator", "classComponentGenerator.html", "classComponentGenerator" ],
+    [ "DispatchUpdateGenerator", "classDispatchUpdateGenerator.html", "classDispatchUpdateGenerator" ]
 ];

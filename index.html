@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.9.8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>ConsoleForge: Main Page</title>
+<title>ConsoleForge: ConsoleForge</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -25,7 +25,7 @@
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">ConsoleForge<span id="projectnumber">&#160;0.2.0</span>
+   <div id="projectname">ConsoleForge<span id="projectnumber">&#160;0.2.1</span>
    </div>
    <div id="projectbrief">Elm-architecture TUI framework for .NET 8</div>
   </td>
@@ -89,10 +89,331 @@ $(document).ready(function(){initNavTree('index.html',''); initResizable(); });
 </div>
 </div>
 
-<div class="header">
-  <div class="headertitle"><div class="title">ConsoleForge Documentation</div></div>
+<div><div class="header">
+  <div class="headertitle"><div class="title"><a class="el" href="namespaceConsoleForge.html">ConsoleForge</a> </div></div>
 </div><!--header-->
 <div class="contents">
+<div class="textblock"><p><a class="anchor" id="md_README"></a> An Elm-architecture TUI framework for .NET 8. Immutable model → pure update → declarative view.</p>
+<p>Built for developers who want the predictability of <a href="https://github.com/charmbracelet/bubbletea">Bubble Tea</a> in C#: no mutable widget state, no hidden side effects, and a render pipeline that only touches the cells that actually changed.</p>
+<h1><a class="anchor" id="autotoc_md3"></a>
+Features</h1>
+<ul>
+<li><b>Elm loop</b> — <code>Init</code> → <code>Update</code> → <code>View</code>. Your model is an immutable record. <code>Update</code> returns a new copy. <code>View</code> is pure.</li>
+<li><b>13 built-in widgets</b> — TextBlock, TextInput, TextArea, List, Table, Checkbox, Tabs, ProgressBar, Spinner, BorderBox, Container, Modal, ZStack</li>
+<li><b>6 named themes</b> — Dark, Light, Dracula, Nord, Monokai, Tokyo Night. Switch at runtime with one message.</li>
+<li><b>Mouse support</b> — SGR 1006 extended mouse tracking. Click-to-focus, scroll wheel, button/motion events.</li>
+<li><b>Unicode-aware layout</b> — CJK, emoji, and full-width characters render at correct column widths.</li>
+<li><b>Composable sub-programs</b> — <code>IComponent</code> / <code>IComponent&lt;TResult&gt;</code> for self-contained pages with own state, keymaps, and lifecycle.</li>
+<li><b>Declarative keybindings</b> — <code>KeyMap</code> + <code>KeyPattern</code> replace giant switch statements. Composable, context-aware.</li>
+<li><b>Virtualized scrolling</b> — List and Table render only visible rows. 1,000 items costs the same as 20.</li>
+<li><b>Double-buffered renderer</b> — Cell-level diff with per-widget dirty tracking. Only changed cells hit the terminal.</li>
+<li><b>Margin &amp; padding</b> — <code>Style.Padding(1)</code> and <code>Style.Margin(1)</code> enforced by the layout engine.</li>
+<li><b>Async commands</b> — <code>Cmd.Run</code>, <code>Cmd.Batch</code>, <code>Cmd.Sequence</code>, <code>Cmd.Tick</code>, <code>Cmd.Debounce</code>, <code>Cmd.Throttle</code>.</li>
+<li><b>Subscriptions</b> — <code>Sub.Interval</code>, <code>Sub.FromAsyncEnumerable</code>, <code>Sub.FromObservable</code> for continuous data streams.</li>
+</ul>
+<h1><a class="anchor" id="autotoc_md4"></a>
+Quick Start</h1>
+<div class="fragment"><div class="line">dotnet add package ConsoleForge</div>
+</div><!-- fragment --><div class="fragment"><div class="line"><span class="keyword">using </span><a class="code hl_namespace" href="namespaceConsoleForge_1_1Core.html">ConsoleForge.Core</a>;</div>
+<div class="line"><span class="keyword">using </span><a class="code hl_namespace" href="namespaceConsoleForge_1_1Layout.html">ConsoleForge.Layout</a>;</div>
+<div class="line"><span class="keyword">using </span><a class="code hl_namespace" href="namespaceConsoleForge_1_1Styling.html">ConsoleForge.Styling</a>;</div>
+<div class="line"><span class="keyword">using </span><a class="code hl_namespace" href="namespaceConsoleForge_1_1Widgets.html">ConsoleForge.Widgets</a>;</div>
+<div class="line"> </div>
+<div class="line"><span class="keyword">sealed</span> record HelloModel(<span class="keywordtype">int</span> Count = 0) : <a class="code hl_interface" href="interfaceConsoleForge_1_1Core_1_1IModel.html">IModel</a></div>
+<div class="line">{</div>
+<div class="line">    <span class="keyword">public</span> ICmd? Init() =&gt; <span class="keyword">null</span>;</div>
+<div class="line"> </div>
+<div class="line">    <span class="keyword">public</span> (<a class="code hl_interface" href="interfaceConsoleForge_1_1Core_1_1IModel.html">IModel</a> Model, ICmd? <a class="code hl_class" href="classConsoleForge_1_1Core_1_1Cmd.html">Cmd</a>) Update(<a class="code hl_interface" href="interfaceConsoleForge_1_1Core_1_1IMsg.html">IMsg</a> msg) =&gt; msg <span class="keywordflow">switch</span></div>
+<div class="line">    {</div>
+<div class="line">        KeyMsg { Key: ConsoleKey.UpArrow }   =&gt; (<span class="keyword">this</span> with { Count = Count + 1 }, <span class="keyword">null</span>),</div>
+<div class="line">        KeyMsg { Key: ConsoleKey.DownArrow } =&gt; (<span class="keyword">this</span> with { Count = Count - 1 }, <span class="keyword">null</span>),</div>
+<div class="line">        KeyMsg { Key: ConsoleKey.Q }         =&gt; (<span class="keyword">this</span>, <a class="code hl_class" href="classConsoleForge_1_1Core_1_1Cmd.html">Cmd</a>.<a class="code hl_function" href="classConsoleForge_1_1Core_1_1Cmd.html#a65e48526a8aa2bbd4e5f515f92a4cd1f">Quit</a>()),</div>
+<div class="line">        _ =&gt; (<span class="keyword">this</span>, <span class="keyword">null</span>),</div>
+<div class="line">    };</div>
+<div class="line"> </div>
+<div class="line">    <span class="keyword">public</span> <a class="code hl_interface" href="interfaceConsoleForge_1_1Layout_1_1IWidget.html">IWidget</a> View() =&gt;</div>
+<div class="line">        <span class="keyword">new</span> <a class="code hl_class" href="classConsoleForge_1_1Widgets_1_1BorderBox.html">BorderBox</a>(<span class="stringliteral">&quot;ConsoleForge&quot;</span>,</div>
+<div class="line">            body: new <a class="code hl_class" href="classConsoleForge_1_1Widgets_1_1Container.html">Container</a>(<a class="code hl_enumeration" href="namespaceConsoleForge_1_1Layout.html#a5ad525ec3eb9f2080c3f075c393ee264">Axis</a>.Vertical, [</div>
+<div class="line">                new <a class="code hl_class" href="classConsoleForge_1_1Widgets_1_1TextBlock.html">TextBlock</a>($<span class="stringliteral">&quot;Count: {Count}&quot;</span>),</div>
+<div class="line">                new <a class="code hl_class" href="classConsoleForge_1_1Widgets_1_1TextBlock.html">TextBlock</a>(<span class="stringliteral">&quot;↑↓ to change, Q to quit&quot;</span>,</div>
+<div class="line">                    style: <a class="code hl_struct" href="structConsoleForge_1_1Styling_1_1Style.html">Style</a>.Default.Faint(true)),</div>
+<div class="line">            ]));</div>
+<div class="line">}</div>
+<div class="line"> </div>
+<div class="line">await <a class="code hl_class" href="classConsoleForge_1_1Core_1_1Program.html">Program</a>.<a class="code hl_function" href="classConsoleForge_1_1Core_1_1Program.html#a71dc7b815399e7bd525477eea4379ba8">Run</a>(<span class="keyword">new</span> HelloModel(), theme: <a class="code hl_property" href="namespaceConsoleForge_1_1Styling.html#a61a75ef10e7fefe8c47b677751e70e01">Theme</a>.Dark);</div>
+<div class="ttc" id="aclassConsoleForge_1_1Core_1_1Cmd_html"><div class="ttname"><a href="classConsoleForge_1_1Core_1_1Cmd.html">ConsoleForge.Core.Cmd</a></div><div class="ttdoc">Factory for creating common command values.</div><div class="ttdef"><b>Definition</b> Cmd.cs:5</div></div>
+<div class="ttc" id="aclassConsoleForge_1_1Core_1_1Cmd_html_a65e48526a8aa2bbd4e5f515f92a4cd1f"><div class="ttname"><a href="classConsoleForge_1_1Core_1_1Cmd.html#a65e48526a8aa2bbd4e5f515f92a4cd1f">ConsoleForge.Core.Cmd.Quit</a></div><div class="ttdeci">static ICmd Quit()</div><div class="ttdoc">Returns QuitMsg immediately, ending the program loop.</div><div class="ttdef"><b>Definition</b> Cmd.cs:10</div></div>
+<div class="ttc" id="aclassConsoleForge_1_1Core_1_1Program_html"><div class="ttname"><a href="classConsoleForge_1_1Core_1_1Program.html">ConsoleForge.Core.Program</a></div><div class="ttdoc">Main event loop for a ConsoleForge application.</div><div class="ttdef"><b>Definition</b> Program.cs:18</div></div>
+<div class="ttc" id="aclassConsoleForge_1_1Core_1_1Program_html_a71dc7b815399e7bd525477eea4379ba8"><div class="ttname"><a href="classConsoleForge_1_1Core_1_1Program.html#a71dc7b815399e7bd525477eea4379ba8">ConsoleForge.Core.Program.Run</a></div><div class="ttdeci">static Task Run(IModel model, ITerminal? terminal=null, Theme? theme=null, int targetFps=30, bool enableMouse=false)</div><div class="ttdoc">Run the application asynchronously.</div><div class="ttdef"><b>Definition</b> Program.cs:45</div></div>
+<div class="ttc" id="aclassConsoleForge_1_1Widgets_1_1BorderBox_html"><div class="ttname"><a href="classConsoleForge_1_1Widgets_1_1BorderBox.html">ConsoleForge.Widgets.BorderBox</a></div><div class="ttdoc">A widget that renders a bordered box with an optional title and a body child widget.</div><div class="ttdef"><b>Definition</b> BorderBox.cs:12</div></div>
+<div class="ttc" id="aclassConsoleForge_1_1Widgets_1_1Container_html"><div class="ttname"><a href="classConsoleForge_1_1Widgets_1_1Container.html">ConsoleForge.Widgets.Container</a></div><div class="ttdoc">A layout container that arranges child widgets along a given axis.</div><div class="ttdef"><b>Definition</b> Container.cs:12</div></div>
+<div class="ttc" id="aclassConsoleForge_1_1Widgets_1_1TextBlock_html"><div class="ttname"><a href="classConsoleForge_1_1Widgets_1_1TextBlock.html">ConsoleForge.Widgets.TextBlock</a></div><div class="ttdoc">A widget that renders a single string, wrapping at region width.</div><div class="ttdef"><b>Definition</b> TextBlock.cs:11</div></div>
+<div class="ttc" id="ainterfaceConsoleForge_1_1Core_1_1IModel_html"><div class="ttname"><a href="interfaceConsoleForge_1_1Core_1_1IModel.html">ConsoleForge.Core.IModel</a></div><div class="ttdoc">The root interface for all ConsoleForge application models.</div><div class="ttdef"><b>Definition</b> IModel.cs:10</div></div>
+<div class="ttc" id="ainterfaceConsoleForge_1_1Core_1_1IMsg_html"><div class="ttname"><a href="interfaceConsoleForge_1_1Core_1_1IMsg.html">ConsoleForge.Core.IMsg</a></div><div class="ttdoc">Marker interface for all messages flowing through the event loop.</div><div class="ttdef"><b>Definition</b> IMsg.cs:7</div></div>
+<div class="ttc" id="ainterfaceConsoleForge_1_1Layout_1_1IWidget_html"><div class="ttname"><a href="interfaceConsoleForge_1_1Layout_1_1IWidget.html">ConsoleForge.Layout.IWidget</a></div><div class="ttdoc">Base interface for all visual elements in the widget tree.</div><div class="ttdef"><b>Definition</b> IWidget.cs:9</div></div>
+<div class="ttc" id="anamespaceConsoleForge_1_1Core_html"><div class="ttname"><a href="namespaceConsoleForge_1_1Core.html">ConsoleForge.Core</a></div><div class="ttdef"><b>Definition</b> Attributes.cs:1</div></div>
+<div class="ttc" id="anamespaceConsoleForge_1_1Layout_html"><div class="ttname"><a href="namespaceConsoleForge_1_1Layout.html">ConsoleForge.Layout</a></div><div class="ttdef"><b>Definition</b> IContainer.cs:1</div></div>
+<div class="ttc" id="anamespaceConsoleForge_1_1Layout_html_a5ad525ec3eb9f2080c3f075c393ee264"><div class="ttname"><a href="namespaceConsoleForge_1_1Layout.html#a5ad525ec3eb9f2080c3f075c393ee264">ConsoleForge.Layout.Axis</a></div><div class="ttdeci">Axis</div><div class="ttdoc">Axis for container layout direction.</div><div class="ttdef"><b>Definition</b> LayoutEngine.cs:7</div></div>
+<div class="ttc" id="anamespaceConsoleForge_1_1Styling_html"><div class="ttname"><a href="namespaceConsoleForge_1_1Styling.html">ConsoleForge.Styling</a></div><div class="ttdef"><b>Definition</b> Borders.cs:1</div></div>
+<div class="ttc" id="anamespaceConsoleForge_1_1Styling_html_a61a75ef10e7fefe8c47b677751e70e01"><div class="ttname"><a href="namespaceConsoleForge_1_1Styling.html#a61a75ef10e7fefe8c47b677751e70e01">ConsoleForge.Styling.Theme</a></div><div class="ttdeci">record Theme</div><div class="ttdoc">Immutable named collection of base styles applied as defaults across all widgets via Style....</div><div class="ttdef"><b>Definition</b> Theme.cs:11</div></div>
+<div class="ttc" id="anamespaceConsoleForge_1_1Widgets_html"><div class="ttname"><a href="namespaceConsoleForge_1_1Widgets.html">ConsoleForge.Widgets</a></div><div class="ttdef"><b>Definition</b> BorderBox.cs:4</div></div>
+<div class="ttc" id="astructConsoleForge_1_1Styling_1_1Style_html"><div class="ttname"><a href="structConsoleForge_1_1Styling_1_1Style.html">ConsoleForge.Styling.Style</a></div><div class="ttdoc">Immutable value type carrying visual style properties.</div><div class="ttdef"><b>Definition</b> Style.cs:12</div></div>
+</div><!-- fragment --><h1><a class="anchor" id="autotoc_md5"></a>
+Widgets</h1>
+<table class="markdownTable">
+<tr class="markdownTableHead">
+<th class="markdownTableHeadNone">Widget   </th><th class="markdownTableHeadNone">Description    </th></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone"><code>TextBlock</code>   </td><td class="markdownTableBodyNone">Text display with word-wrap. Supports <code>\n</code>, padding, and alignment.    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone"><code>TextInput</code>   </td><td class="markdownTableBodyNone">Single-line input with cursor, backspace, delete, and arrow keys.    </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone"><code>TextArea</code>   </td><td class="markdownTableBodyNone">Multi-line editor with cursor navigation, line splitting, and scroll.    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone"><code>List</code>   </td><td class="markdownTableBodyNone">Scrollable list with selection highlight. Virtualized — only visible rows render.    </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone"><code>Table</code>   </td><td class="markdownTableBodyNone">Columnar data with headers, selection, separators. Virtualized scrolling.    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone"><code>Checkbox</code>   </td><td class="markdownTableBodyNone">Toggle <code>[✓] Label</code> / <code>[ ] Label</code>. Customizable indicator characters.    </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone"><code>Tabs</code>   </td><td class="markdownTableBodyNone">Tab bar + body content. Left/Right arrows, number keys 1–9.    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone"><code>ProgressBar</code>   </td><td class="markdownTableBodyNone">Horizontal fill bar with optional percentage label.    </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone"><code>Spinner</code>   </td><td class="markdownTableBodyNone">Animated spinner with braille, ASCII, and arc frame sets.    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone"><code>BorderBox</code>   </td><td class="markdownTableBodyNone">Bordered box with title. 6 border styles: Normal, Rounded, Thick, Double, ASCII, Hidden.    </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone"><code>Container</code>   </td><td class="markdownTableBodyNone">Flex layout along horizontal or vertical axis. Supports scrolling.    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone"><code>Modal</code>   </td><td class="markdownTableBodyNone">Centered dialog overlay. Compose with <code>ZStack</code> for layered UIs.    </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone"><code>ZStack</code>   </td><td class="markdownTableBodyNone">Renders layers back-to-front. The foundation for overlays and modals.   </td></tr>
+</table>
+<h1><a class="anchor" id="autotoc_md6"></a>
+Themes</h1>
+<p>Six built-in themes with background colours, accent styles, and semantic colour slots:</p>
+<div class="fragment"><div class="line">await <a class="code hl_class" href="classConsoleForge_1_1Core_1_1Program.html">Program</a>.<a class="code hl_function" href="classConsoleForge_1_1Core_1_1Program.html#a71dc7b815399e7bd525477eea4379ba8">Run</a>(model, theme: Theme.Dracula);</div>
+</div><!-- fragment --><table class="markdownTable">
+<tr class="markdownTableHead">
+<th class="markdownTableHeadNone">Theme   </th><th class="markdownTableHeadNone">Background   </th><th class="markdownTableHeadNone">Accent   </th><th class="markdownTableHeadNone">Focus    </th></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone"><code>Theme.Dark</code>   </td><td class="markdownTableBodyNone"><code>#1C1C1C</code>   </td><td class="markdownTableBodyNone">Teal   </td><td class="markdownTableBodyNone">Gold    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone"><code>Theme.Light</code>   </td><td class="markdownTableBodyNone"><code>#F0F0F0</code>   </td><td class="markdownTableBodyNone">Blue   </td><td class="markdownTableBodyNone">Red    </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone"><code>Theme.Dracula</code>   </td><td class="markdownTableBodyNone"><code>#282A36</code>   </td><td class="markdownTableBodyNone">Purple   </td><td class="markdownTableBodyNone">Cyan    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone"><code>Theme.Nord</code>   </td><td class="markdownTableBodyNone"><code>#2E3440</code>   </td><td class="markdownTableBodyNone">Teal   </td><td class="markdownTableBodyNone">Green    </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone"><code>Theme.Monokai</code>   </td><td class="markdownTableBodyNone"><code>#272822</code>   </td><td class="markdownTableBodyNone">Green   </td><td class="markdownTableBodyNone">Yellow    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone"><code>Theme.TokyoNight</code>   </td><td class="markdownTableBodyNone"><code>#1A1B26</code>   </td><td class="markdownTableBodyNone">Blue   </td><td class="markdownTableBodyNone">Orange   </td></tr>
+</table>
+<p>Switch at runtime:</p>
+<div class="fragment"><div class="line"><span class="comment">// In Update:</span></div>
+<div class="line"><span class="keywordflow">return</span> (<span class="keyword">this</span> with { ThemeIdx = next }, <a class="code hl_class" href="classConsoleForge_1_1Core_1_1Cmd.html">Cmd</a>.Msg(<span class="keyword">new</span> ThemeChangedMsg(newTheme)));</div>
+</div><!-- fragment --><p>Access theme colours with extension methods:</p>
+<div class="fragment"><div class="line">theme.Accent()       <span class="comment">// IColor? — border brand colour</span></div>
+<div class="line">theme.AccentStyle()  <span class="comment">// Style — accent as foreground, bold-ready</span></div>
+<div class="line">theme.MutedStyle()   <span class="comment">// Style — dim secondary text</span></div>
+<div class="line">theme.Success()      <span class="comment">// Style — green/equivalent</span></div>
+<div class="line">theme.Warning()      <span class="comment">// Style — yellow/equivalent</span></div>
+<div class="line">theme.Error()        <span class="comment">// Style — red/equivalent</span></div>
+<div class="line">theme.Bg()           <span class="comment">// IColor? — background from BaseStyle</span></div>
+<div class="line">theme.BgStyle()      <span class="comment">// Style — background only</span></div>
+</div><!-- fragment --><h1><a class="anchor" id="autotoc_md7"></a>
+Layout</h1>
+<p>Children declare <code>Width</code> and <code>Height</code> as <code>SizeConstraint</code>:</p>
+<div class="fragment"><div class="line">SizeConstraint.Fixed(24)        <span class="comment">// exact columns/rows</span></div>
+<div class="line">SizeConstraint.Flex(1)          <span class="comment">// proportional share of free space</span></div>
+<div class="line">SizeConstraint.Auto             <span class="comment">// shrink to content</span></div>
+<div class="line">SizeConstraint.Min(10, inner)   <span class="comment">// minimum bound</span></div>
+<div class="line">SizeConstraint.Max(40, inner)   <span class="comment">// maximum bound</span></div>
+</div><!-- fragment --><p><code>Container</code> runs a two-pass layout: fixed children first, then flex children share the remainder. Supports padding and margin:</p>
+<div class="fragment"><div class="line"><span class="keyword">new</span> <a class="code hl_class" href="classConsoleForge_1_1Widgets_1_1Container.html">Container</a>(<a class="code hl_enumeration" href="namespaceConsoleForge_1_1Layout.html#a5ad525ec3eb9f2080c3f075c393ee264">Axis</a>.Horizontal,</div>
+<div class="line">    style: <a class="code hl_struct" href="structConsoleForge_1_1Styling_1_1Style.html">Style</a>.Default.Padding(1),          <span class="comment">// insets child region</span></div>
+<div class="line">    children: [</div>
+<div class="line">        new <a class="code hl_class" href="classConsoleForge_1_1Widgets_1_1TextBlock.html">TextBlock</a>(<span class="stringliteral">&quot;A&quot;</span>) { <a class="code hl_struct" href="structConsoleForge_1_1Styling_1_1Style.html">Style</a> = <a class="code hl_struct" href="structConsoleForge_1_1Styling_1_1Style.html">Style</a>.<a class="code hl_variable" href="structConsoleForge_1_1Styling_1_1Style.html#a25115fa9d99e7e7359a89c43e6d61f7e">Default</a>.Margin(0, 1, 0, 1) },  <span class="comment">// spacing around widget</span></div>
+<div class="line">        <span class="keyword">new</span> <a class="code hl_class" href="classConsoleForge_1_1Widgets_1_1TextBlock.html">TextBlock</a>(<span class="stringliteral">&quot;B&quot;</span>),</div>
+<div class="line">    ]);</div>
+<div class="ttc" id="astructConsoleForge_1_1Styling_1_1Style_html_a25115fa9d99e7e7359a89c43e6d61f7e"><div class="ttname"><a href="structConsoleForge_1_1Styling_1_1Style.html#a25115fa9d99e7e7359a89c43e6d61f7e">ConsoleForge.Styling.Style.Default</a></div><div class="ttdeci">static readonly Style Default</div><div class="ttdoc">The empty style (no properties set). Fast path: Render returns text unchanged.</div><div class="ttdef"><b>Definition</b> Style.cs:66</div></div>
+</div><!-- fragment --><h1><a class="anchor" id="autotoc_md8"></a>
+Styling</h1>
+<p><code>Style</code> is an immutable value type. All methods return a new <code>Style</code>:</p>
+<div class="fragment"><div class="line">Style.Default</div>
+<div class="line">    .Foreground(Color.FromHex(<span class="stringliteral">&quot;#FF5733&quot;</span>))</div>
+<div class="line">    .Background(Color.Blue)</div>
+<div class="line">    .Bold()</div>
+<div class="line">    .Italic()</div>
+<div class="line">    .Underline()</div>
+<div class="line">    .Padding(1, 2)</div>
+<div class="line">    .Border(<a class="code hl_class" href="classConsoleForge_1_1Styling_1_1Borders.html">Borders</a>.<a class="code hl_variable" href="classConsoleForge_1_1Styling_1_1Borders.html#a2a93343ca72ca1534e12facc2f292ca1">Rounded</a>)</div>
+<div class="line">    .BorderForeground(Color.Cyan)</div>
+<div class="ttc" id="aclassConsoleForge_1_1Styling_1_1Borders_html"><div class="ttname"><a href="classConsoleForge_1_1Styling_1_1Borders.html">ConsoleForge.Styling.Borders</a></div><div class="ttdoc">Pre-defined border character sets.</div><div class="ttdef"><b>Definition</b> Borders.cs:5</div></div>
+<div class="ttc" id="aclassConsoleForge_1_1Styling_1_1Borders_html_a2a93343ca72ca1534e12facc2f292ca1"><div class="ttname"><a href="classConsoleForge_1_1Styling_1_1Borders.html#a2a93343ca72ca1534e12facc2f292ca1">ConsoleForge.Styling.Borders.Rounded</a></div><div class="ttdeci">static readonly BorderSpec Rounded</div><div class="ttdoc">Rounded corners: ╭─╮│╰╯├┤┬┴┼</div><div class="ttdef"><b>Definition</b> Borders.cs:16</div></div>
+</div><!-- fragment --><p>Styles inherit from the active theme when properties are unset — set only what you need.</p>
+<h1><a class="anchor" id="autotoc_md9"></a>
+Mouse Support</h1>
+<div class="fragment"><div class="line">await <a class="code hl_class" href="classConsoleForge_1_1Core_1_1Program.html">Program</a>.<a class="code hl_function" href="classConsoleForge_1_1Core_1_1Program.html#a71dc7b815399e7bd525477eea4379ba8">Run</a>(model, theme: Theme.Dark, enableMouse: true);</div>
+</div><!-- fragment --><ul>
+<li><b>Click-to-focus</b> — left-click moves focus to the clicked widget (automatic)</li>
+<li><b>Scroll wheel</b> — <code>MouseMsg</code> with <code>MouseButton.ScrollUp</code> / <code>ScrollDown</code></li>
+<li><b>Button events</b> — press, release, motion tracking via <code>MouseMsg</code></li>
+</ul>
+<p>Handle in your model:</p>
+<div class="fragment"><div class="line"><span class="keywordflow">case</span> MouseMsg { Button: MouseButton.ScrollDown } =&gt; <span class="comment">// scroll handler</span></div>
+</div><!-- fragment --><h1><a class="anchor" id="autotoc_md10"></a>
+KeyMap — Declarative Keybindings</h1>
+<p>Replace switch statements with composable, context-aware binding maps:</p>
+<div class="fragment"><div class="line"><span class="keyword">static</span> readonly <a class="code hl_class" href="classConsoleForge_1_1Core_1_1KeyMap.html">KeyMap</a> SidebarKeys = <span class="keyword">new</span> <a class="code hl_class" href="classConsoleForge_1_1Core_1_1KeyMap.html">KeyMap</a>()</div>
+<div class="line">    .<a class="code hl_function" href="classConsoleForge_1_1Core_1_1KeyMap.html#a0e5afa3c430fa57a0edb430d1b5f906f">On</a>(ConsoleKey.UpArrow,   () =&gt; <span class="keyword">new</span> NavUpMsg())</div>
+<div class="line">    .<a class="code hl_function" href="classConsoleForge_1_1Core_1_1KeyMap.html#a0e5afa3c430fa57a0edb430d1b5f906f">On</a>(ConsoleKey.DownArrow, () =&gt; <span class="keyword">new</span> NavDownMsg())</div>
+<div class="line">    .<a class="code hl_function" href="classConsoleForge_1_1Core_1_1KeyMap.html#a0e5afa3c430fa57a0edb430d1b5f906f">On</a>(ConsoleKey.Enter,     () =&gt; <span class="keyword">new</span> SelectMsg())</div>
+<div class="line">    .<a class="code hl_function" href="classConsoleForge_1_1Core_1_1KeyMap.html#a0e5afa3c430fa57a0edb430d1b5f906f">On</a>(ConsoleKey.Escape,    () =&gt; <span class="keyword">new</span> QuitMsg())</div>
+<div class="line">    .<a class="code hl_function" href="classConsoleForge_1_1Core_1_1KeyMap.html#a0e5afa3c430fa57a0edb430d1b5f906f">On</a>(KeyPattern.WithCtrl(ConsoleKey.C), () =&gt; <span class="keyword">new</span> QuitMsg())</div>
+<div class="line">    .<a class="code hl_function" href="classConsoleForge_1_1Core_1_1KeyMap.html#a13e756688dcc5691f6cea79c542c6981">OnScroll</a>(m =&gt; m.Button == <a class="code hl_enumeration" href="namespaceConsoleForge_1_1Core.html#a41c27369bb8f4a11b68352b1c4ac51a9">MouseButton</a>.ScrollUp</div>
+<div class="line">        ? <span class="keyword">new</span> NavUpMsg() : new NavDownMsg());</div>
+<div class="line"> </div>
+<div class="line"><span class="comment">// In Update:</span></div>
+<div class="line"><span class="keywordflow">if</span> (SidebarKeys.Handle(msg) is { } action) msg = action;</div>
+<div class="ttc" id="aclassConsoleForge_1_1Core_1_1KeyMap_html"><div class="ttname"><a href="classConsoleForge_1_1Core_1_1KeyMap.html">ConsoleForge.Core.KeyMap</a></div><div class="ttdoc">Declarative input binding map.</div><div class="ttdef"><b>Definition</b> KeyMap.cs:28</div></div>
+<div class="ttc" id="aclassConsoleForge_1_1Core_1_1KeyMap_html_a0e5afa3c430fa57a0edb430d1b5f906f"><div class="ttname"><a href="classConsoleForge_1_1Core_1_1KeyMap.html#a0e5afa3c430fa57a0edb430d1b5f906f">ConsoleForge.Core.KeyMap.On</a></div><div class="ttdeci">KeyMap On(ConsoleKey key, Func&lt; IMsg &gt; handler)</div><div class="ttdoc">Bind a key (any modifiers) to a message factory.</div><div class="ttdef"><b>Definition</b> KeyMap.cs:35</div></div>
+<div class="ttc" id="aclassConsoleForge_1_1Core_1_1KeyMap_html_a13e756688dcc5691f6cea79c542c6981"><div class="ttname"><a href="classConsoleForge_1_1Core_1_1KeyMap.html#a13e756688dcc5691f6cea79c542c6981">ConsoleForge.Core.KeyMap.OnScroll</a></div><div class="ttdeci">KeyMap OnScroll(Func&lt; MouseMsg, IMsg &gt; handler)</div><div class="ttdoc">Bind scroll-wheel events (both up and down).</div><div class="ttdef"><b>Definition</b> KeyMap.cs:72</div></div>
+<div class="ttc" id="anamespaceConsoleForge_1_1Core_html_a41c27369bb8f4a11b68352b1c4ac51a9"><div class="ttname"><a href="namespaceConsoleForge_1_1Core.html#a41c27369bb8f4a11b68352b1c4ac51a9">ConsoleForge.Core.MouseButton</a></div><div class="ttdeci">MouseButton</div><div class="ttdoc">Dispatched by List when the user presses Enter on a selected item.</div><div class="ttdef"><b>Definition</b> Messages.cs:62</div></div>
+</div><!-- fragment --><p><code>KeyPattern</code> supports modifier wildcards: <code>Of(key)</code>, <code>WithCtrl(key)</code>, <code>WithAlt(key)</code>, <code>Plain(key)</code>.</p>
+<p>Compose maps: <code>globalKeys.Merge(pageKeys)</code> — first map takes priority.</p>
+<h1><a class="anchor" id="autotoc_md11"></a>
+IComponent — Sub-Programs</h1>
+<p>Self-contained pages with own state, keybindings, and view. The <a href="https://github.com/charmbracelet/bubbletea">Bubble Tea</a> <code>tea.Model</code>-per-page pattern:</p>
+<div class="fragment"><div class="line"><span class="comment">// Pages/CounterPage.cs</span></div>
+<div class="line"><span class="keyword">sealed</span> record CounterPage(<span class="keywordtype">int</span> Count = 0) : <a class="code hl_interface" href="interfaceConsoleForge_1_1Core_1_1IComponent.html">IComponent</a></div>
+<div class="line">{</div>
+<div class="line">    <span class="keyword">static</span> readonly <a class="code hl_class" href="classConsoleForge_1_1Core_1_1KeyMap.html">KeyMap</a> Keys = <span class="keyword">new</span> <a class="code hl_class" href="classConsoleForge_1_1Core_1_1KeyMap.html">KeyMap</a>()</div>
+<div class="line">        .<a class="code hl_function" href="classConsoleForge_1_1Core_1_1KeyMap.html#a0e5afa3c430fa57a0edb430d1b5f906f">On</a>(ConsoleKey.UpArrow,   () =&gt; <span class="keyword">new</span> IncrMsg())</div>
+<div class="line">        .<a class="code hl_function" href="classConsoleForge_1_1Core_1_1KeyMap.html#a0e5afa3c430fa57a0edb430d1b5f906f">On</a>(ConsoleKey.DownArrow, () =&gt; <span class="keyword">new</span> DecrMsg());</div>
+<div class="line"> </div>
+<div class="line">    <span class="keyword">public</span> ICmd? Init() =&gt; <span class="keyword">null</span>;</div>
+<div class="line"> </div>
+<div class="line">    <span class="keyword">public</span> (<a class="code hl_interface" href="interfaceConsoleForge_1_1Core_1_1IModel.html">IModel</a> Model, ICmd? <a class="code hl_class" href="classConsoleForge_1_1Core_1_1Cmd.html">Cmd</a>) Update(<a class="code hl_interface" href="interfaceConsoleForge_1_1Core_1_1IMsg.html">IMsg</a> msg)</div>
+<div class="line">    {</div>
+<div class="line">        <span class="keywordflow">if</span> (Keys.Handle(msg) is { } action) msg = action;</div>
+<div class="line">        <span class="keywordflow">return</span> msg <span class="keywordflow">switch</span></div>
+<div class="line">        {</div>
+<div class="line">            IncrMsg =&gt; (<span class="keyword">this</span> with { Count = Count + 1 }, <span class="keyword">null</span>),</div>
+<div class="line">            DecrMsg =&gt; (<span class="keyword">this</span> with { Count = Count - 1 }, <span class="keyword">null</span>),</div>
+<div class="line">            _       =&gt; (<span class="keyword">this</span>, <span class="keyword">null</span>),</div>
+<div class="line">        };</div>
+<div class="line">    }</div>
+<div class="line"> </div>
+<div class="line">    <span class="keyword">public</span> <a class="code hl_interface" href="interfaceConsoleForge_1_1Layout_1_1IWidget.html">IWidget</a> View() =&gt; <span class="keyword">new</span> <a class="code hl_class" href="classConsoleForge_1_1Widgets_1_1TextBlock.html">TextBlock</a>($<span class="stringliteral">&quot;Count: {Count}&quot;</span>);</div>
+<div class="line">}</div>
+<div class="ttc" id="ainterfaceConsoleForge_1_1Core_1_1IComponent_html"><div class="ttname"><a href="interfaceConsoleForge_1_1Core_1_1IComponent.html">ConsoleForge.Core.IComponent</a></div><div class="ttdoc">A self-contained sub-program: owns its own state, update logic, and view.</div><div class="ttdef"><b>Definition</b> IComponent.cs:97</div></div>
+</div><!-- fragment --><p>Embed in a parent model:</p>
+<div class="fragment"><div class="line">record AppModel(CounterPage Counter) : <a class="code hl_interface" href="interfaceConsoleForge_1_1Core_1_1IModel.html">IModel</a></div>
+<div class="line">{</div>
+<div class="line">    <span class="keyword">public</span> (<a class="code hl_interface" href="interfaceConsoleForge_1_1Core_1_1IModel.html">IModel</a>, ICmd?) Update(<a class="code hl_interface" href="interfaceConsoleForge_1_1Core_1_1IMsg.html">IMsg</a> msg)</div>
+<div class="line">    {</div>
+<div class="line">        var (next, cmd) = <a class="code hl_class" href="classConsoleForge_1_1Core_1_1Component.html">Component</a>.Delegate(Counter, msg);</div>
+<div class="line">        <span class="keywordflow">return</span> (<span class="keyword">this</span> with { Counter = next! }, cmd);</div>
+<div class="line">    }</div>
+<div class="line">    <span class="keyword">public</span> <a class="code hl_interface" href="interfaceConsoleForge_1_1Layout_1_1IWidget.html">IWidget</a> View() =&gt; Counter.View();</div>
+<div class="line">}</div>
+<div class="ttc" id="aclassConsoleForge_1_1Core_1_1Component_html"><div class="ttname"><a href="classConsoleForge_1_1Core_1_1Component.html">ConsoleForge.Core.Component</a></div><div class="ttdoc">Static helpers for working with IComponent and IComponent&lt;TResult&gt; in parent model Update methods.</div><div class="ttdef"><b>Definition</b> Component.cs:22</div></div>
+</div><!-- fragment --><p>For components that return results (file pickers, confirm dialogs):</p>
+<div class="fragment"><div class="line"><span class="keyword">sealed</span> record FilePicker(<span class="keywordtype">string</span>? Result = <span class="keyword">null</span>) : <a class="code hl_interface" href="interfaceConsoleForge_1_1Core_1_1IComponent.html">IComponent</a>&lt;string&gt;</div>
+<div class="line">{</div>
+<div class="line">    <span class="keywordtype">string</span> <a class="code hl_interface" href="interfaceConsoleForge_1_1Core_1_1IComponent.html">IComponent&lt;string&gt;</a>.<a class="code hl_property" href="interfaceConsoleForge_1_1Core_1_1IComponent.html#ade232f57012c86044d47b3e95fc3e909">Result</a> =&gt; Result!;</div>
+<div class="line">    <span class="comment">// ... Update sets Result when user picks a file</span></div>
+<div class="line">}</div>
+<div class="line"> </div>
+<div class="line"><span class="comment">// Parent checks completion:</span></div>
+<div class="line">var (next, cmd) = <a class="code hl_class" href="classConsoleForge_1_1Core_1_1Component.html">Component</a>.Delegate(picker, msg);</div>
+<div class="line"><span class="keywordflow">if</span> (next.IsCompleted())</div>
+<div class="line">    <span class="keywordflow">return</span> (<span class="keyword">this</span> with { Picker = <span class="keyword">null</span>, ChosenFile = next.Result }, cmd);</div>
+<div class="ttc" id="ainterfaceConsoleForge_1_1Core_1_1IComponent_html_ade232f57012c86044d47b3e95fc3e909"><div class="ttname"><a href="interfaceConsoleForge_1_1Core_1_1IComponent.html#ade232f57012c86044d47b3e95fc3e909">ConsoleForge.Core.IComponent.Result</a></div><div class="ttdeci">TResult Result</div><div class="ttdoc">The result value produced when this component completes.</div><div class="ttdef"><b>Definition</b> IComponent.cs:105</div></div>
+</div><!-- fragment --><h1><a class="anchor" id="autotoc_md12"></a>
+Commands</h1>
+<div class="fragment"><div class="line"><a class="code hl_class" href="classConsoleForge_1_1Core_1_1Cmd.html">Cmd</a>.<a class="code hl_function" href="classConsoleForge_1_1Core_1_1Cmd.html#a65e48526a8aa2bbd4e5f515f92a4cd1f">Quit</a>()                                    <span class="comment">// exit the program</span></div>
+<div class="line"><a class="code hl_class" href="classConsoleForge_1_1Core_1_1Cmd.html">Cmd</a>.Msg(<span class="keyword">new</span> SomeMsg())                        <span class="comment">// synchronous follow-up message</span></div>
+<div class="line"><a class="code hl_class" href="classConsoleForge_1_1Core_1_1Cmd.html">Cmd</a>.Run(async ct =&gt; { ... <span class="keywordflow">return</span> msg; })      <span class="comment">// async work → message</span></div>
+<div class="line"><a class="code hl_class" href="classConsoleForge_1_1Core_1_1Cmd.html">Cmd</a>.Batch(cmd1, cmd2, cmd3)                   <span class="comment">// run concurrently</span></div>
+<div class="line"><a class="code hl_class" href="classConsoleForge_1_1Core_1_1Cmd.html">Cmd</a>.<a class="code hl_function" href="classConsoleForge_1_1Core_1_1Cmd.html#a086a3394bee5399cd0c55d51ad9d4977">Sequence</a>(cmd1, cmd2, cmd3)                <span class="comment">// run serially</span></div>
+<div class="line"><a class="code hl_class" href="classConsoleForge_1_1Core_1_1Cmd.html">Cmd</a>.<a class="code hl_function" href="classConsoleForge_1_1Core_1_1Cmd.html#a5c8b8bea5edf952fa068434d9d75df08">Tick</a>(TimeSpan, ts =&gt; <span class="keyword">new</span> TickMsg(ts))     <span class="comment">// delayed single fire</span></div>
+<div class="line"><a class="code hl_class" href="classConsoleForge_1_1Core_1_1Cmd.html">Cmd</a>.<a class="code hl_function" href="classConsoleForge_1_1Core_1_1Cmd.html#a1127c69f229ad136b7e4b7c1c7a42b88">Debounce</a>(TimeSpan, ts =&gt; msg)             <span class="comment">// debounced (last wins)</span></div>
+<div class="line"><a class="code hl_class" href="classConsoleForge_1_1Core_1_1Cmd.html">Cmd</a>.<a class="code hl_function" href="classConsoleForge_1_1Core_1_1Cmd.html#a09566cce3cb1fc95bf58339d149d2f85">Throttle</a>(TimeSpan, ts =&gt; msg)             <span class="comment">// throttled (first wins)</span></div>
+<div class="ttc" id="aclassConsoleForge_1_1Core_1_1Cmd_html_a086a3394bee5399cd0c55d51ad9d4977"><div class="ttname"><a href="classConsoleForge_1_1Core_1_1Cmd.html#a086a3394bee5399cd0c55d51ad9d4977">ConsoleForge.Core.Cmd.Sequence</a></div><div class="ttdeci">static ? ICmd Sequence(params ICmd?[] cmds)</div><div class="ttdoc">Run commands serially: each waits for the previous to complete.</div><div class="ttdef"><b>Definition</b> Cmd.cs:55</div></div>
+<div class="ttc" id="aclassConsoleForge_1_1Core_1_1Cmd_html_a09566cce3cb1fc95bf58339d149d2f85"><div class="ttname"><a href="classConsoleForge_1_1Core_1_1Cmd.html#a09566cce3cb1fc95bf58339d149d2f85">ConsoleForge.Core.Cmd.Throttle</a></div><div class="ttdeci">static ICmd Throttle(TimeSpan interval, Func&lt; DateTimeOffset, IMsg &gt; fn)</div><div class="ttdoc">Returns a cmd that forwards at most one invocation per interval .</div><div class="ttdef"><b>Definition</b> Cmd.cs:119</div></div>
+<div class="ttc" id="aclassConsoleForge_1_1Core_1_1Cmd_html_a1127c69f229ad136b7e4b7c1c7a42b88"><div class="ttname"><a href="classConsoleForge_1_1Core_1_1Cmd.html#a1127c69f229ad136b7e4b7c1c7a42b88">ConsoleForge.Core.Cmd.Debounce</a></div><div class="ttdeci">static ICmd Debounce(TimeSpan interval, Func&lt; DateTimeOffset, IMsg &gt; fn)</div><div class="ttdoc">Returns a cmd that, when dispatched, waits interval  after the last dispatch before invoking fn .</div><div class="ttdef"><b>Definition</b> Cmd.cs:91</div></div>
+<div class="ttc" id="aclassConsoleForge_1_1Core_1_1Cmd_html_a5c8b8bea5edf952fa068434d9d75df08"><div class="ttname"><a href="classConsoleForge_1_1Core_1_1Cmd.html#a5c8b8bea5edf952fa068434d9d75df08">ConsoleForge.Core.Cmd.Tick</a></div><div class="ttdeci">static ICmd Tick(TimeSpan interval, Func&lt; DateTimeOffset, IMsg &gt; fn, CancellationToken cancellationToken=default)</div><div class="ttdoc">Fire once after interval .</div><div class="ttdef"><b>Definition</b> Cmd.cs:74</div></div>
+</div><!-- fragment --><h1><a class="anchor" id="autotoc_md13"></a>
+Subscriptions</h1>
+<p>For continuous data streams, implement <code>IHasSubscriptions</code>:</p>
+<div class="fragment"><div class="line"><span class="keyword">public</span> IEnumerable&lt;(<span class="keywordtype">string</span> Key, ISub <a class="code hl_class" href="classConsoleForge_1_1Core_1_1Sub.html">Sub</a>)&gt; Subscriptions() =&gt;</div>
+<div class="line">[</div>
+<div class="line">    (<span class="stringliteral">&quot;timer&quot;</span>, <a class="code hl_class" href="classConsoleForge_1_1Core_1_1Sub.html">Sub</a>.<a class="code hl_function" href="classConsoleForge_1_1Core_1_1Sub.html#a5d8429b9faafec153bea69bdb6d247ac">Interval</a>(TimeSpan.FromSeconds(1), ts =&gt; <span class="keyword">new</span> TickMsg(ts))),</div>
+<div class="line">    (<span class="stringliteral">&quot;data&quot;</span>,  <a class="code hl_class" href="classConsoleForge_1_1Core_1_1Sub.html">Sub</a>.<a class="code hl_function" href="classConsoleForge_1_1Core_1_1Sub.html#aaec2355137d5fd56f39c9a05cf4c4616">FromAsyncEnumerable</a>(ct =&gt; GetDataStream(ct))),</div>
+<div class="line">];</div>
+<div class="ttc" id="aclassConsoleForge_1_1Core_1_1Sub_html"><div class="ttname"><a href="classConsoleForge_1_1Core_1_1Sub.html">ConsoleForge.Core.Sub</a></div><div class="ttdoc">Factory helpers for creating common ISub values.</div><div class="ttdef"><b>Definition</b> Sub.cs:5</div></div>
+<div class="ttc" id="aclassConsoleForge_1_1Core_1_1Sub_html_a5d8429b9faafec153bea69bdb6d247ac"><div class="ttname"><a href="classConsoleForge_1_1Core_1_1Sub.html#a5d8429b9faafec153bea69bdb6d247ac">ConsoleForge.Core.Sub.Interval</a></div><div class="ttdeci">static ISub Interval(TimeSpan interval, Func&lt; DateTimeOffset, IMsg &gt; fn)</div><div class="ttdoc">A subscription that fires fn  every interval .</div><div class="ttdef"><b>Definition</b> Sub.cs:10</div></div>
+<div class="ttc" id="aclassConsoleForge_1_1Core_1_1Sub_html_aaec2355137d5fd56f39c9a05cf4c4616"><div class="ttname"><a href="classConsoleForge_1_1Core_1_1Sub.html#aaec2355137d5fd56f39c9a05cf4c4616">ConsoleForge.Core.Sub.FromAsyncEnumerable</a></div><div class="ttdeci">static ISub FromAsyncEnumerable(Func&lt; CancellationToken, IAsyncEnumerable&lt; IMsg &gt; &gt; factory)</div><div class="ttdoc">Wrap an arbitrary IAsyncEnumerable&lt;IMsg&gt; factory as a subscription.</div><div class="ttdef"><b>Definition</b> Sub.cs:35</div></div>
+</div><!-- fragment --><h1><a class="anchor" id="autotoc_md14"></a>
+Samples</h1>
+<table class="markdownTable">
+<tr class="markdownTableHead">
+<th class="markdownTableHeadNone">Sample   </th><th class="markdownTableHeadNone">Description    </th></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone"><a href="samples/ConsoleForge.Gallery/"><code>ConsoleForge.Gallery</code></a>   </td><td class="markdownTableBodyNone">Widget showcase — all 13 widgets, 6 themes, mouse support, IComponent pages    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone"><a href="samples/ConsoleForge.TodoApp/"><code>ConsoleForge.TodoApp</code></a>   </td><td class="markdownTableBodyNone">Todo list — browse, add, toggle, delete    </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone"><a href="samples/ConsoleForge.SysMonitor/"><code>ConsoleForge.SysMonitor</code></a>   </td><td class="markdownTableBodyNone">Live system stats via async subscriptions   </td></tr>
+</table>
+<div class="fragment"><div class="line">dotnet run --project samples/ConsoleForge.Gallery</div>
+</div><!-- fragment --><h1><a class="anchor" id="autotoc_md15"></a>
+Project Structure</h1>
+<div class="fragment"><div class="line">src/ConsoleForge/</div>
+<div class="line">  Core/       Program, IModel, IMsg, ICmd, IComponent, KeyMap, KeyPattern,</div>
+<div class="line">              Component, Cmd, Sub, FocusManager, Renderer, Messages</div>
+<div class="line">  Layout/     IWidget, IContainer, IFocusable, ISingleBodyWidget, ILayeredContainer,</div>
+<div class="line">              LayoutEngine, RenderContext, TextUtils, SizeConstraint, Region</div>
+<div class="line">  Styling/    Style, Theme, ThemeExtensions, Color, Borders, BorderSpec, ColorProfile</div>
+<div class="line">  Terminal/   ITerminal, AnsiTerminal, Termios (Unix), WindowsConsole</div>
+<div class="line">  Widgets/    TextBlock, TextInput, TextArea, List, Table, Checkbox, Tabs,</div>
+<div class="line">              ProgressBar, Spinner, BorderBox, Container, Modal, ZStack</div>
+<div class="line"> </div>
+<div class="line">tests/ConsoleForge.Tests/        398 unit tests (xUnit v3)</div>
+<div class="line">tests/ConsoleForge.Benchmarks/   BenchmarkDotNet render + cmd benchmarks</div>
+<div class="line"> </div>
+<div class="line">samples/</div>
+<div class="line">  ConsoleForge.Gallery/          Widget browser with IComponent page architecture</div>
+<div class="line">  ConsoleForge.SysMonitor/       System monitor dashboard</div>
+<div class="line">  ConsoleForge.TodoApp/          Todo list app</div>
+</div><!-- fragment --><h1><a class="anchor" id="autotoc_md16"></a>
+Building</h1>
+<div class="fragment"><div class="line">dotnet build ConsoleForge.slnx</div>
+<div class="line">dotnet test  ConsoleForge.slnx</div>
+<div class="line">dotnet run --project samples/ConsoleForge.Gallery</div>
+</div><!-- fragment --><p>Requires **.NET 8 SDK**. Single dependency: <code>System.Reactive</code>.</p>
+<h1><a class="anchor" id="autotoc_md17"></a>
+Performance</h1>
+<p>Double-buffered cell diff + per-widget render cache. Benchmarks (80×24 terminal):</p>
+<table class="markdownTable">
+<tr class="markdownTableHead">
+<th class="markdownTableHeadNone">Scenario   </th><th class="markdownTableHeadNone">Time   </th><th class="markdownTableHeadNone">Allocations    </th></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone">20-widget cold render   </td><td class="markdownTableBodyNone">~20 µs   </td><td class="markdownTableBodyNone">68 KB    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone">20-widget warm (no changes)   </td><td class="markdownTableBodyNone">~21 µs   </td><td class="markdownTableBodyNone">14 KB    </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone">1,000-row Table (24 visible)   </td><td class="markdownTableBodyNone">~30 µs   </td><td class="markdownTableBodyNone">67 KB    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone">Dirty-skip (model unchanged)   </td><td class="markdownTableBodyNone">3 ns   </td><td class="markdownTableBodyNone">0   </td></tr>
+</table>
+<h1><a class="anchor" id="autotoc_md18"></a>
+License</h1>
+<p>MIT — see [LICENSE](LICENSE). </p>
+</div></div><!-- PageDoc -->
 </div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->

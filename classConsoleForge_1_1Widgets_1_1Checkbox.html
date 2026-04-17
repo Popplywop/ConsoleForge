@@ -25,7 +25,7 @@
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">ConsoleForge<span id="projectnumber">&#160;0.2.0</span>
+   <div id="projectname">ConsoleForge<span id="projectnumber">&#160;0.2.1</span>
    </div>
    <div id="projectbrief">Elm-architecture TUI framework for .NET 8</div>
   </td>
@@ -122,8 +122,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a480c828ebb68c32474e64ea4a94102d6" id="r_a480c828ebb68c32474e64ea4a94102d6"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classConsoleForge_1_1Widgets_1_1Checkbox.html#a480c828ebb68c32474e64ea4a94102d6">Checkbox</a> (string label=&quot;&quot;, bool isChecked=false, char checkedChar='✓', char uncheckedChar=' ', <a class="el" href="structConsoleForge_1_1Styling_1_1Style.html">Style</a>? style=null)</td></tr>
 <tr class="memdesc:a480c828ebb68c32474e64ea4a94102d6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Positional constructor for inline usage.  <br /></td></tr>
 <tr class="separator:a480c828ebb68c32474e64ea4a94102d6"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4a44a650e1749bf172d972e6dae64a81" id="r_a4a44a650e1749bf172d972e6dae64a81"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classConsoleForge_1_1Widgets_1_1Checkbox.html#a4a44a650e1749bf172d972e6dae64a81">OnKeyEvent</a> (KeyMsg key, Action&lt; <a class="el" href="interfaceConsoleForge_1_1Core_1_1IMsg.html">IMsg</a> &gt; dispatch)</td></tr>
-<tr class="memdesc:a4a44a650e1749bf172d972e6dae64a81"><td class="mdescLeft">&#160;</td><td class="mdescRight">Toggle the checkbox state when Space or Enter is pressed.  <br /></td></tr>
+<tr class="memitem:a4a44a650e1749bf172d972e6dae64a81" id="r_a4a44a650e1749bf172d972e6dae64a81"><td class="memItemLeft" align="right" valign="top"><a id="a4a44a650e1749bf172d972e6dae64a81" name="a4a44a650e1749bf172d972e6dae64a81"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>OnKeyEvent</b> (KeyMsg key, Action&lt; <a class="el" href="interfaceConsoleForge_1_1Core_1_1IMsg.html">IMsg</a> &gt; dispatch)</td></tr>
+<tr class="memdesc:a4a44a650e1749bf172d972e6dae64a81"><td class="mdescLeft">&#160;</td><td class="mdescRight">Toggle the checkbox state when Space or Enter is pressed. <br /></td></tr>
 <tr class="separator:a4a44a650e1749bf172d972e6dae64a81"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7088f5694a08307d78090af2db36c10b" id="r_a7088f5694a08307d78090af2db36c10b"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classConsoleForge_1_1Widgets_1_1Checkbox.html#a7088f5694a08307d78090af2db36c10b">Render</a> (<a class="el" href="interfaceConsoleForge_1_1Layout_1_1IRenderContext.html">IRenderContext</a> ctx)</td></tr>
 <tr class="memdesc:a7088f5694a08307d78090af2db36c10b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Renders the checkbox as <code>[✓] Label</code> or <code>[ ] Label</code>.  <br /></td></tr>
@@ -131,34 +132,38 @@ Public Member Functions</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="properties" name="properties"></a>
 Properties</h2></td></tr>
-<tr class="memitem:adbef357440e403d2c96dc6a0af68a284" id="r_adbef357440e403d2c96dc6a0af68a284"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classConsoleForge_1_1Widgets_1_1Checkbox.html#adbef357440e403d2c96dc6a0af68a284">HasFocus</a><code> [get, set]</code></td></tr>
-<tr class="memdesc:adbef357440e403d2c96dc6a0af68a284"><td class="mdescLeft">&#160;</td><td class="mdescRight">True when this widget holds keyboard focus.  <br /></td></tr>
-<tr class="separator:adbef357440e403d2c96dc6a0af68a284"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aab550c0fb60c761c1826ec3d9f87085c" id="r_aab550c0fb60c761c1826ec3d9f87085c"><td class="memItemLeft" align="right" valign="top">SizeConstraint&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classConsoleForge_1_1Widgets_1_1Checkbox.html#aab550c0fb60c761c1826ec3d9f87085c">Width</a> = SizeConstraint.Flex(1)<code> [get]</code></td></tr>
-<tr class="memdesc:aab550c0fb60c761c1826ec3d9f87085c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Width constraint used by the layout engine.  <br /></td></tr>
-<tr class="separator:aab550c0fb60c761c1826ec3d9f87085c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a23bbb4ef2cb8a3b28a4e796ad6403654" id="r_a23bbb4ef2cb8a3b28a4e796ad6403654"><td class="memItemLeft" align="right" valign="top">SizeConstraint&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classConsoleForge_1_1Widgets_1_1Checkbox.html#a23bbb4ef2cb8a3b28a4e796ad6403654">Height</a> = SizeConstraint.Fixed(1)<code> [get]</code></td></tr>
-<tr class="memdesc:a23bbb4ef2cb8a3b28a4e796ad6403654"><td class="mdescLeft">&#160;</td><td class="mdescRight">Height constraint used by the layout engine.  <br /></td></tr>
-<tr class="separator:a23bbb4ef2cb8a3b28a4e796ad6403654"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a615386e4bab4e6f5c88d782230e2d958" id="r_a615386e4bab4e6f5c88d782230e2d958"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structConsoleForge_1_1Styling_1_1Style.html">Style</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classConsoleForge_1_1Widgets_1_1Checkbox.html#a615386e4bab4e6f5c88d782230e2d958">Style</a> = Style.Default<code> [get]</code></td></tr>
-<tr class="memdesc:a615386e4bab4e6f5c88d782230e2d958"><td class="mdescLeft">&#160;</td><td class="mdescRight">Visual style for the widget. Inherits theme base style when unset.  <br /></td></tr>
-<tr class="separator:a615386e4bab4e6f5c88d782230e2d958"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa932d582a345975ac4aca9c53909d783" id="r_aa932d582a345975ac4aca9c53909d783"><td class="memItemLeft" align="right" valign="top"><a id="aa932d582a345975ac4aca9c53909d783" name="aa932d582a345975ac4aca9c53909d783"></a>
-string&#160;</td><td class="memItemRight" valign="bottom"><b>Label</b> = &quot;&quot;<code> [get]</code></td></tr>
-<tr class="memdesc:aa932d582a345975ac4aca9c53909d783"><td class="mdescLeft">&#160;</td><td class="mdescRight">Text label displayed after the checkbox indicator. <br /></td></tr>
-<tr class="separator:aa932d582a345975ac4aca9c53909d783"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab3586191805eea523868a725fc87a246" id="r_ab3586191805eea523868a725fc87a246"><td class="memItemLeft" align="right" valign="top"><a id="ab3586191805eea523868a725fc87a246" name="ab3586191805eea523868a725fc87a246"></a>
-bool&#160;</td><td class="memItemRight" valign="bottom"><b>IsChecked</b><code> [get]</code></td></tr>
-<tr class="memdesc:ab3586191805eea523868a725fc87a246"><td class="mdescLeft">&#160;</td><td class="mdescRight">Whether the checkbox is currently checked. <br /></td></tr>
-<tr class="separator:ab3586191805eea523868a725fc87a246"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5e8e629155d7cef76d4a88554c76b784" id="r_a5e8e629155d7cef76d4a88554c76b784"><td class="memItemLeft" align="right" valign="top"><a id="a5e8e629155d7cef76d4a88554c76b784" name="a5e8e629155d7cef76d4a88554c76b784"></a>
 char&#160;</td><td class="memItemRight" valign="bottom"><b>CheckedChar</b> = '✓'<code> [get]</code></td></tr>
 <tr class="memdesc:a5e8e629155d7cef76d4a88554c76b784"><td class="mdescLeft">&#160;</td><td class="mdescRight">Character rendered inside the brackets when checked. Default <code>'✓'</code>. <br /></td></tr>
 <tr class="separator:a5e8e629155d7cef76d4a88554c76b784"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adbef357440e403d2c96dc6a0af68a284" id="r_adbef357440e403d2c96dc6a0af68a284"><td class="memItemLeft" align="right" valign="top"><a id="adbef357440e403d2c96dc6a0af68a284" name="adbef357440e403d2c96dc6a0af68a284"></a>
+bool&#160;</td><td class="memItemRight" valign="bottom"><b>HasFocus</b><code> [get, set]</code></td></tr>
+<tr class="memdesc:adbef357440e403d2c96dc6a0af68a284"><td class="mdescLeft">&#160;</td><td class="mdescRight">True when this widget holds keyboard focus. <br /></td></tr>
+<tr class="separator:adbef357440e403d2c96dc6a0af68a284"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a23bbb4ef2cb8a3b28a4e796ad6403654" id="r_a23bbb4ef2cb8a3b28a4e796ad6403654"><td class="memItemLeft" align="right" valign="top"><a id="a23bbb4ef2cb8a3b28a4e796ad6403654" name="a23bbb4ef2cb8a3b28a4e796ad6403654"></a>
+SizeConstraint&#160;</td><td class="memItemRight" valign="bottom"><b>Height</b> = SizeConstraint.Fixed(1)<code> [get]</code></td></tr>
+<tr class="memdesc:a23bbb4ef2cb8a3b28a4e796ad6403654"><td class="mdescLeft">&#160;</td><td class="mdescRight">Height constraint used by the layout engine. <br /></td></tr>
+<tr class="separator:a23bbb4ef2cb8a3b28a4e796ad6403654"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab3586191805eea523868a725fc87a246" id="r_ab3586191805eea523868a725fc87a246"><td class="memItemLeft" align="right" valign="top"><a id="ab3586191805eea523868a725fc87a246" name="ab3586191805eea523868a725fc87a246"></a>
+bool&#160;</td><td class="memItemRight" valign="bottom"><b>IsChecked</b><code> [get]</code></td></tr>
+<tr class="memdesc:ab3586191805eea523868a725fc87a246"><td class="mdescLeft">&#160;</td><td class="mdescRight">Whether the checkbox is currently checked. <br /></td></tr>
+<tr class="separator:ab3586191805eea523868a725fc87a246"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa932d582a345975ac4aca9c53909d783" id="r_aa932d582a345975ac4aca9c53909d783"><td class="memItemLeft" align="right" valign="top"><a id="aa932d582a345975ac4aca9c53909d783" name="aa932d582a345975ac4aca9c53909d783"></a>
+string&#160;</td><td class="memItemRight" valign="bottom"><b>Label</b> = &quot;&quot;<code> [get]</code></td></tr>
+<tr class="memdesc:aa932d582a345975ac4aca9c53909d783"><td class="mdescLeft">&#160;</td><td class="mdescRight">Text label displayed after the checkbox indicator. <br /></td></tr>
+<tr class="separator:aa932d582a345975ac4aca9c53909d783"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a615386e4bab4e6f5c88d782230e2d958" id="r_a615386e4bab4e6f5c88d782230e2d958"><td class="memItemLeft" align="right" valign="top"><a id="a615386e4bab4e6f5c88d782230e2d958" name="a615386e4bab4e6f5c88d782230e2d958"></a>
+<a class="el" href="structConsoleForge_1_1Styling_1_1Style.html">Style</a>&#160;</td><td class="memItemRight" valign="bottom"><b>Style</b> = Style.Default<code> [get]</code></td></tr>
+<tr class="memdesc:a615386e4bab4e6f5c88d782230e2d958"><td class="mdescLeft">&#160;</td><td class="mdescRight">Visual style for the widget. Inherits theme base style when unset. <br /></td></tr>
+<tr class="separator:a615386e4bab4e6f5c88d782230e2d958"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac0df7ec43ee5c7d57cb6c913aa84bb0e" id="r_ac0df7ec43ee5c7d57cb6c913aa84bb0e"><td class="memItemLeft" align="right" valign="top"><a id="ac0df7ec43ee5c7d57cb6c913aa84bb0e" name="ac0df7ec43ee5c7d57cb6c913aa84bb0e"></a>
 char&#160;</td><td class="memItemRight" valign="bottom"><b>UncheckedChar</b> = ' '<code> [get]</code></td></tr>
 <tr class="memdesc:ac0df7ec43ee5c7d57cb6c913aa84bb0e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Character rendered inside the brackets when unchecked. Default <code>' '</code>. <br /></td></tr>
 <tr class="separator:ac0df7ec43ee5c7d57cb6c913aa84bb0e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aab550c0fb60c761c1826ec3d9f87085c" id="r_aab550c0fb60c761c1826ec3d9f87085c"><td class="memItemLeft" align="right" valign="top"><a id="aab550c0fb60c761c1826ec3d9f87085c" name="aab550c0fb60c761c1826ec3d9f87085c"></a>
+SizeConstraint&#160;</td><td class="memItemRight" valign="bottom"><b>Width</b> = SizeConstraint.Flex(1)<code> [get]</code></td></tr>
+<tr class="memdesc:aab550c0fb60c761c1826ec3d9f87085c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Width constraint used by the layout engine. <br /></td></tr>
+<tr class="separator:aab550c0fb60c761c1826ec3d9f87085c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header properties_interfaceConsoleForge_1_1Layout_1_1IFocusable"><td colspan="2" onclick="javascript:toggleInherit('properties_interfaceConsoleForge_1_1Layout_1_1IFocusable')"><img src="closed.png" alt="-"/>&#160;Properties inherited from <a class="el" href="interfaceConsoleForge_1_1Layout_1_1IFocusable.html">ConsoleForge.Layout.IFocusable</a></td></tr>
 <tr class="inherit_header properties_interfaceConsoleForge_1_1Layout_1_1IWidget"><td colspan="2" onclick="javascript:toggleInherit('properties_interfaceConsoleForge_1_1Layout_1_1IWidget')"><img src="closed.png" alt="-"/>&#160;Properties inherited from <a class="el" href="interfaceConsoleForge_1_1Layout_1_1IWidget.html">ConsoleForge.Layout.IWidget</a></td></tr>
 </table>
@@ -225,38 +230,6 @@ char&#160;</td><td class="memItemRight" valign="bottom"><b>UncheckedChar</b> = '
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
-<a id="a4a44a650e1749bf172d972e6dae64a81" name="a4a44a650e1749bf172d972e6dae64a81"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a4a44a650e1749bf172d972e6dae64a81">&#9670;&#160;</a></span>OnKeyEvent()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">void ConsoleForge.Widgets.Checkbox.OnKeyEvent </td>
-          <td>(</td>
-          <td class="paramtype">KeyMsg&#160;</td>
-          <td class="paramname"><em>key</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">Action&lt; <a class="el" href="interfaceConsoleForge_1_1Core_1_1IMsg.html">IMsg</a> &gt;&#160;</td>
-          <td class="paramname"><em>dispatch</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Toggle the checkbox state when Space or Enter is pressed. </p>
-
-<p>Implements <a class="el" href="interfaceConsoleForge_1_1Layout_1_1IFocusable.html#a6fd21ecae11f928020fc9aad3f00a203">ConsoleForge.Layout.IFocusable</a>.</p>
-
-</div>
-</div>
 <a id="a7088f5694a08307d78090af2db36c10b" name="a7088f5694a08307d78090af2db36c10b"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a7088f5694a08307d78090af2db36c10b">&#9670;&#160;</a></span>Render()</h2>
 
@@ -277,111 +250,6 @@ char&#160;</td><td class="memItemRight" valign="bottom"><b>UncheckedChar</b> = '
 <p>The indicator brackets and label are styled together. When focused, the active theme's Theme.FocusedStyle is blended in. </p>
 
 <p>Implements <a class="el" href="interfaceConsoleForge_1_1Layout_1_1IWidget.html#a667c894a8e08971ea9c2d2f35bddb90d">ConsoleForge.Layout.IWidget</a>.</p>
-
-</div>
-</div>
-<h2 class="groupheader">Property Documentation</h2>
-<a id="adbef357440e403d2c96dc6a0af68a284" name="adbef357440e403d2c96dc6a0af68a284"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#adbef357440e403d2c96dc6a0af68a284">&#9670;&#160;</a></span>HasFocus</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">bool ConsoleForge.Widgets.Checkbox.HasFocus</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">get</span><span class="mlabel">set</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>True when this widget holds keyboard focus. </p>
-
-<p>Implements <a class="el" href="interfaceConsoleForge_1_1Layout_1_1IFocusable.html#acff7515203359e3faf0188fe3294d2ea">ConsoleForge.Layout.IFocusable</a>.</p>
-
-</div>
-</div>
-<a id="a23bbb4ef2cb8a3b28a4e796ad6403654" name="a23bbb4ef2cb8a3b28a4e796ad6403654"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a23bbb4ef2cb8a3b28a4e796ad6403654">&#9670;&#160;</a></span>Height</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">SizeConstraint ConsoleForge.Widgets.Checkbox.Height = SizeConstraint.Fixed(1)</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">get</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Height constraint used by the layout engine. </p>
-
-<p>Implements <a class="el" href="interfaceConsoleForge_1_1Layout_1_1IWidget.html#a6753e2b9c2ab70d7f9c1914fbee562cd">ConsoleForge.Layout.IWidget</a>.</p>
-
-</div>
-</div>
-<a id="a615386e4bab4e6f5c88d782230e2d958" name="a615386e4bab4e6f5c88d782230e2d958"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a615386e4bab4e6f5c88d782230e2d958">&#9670;&#160;</a></span>Style</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="structConsoleForge_1_1Styling_1_1Style.html">Style</a> ConsoleForge.Widgets.Checkbox.Style = Style.Default</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">get</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Visual style for the widget. Inherits theme base style when unset. </p>
-
-<p>Implements <a class="el" href="interfaceConsoleForge_1_1Layout_1_1IWidget.html#a6f793d12abc011f0684aa6b530bfbcec">ConsoleForge.Layout.IWidget</a>.</p>
-
-</div>
-</div>
-<a id="aab550c0fb60c761c1826ec3d9f87085c" name="aab550c0fb60c761c1826ec3d9f87085c"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aab550c0fb60c761c1826ec3d9f87085c">&#9670;&#160;</a></span>Width</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">SizeConstraint ConsoleForge.Widgets.Checkbox.Width = SizeConstraint.Flex(1)</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">get</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Width constraint used by the layout engine. </p>
-
-<p>Implements <a class="el" href="interfaceConsoleForge_1_1Layout_1_1IWidget.html#a4755d176a57385eda84dc972fe0f2848">ConsoleForge.Layout.IWidget</a>.</p>
 
 </div>
 </div>

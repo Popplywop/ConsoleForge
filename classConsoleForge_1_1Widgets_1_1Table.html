@@ -25,7 +25,7 @@
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">ConsoleForge<span id="projectnumber">&#160;0.2.0</span>
+   <div id="projectname">ConsoleForge<span id="projectnumber">&#160;0.2.1</span>
    </div>
    <div id="projectbrief">Elm-architecture TUI framework for .NET 8</div>
   </td>
@@ -115,6 +115,9 @@ $(document).ready(function(){initNavTree('classConsoleForge_1_1Widgets_1_1Table.
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
+<tr class="memitem:a1b3b5fb6db38b277cbde10de7d67f1e5" id="r_a1b3b5fb6db38b277cbde10de7d67f1e5"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classConsoleForge_1_1Widgets_1_1Table.html#a1b3b5fb6db38b277cbde10de7d67f1e5">Render</a> (<a class="el" href="interfaceConsoleForge_1_1Layout_1_1IRenderContext.html">IRenderContext</a> ctx)</td></tr>
+<tr class="memdesc:a1b3b5fb6db38b277cbde10de7d67f1e5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Renders the header row, separator line, and data rows into <em>ctx</em> 's allocated region.  <br /></td></tr>
+<tr class="separator:a1b3b5fb6db38b277cbde10de7d67f1e5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afb51fb0506811d33a36504c4fbf64456" id="r_afb51fb0506811d33a36504c4fbf64456"><td class="memItemLeft" align="right" valign="top"><a id="afb51fb0506811d33a36504c4fbf64456" name="afb51fb0506811d33a36504c4fbf64456"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><b>Table</b> ()</td></tr>
 <tr class="memdesc:afb51fb0506811d33a36504c4fbf64456"><td class="mdescLeft">&#160;</td><td class="mdescRight">Object-initializer constructor. <br /></td></tr>
@@ -123,9 +126,6 @@ Public Member Functions</h2></td></tr>
 &#160;</td><td class="memItemRight" valign="bottom"><b>Table</b> (IReadOnlyList&lt; <a class="el" href="namespaceConsoleForge_1_1Widgets.html#ae60cc105b519a113c4523cb534bda505">TableColumn</a> &gt; columns, IReadOnlyList&lt; IReadOnlyList&lt; string &gt; &gt; rows, int selectedIndex=-1, <a class="el" href="structConsoleForge_1_1Styling_1_1Style.html">Style</a>? headerStyle=null, <a class="el" href="structConsoleForge_1_1Styling_1_1Style.html">Style</a>? rowStyle=null, int paddingLeft=1, int paddingRight=1, int scrollOffset=0)</td></tr>
 <tr class="memdesc:ab886b169ca9ed5bcd87d6e5db1067e75"><td class="mdescLeft">&#160;</td><td class="mdescRight">Positional constructor for inline usage. <br /></td></tr>
 <tr class="separator:ab886b169ca9ed5bcd87d6e5db1067e75"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1b3b5fb6db38b277cbde10de7d67f1e5" id="r_a1b3b5fb6db38b277cbde10de7d67f1e5"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classConsoleForge_1_1Widgets_1_1Table.html#a1b3b5fb6db38b277cbde10de7d67f1e5">Render</a> (<a class="el" href="interfaceConsoleForge_1_1Layout_1_1IRenderContext.html">IRenderContext</a> ctx)</td></tr>
-<tr class="memdesc:a1b3b5fb6db38b277cbde10de7d67f1e5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Renders the header row, separator line, and data rows into <em>ctx</em> 's allocated region.  <br /></td></tr>
-<tr class="separator:a1b3b5fb6db38b277cbde10de7d67f1e5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
@@ -135,50 +135,53 @@ Static Public Member Functions</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="properties" name="properties"></a>
 Properties</h2></td></tr>
-<tr class="memitem:a99a5f72cd1f65ca87d029abdf0586bdb" id="r_a99a5f72cd1f65ca87d029abdf0586bdb"><td class="memItemLeft" align="right" valign="top">SizeConstraint&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classConsoleForge_1_1Widgets_1_1Table.html#a99a5f72cd1f65ca87d029abdf0586bdb">Width</a> = SizeConstraint.Flex(1)<code> [get]</code></td></tr>
-<tr class="memdesc:a99a5f72cd1f65ca87d029abdf0586bdb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Horizontal size constraint. Defaults to SizeConstraint.Flex(int) weight 1 (fill available width).  <br /></td></tr>
-<tr class="separator:a99a5f72cd1f65ca87d029abdf0586bdb"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4eda522abdf2eb9c947baa45c026c790" id="r_a4eda522abdf2eb9c947baa45c026c790"><td class="memItemLeft" align="right" valign="top">SizeConstraint&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classConsoleForge_1_1Widgets_1_1Table.html#a4eda522abdf2eb9c947baa45c026c790">Height</a> = SizeConstraint.Flex(1)<code> [get]</code></td></tr>
-<tr class="memdesc:a4eda522abdf2eb9c947baa45c026c790"><td class="mdescLeft">&#160;</td><td class="mdescRight">Vertical size constraint. Defaults to SizeConstraint.Flex(int) weight 1 (fill available height).  <br /></td></tr>
-<tr class="separator:a4eda522abdf2eb9c947baa45c026c790"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:abaf726be58b09df310cc872f2edf3d8f" id="r_abaf726be58b09df310cc872f2edf3d8f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structConsoleForge_1_1Styling_1_1Style.html">Style</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classConsoleForge_1_1Widgets_1_1Table.html#abaf726be58b09df310cc872f2edf3d8f">Style</a> = Style.Default<code> [get]</code></td></tr>
-<tr class="memdesc:abaf726be58b09df310cc872f2edf3d8f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Base style applied to the widget. Individual row and header styles override this per-section.  <br /></td></tr>
-<tr class="separator:abaf726be58b09df310cc872f2edf3d8f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a878081ab877f28bf92c4755f4821cc33" id="r_a878081ab877f28bf92c4755f4821cc33"><td class="memItemLeft" align="right" valign="top"><a id="a878081ab877f28bf92c4755f4821cc33" name="a878081ab877f28bf92c4755f4821cc33"></a>
 IReadOnlyList&lt; <a class="el" href="namespaceConsoleForge_1_1Widgets.html#ae60cc105b519a113c4523cb534bda505">TableColumn</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>Columns</b> = []<code> [get]</code></td></tr>
 <tr class="memdesc:a878081ab877f28bf92c4755f4821cc33"><td class="mdescLeft">&#160;</td><td class="mdescRight">Column definitions. Must not be empty. <br /></td></tr>
 <tr class="separator:a878081ab877f28bf92c4755f4821cc33"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af4a8ba3470fd5e8e05b6f2e0ac59351e" id="r_af4a8ba3470fd5e8e05b6f2e0ac59351e"><td class="memItemLeft" align="right" valign="top">IReadOnlyList&lt; IReadOnlyList&lt; string &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classConsoleForge_1_1Widgets_1_1Table.html#af4a8ba3470fd5e8e05b6f2e0ac59351e">Rows</a> = []<code> [get]</code></td></tr>
-<tr class="memdesc:af4a8ba3470fd5e8e05b6f2e0ac59351e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Data rows.  <br /></td></tr>
-<tr class="separator:af4a8ba3470fd5e8e05b6f2e0ac59351e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a49e4785593b4cc04132759a88b246a14" id="r_a49e4785593b4cc04132759a88b246a14"><td class="memItemLeft" align="right" valign="top"><a id="a49e4785593b4cc04132759a88b246a14" name="a49e4785593b4cc04132759a88b246a14"></a>
 <a class="el" href="structConsoleForge_1_1Styling_1_1Style.html">Style</a>&#160;</td><td class="memItemRight" valign="bottom"><b>HeaderStyle</b> = Style.Default.Bold(true)<code> [get]</code></td></tr>
 <tr class="memdesc:a49e4785593b4cc04132759a88b246a14"><td class="mdescLeft">&#160;</td><td class="mdescRight">Style applied to the header row. Inherits theme base style when unset. <br /></td></tr>
 <tr class="separator:a49e4785593b4cc04132759a88b246a14"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a685ad3430b4ea961bcd0593ddc057b6c" id="r_a685ad3430b4ea961bcd0593ddc057b6c"><td class="memItemLeft" align="right" valign="top"><a id="a685ad3430b4ea961bcd0593ddc057b6c" name="a685ad3430b4ea961bcd0593ddc057b6c"></a>
-<a class="el" href="structConsoleForge_1_1Styling_1_1Style.html">Style</a>&#160;</td><td class="memItemRight" valign="bottom"><b>RowStyle</b> = Style.Default<code> [get]</code></td></tr>
-<tr class="memdesc:a685ad3430b4ea961bcd0593ddc057b6c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Style applied to data rows. Inherits theme base style when unset. <br /></td></tr>
-<tr class="separator:a685ad3430b4ea961bcd0593ddc057b6c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac33101dbeb610a72e0e5349dbd3af1c5" id="r_ac33101dbeb610a72e0e5349dbd3af1c5"><td class="memItemLeft" align="right" valign="top"><a id="ac33101dbeb610a72e0e5349dbd3af1c5" name="ac33101dbeb610a72e0e5349dbd3af1c5"></a>
-<a class="el" href="structConsoleForge_1_1Styling_1_1Style.html">Style</a>&#160;</td><td class="memItemRight" valign="bottom"><b>SelectedRowStyle</b> = Style.Default.Reverse(true)<code> [get]</code></td></tr>
-<tr class="memdesc:ac33101dbeb610a72e0e5349dbd3af1c5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Style applied to the currently selected row (when SelectedIndex ≥ 0). <br /></td></tr>
-<tr class="separator:ac33101dbeb610a72e0e5349dbd3af1c5"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:adcc4ac7e34e594e73519087900343a45" id="r_adcc4ac7e34e594e73519087900343a45"><td class="memItemLeft" align="right" valign="top"><a id="adcc4ac7e34e594e73519087900343a45" name="adcc4ac7e34e594e73519087900343a45"></a>
-int&#160;</td><td class="memItemRight" valign="bottom"><b>SelectedIndex</b> = -1<code> [get]</code></td></tr>
-<tr class="memdesc:adcc4ac7e34e594e73519087900343a45"><td class="mdescLeft">&#160;</td><td class="mdescRight">Zero-based index of the selected row. -1 means no selection. <br /></td></tr>
-<tr class="separator:adcc4ac7e34e594e73519087900343a45"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2df2118faaadc1be39e36e16245d2dca" id="r_a2df2118faaadc1be39e36e16245d2dca"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classConsoleForge_1_1Widgets_1_1Table.html#a2df2118faaadc1be39e36e16245d2dca">ScrollOffset</a><code> [get]</code></td></tr>
-<tr class="memdesc:a2df2118faaadc1be39e36e16245d2dca"><td class="mdescLeft">&#160;</td><td class="mdescRight">Zero-based index of the first data row rendered in the viewport.  <br /></td></tr>
-<tr class="separator:a2df2118faaadc1be39e36e16245d2dca"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac34839b22b00b3a8428f9598477cc788" id="r_ac34839b22b00b3a8428f9598477cc788"><td class="memItemLeft" align="right" valign="top">char&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classConsoleForge_1_1Widgets_1_1Table.html#ac34839b22b00b3a8428f9598477cc788">Separator</a> = '\0'<code> [get]</code></td></tr>
-<tr class="memdesc:ac34839b22b00b3a8428f9598477cc788"><td class="mdescLeft">&#160;</td><td class="mdescRight">Character used to separate columns.  <br /></td></tr>
-<tr class="separator:ac34839b22b00b3a8428f9598477cc788"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4eda522abdf2eb9c947baa45c026c790" id="r_a4eda522abdf2eb9c947baa45c026c790"><td class="memItemLeft" align="right" valign="top"><a id="a4eda522abdf2eb9c947baa45c026c790" name="a4eda522abdf2eb9c947baa45c026c790"></a>
+SizeConstraint&#160;</td><td class="memItemRight" valign="bottom"><b>Height</b> = SizeConstraint.Flex(1)<code> [get]</code></td></tr>
+<tr class="memdesc:a4eda522abdf2eb9c947baa45c026c790"><td class="mdescLeft">&#160;</td><td class="mdescRight">Vertical size constraint. Defaults to SizeConstraint.Flex(int) weight 1 (fill available height). <br /></td></tr>
+<tr class="separator:a4eda522abdf2eb9c947baa45c026c790"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aae943f547d58cde6a168779770d9a91b" id="r_aae943f547d58cde6a168779770d9a91b"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classConsoleForge_1_1Widgets_1_1Table.html#aae943f547d58cde6a168779770d9a91b">PaddingLeft</a> = 1<code> [get]</code></td></tr>
 <tr class="memdesc:aae943f547d58cde6a168779770d9a91b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Blank columns inserted to the left of each cell's text.  <br /></td></tr>
 <tr class="separator:aae943f547d58cde6a168779770d9a91b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad18c6442495107209a3d5e8396b64d61" id="r_ad18c6442495107209a3d5e8396b64d61"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classConsoleForge_1_1Widgets_1_1Table.html#ad18c6442495107209a3d5e8396b64d61">PaddingRight</a> = 1<code> [get]</code></td></tr>
 <tr class="memdesc:ad18c6442495107209a3d5e8396b64d61"><td class="mdescLeft">&#160;</td><td class="mdescRight">Blank columns reserved to the right of each cell's text.  <br /></td></tr>
 <tr class="separator:ad18c6442495107209a3d5e8396b64d61"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af4a8ba3470fd5e8e05b6f2e0ac59351e" id="r_af4a8ba3470fd5e8e05b6f2e0ac59351e"><td class="memItemLeft" align="right" valign="top">IReadOnlyList&lt; IReadOnlyList&lt; string &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classConsoleForge_1_1Widgets_1_1Table.html#af4a8ba3470fd5e8e05b6f2e0ac59351e">Rows</a> = []<code> [get]</code></td></tr>
+<tr class="memdesc:af4a8ba3470fd5e8e05b6f2e0ac59351e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Data rows.  <br /></td></tr>
+<tr class="separator:af4a8ba3470fd5e8e05b6f2e0ac59351e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a685ad3430b4ea961bcd0593ddc057b6c" id="r_a685ad3430b4ea961bcd0593ddc057b6c"><td class="memItemLeft" align="right" valign="top"><a id="a685ad3430b4ea961bcd0593ddc057b6c" name="a685ad3430b4ea961bcd0593ddc057b6c"></a>
+<a class="el" href="structConsoleForge_1_1Styling_1_1Style.html">Style</a>&#160;</td><td class="memItemRight" valign="bottom"><b>RowStyle</b> = Style.Default<code> [get]</code></td></tr>
+<tr class="memdesc:a685ad3430b4ea961bcd0593ddc057b6c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Style applied to data rows. Inherits theme base style when unset. <br /></td></tr>
+<tr class="separator:a685ad3430b4ea961bcd0593ddc057b6c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2df2118faaadc1be39e36e16245d2dca" id="r_a2df2118faaadc1be39e36e16245d2dca"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classConsoleForge_1_1Widgets_1_1Table.html#a2df2118faaadc1be39e36e16245d2dca">ScrollOffset</a><code> [get]</code></td></tr>
+<tr class="memdesc:a2df2118faaadc1be39e36e16245d2dca"><td class="mdescLeft">&#160;</td><td class="mdescRight">Zero-based index of the first data row rendered in the viewport.  <br /></td></tr>
+<tr class="separator:a2df2118faaadc1be39e36e16245d2dca"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adcc4ac7e34e594e73519087900343a45" id="r_adcc4ac7e34e594e73519087900343a45"><td class="memItemLeft" align="right" valign="top"><a id="adcc4ac7e34e594e73519087900343a45" name="adcc4ac7e34e594e73519087900343a45"></a>
+int&#160;</td><td class="memItemRight" valign="bottom"><b>SelectedIndex</b> = -1<code> [get]</code></td></tr>
+<tr class="memdesc:adcc4ac7e34e594e73519087900343a45"><td class="mdescLeft">&#160;</td><td class="mdescRight">Zero-based index of the selected row. -1 means no selection. <br /></td></tr>
+<tr class="separator:adcc4ac7e34e594e73519087900343a45"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac33101dbeb610a72e0e5349dbd3af1c5" id="r_ac33101dbeb610a72e0e5349dbd3af1c5"><td class="memItemLeft" align="right" valign="top"><a id="ac33101dbeb610a72e0e5349dbd3af1c5" name="ac33101dbeb610a72e0e5349dbd3af1c5"></a>
+<a class="el" href="structConsoleForge_1_1Styling_1_1Style.html">Style</a>&#160;</td><td class="memItemRight" valign="bottom"><b>SelectedRowStyle</b> = Style.Default.Reverse(true)<code> [get]</code></td></tr>
+<tr class="memdesc:ac33101dbeb610a72e0e5349dbd3af1c5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Style applied to the currently selected row (when SelectedIndex ≥ 0). <br /></td></tr>
+<tr class="separator:ac33101dbeb610a72e0e5349dbd3af1c5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac34839b22b00b3a8428f9598477cc788" id="r_ac34839b22b00b3a8428f9598477cc788"><td class="memItemLeft" align="right" valign="top">char&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classConsoleForge_1_1Widgets_1_1Table.html#ac34839b22b00b3a8428f9598477cc788">Separator</a> = '\0'<code> [get]</code></td></tr>
+<tr class="memdesc:ac34839b22b00b3a8428f9598477cc788"><td class="mdescLeft">&#160;</td><td class="mdescRight">Character used to separate columns.  <br /></td></tr>
+<tr class="separator:ac34839b22b00b3a8428f9598477cc788"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abaf726be58b09df310cc872f2edf3d8f" id="r_abaf726be58b09df310cc872f2edf3d8f"><td class="memItemLeft" align="right" valign="top"><a id="abaf726be58b09df310cc872f2edf3d8f" name="abaf726be58b09df310cc872f2edf3d8f"></a>
+<a class="el" href="structConsoleForge_1_1Styling_1_1Style.html">Style</a>&#160;</td><td class="memItemRight" valign="bottom"><b>Style</b> = Style.Default<code> [get]</code></td></tr>
+<tr class="memdesc:abaf726be58b09df310cc872f2edf3d8f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Base style applied to the widget. Individual row and header styles override this per-section. <br /></td></tr>
+<tr class="separator:abaf726be58b09df310cc872f2edf3d8f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a99a5f72cd1f65ca87d029abdf0586bdb" id="r_a99a5f72cd1f65ca87d029abdf0586bdb"><td class="memItemLeft" align="right" valign="top"><a id="a99a5f72cd1f65ca87d029abdf0586bdb" name="a99a5f72cd1f65ca87d029abdf0586bdb"></a>
+SizeConstraint&#160;</td><td class="memItemRight" valign="bottom"><b>Width</b> = SizeConstraint.Flex(1)<code> [get]</code></td></tr>
+<tr class="memdesc:a99a5f72cd1f65ca87d029abdf0586bdb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Horizontal size constraint. Defaults to SizeConstraint.Flex(int) weight 1 (fill available width). <br /></td></tr>
+<tr class="separator:a99a5f72cd1f65ca87d029abdf0586bdb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header properties_interfaceConsoleForge_1_1Layout_1_1IWidget"><td colspan="2" onclick="javascript:toggleInherit('properties_interfaceConsoleForge_1_1Layout_1_1IWidget')"><img src="closed.png" alt="-"/>&#160;Properties inherited from <a class="el" href="interfaceConsoleForge_1_1Layout_1_1IWidget.html">ConsoleForge.Layout.IWidget</a></td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
@@ -269,32 +272,6 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>SelectedIndex</b> = -1
 </div>
 </div>
 <h2 class="groupheader">Property Documentation</h2>
-<a id="a4eda522abdf2eb9c947baa45c026c790" name="a4eda522abdf2eb9c947baa45c026c790"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a4eda522abdf2eb9c947baa45c026c790">&#9670;&#160;</a></span>Height</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">SizeConstraint ConsoleForge.Widgets.Table.Height = SizeConstraint.Flex(1)</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">get</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Vertical size constraint. Defaults to SizeConstraint.Flex(int) weight 1 (fill available height). </p>
-
-<p>Implements <a class="el" href="interfaceConsoleForge_1_1Layout_1_1IWidget.html#a6753e2b9c2ab70d7f9c1914fbee562cd">ConsoleForge.Layout.IWidget</a>.</p>
-
-</div>
-</div>
 <a id="aae943f547d58cde6a168779770d9a91b" name="aae943f547d58cde6a168779770d9a91b"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#aae943f547d58cde6a168779770d9a91b">&#9670;&#160;</a></span>PaddingLeft</h2>
 
@@ -417,58 +394,6 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>SelectedIndex</b> = -1
 
 <p>Character used to separate columns. </p>
 <p>Defaults to <code>'\0'</code> (no separator). When non-zero the separator is always rendered with the base row style so it never inherits the selection highlight. </p>
-
-</div>
-</div>
-<a id="abaf726be58b09df310cc872f2edf3d8f" name="abaf726be58b09df310cc872f2edf3d8f"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#abaf726be58b09df310cc872f2edf3d8f">&#9670;&#160;</a></span>Style</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="structConsoleForge_1_1Styling_1_1Style.html">Style</a> ConsoleForge.Widgets.Table.Style = Style.Default</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">get</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Base style applied to the widget. Individual row and header styles override this per-section. </p>
-
-<p>Implements <a class="el" href="interfaceConsoleForge_1_1Layout_1_1IWidget.html#a6f793d12abc011f0684aa6b530bfbcec">ConsoleForge.Layout.IWidget</a>.</p>
-
-</div>
-</div>
-<a id="a99a5f72cd1f65ca87d029abdf0586bdb" name="a99a5f72cd1f65ca87d029abdf0586bdb"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a99a5f72cd1f65ca87d029abdf0586bdb">&#9670;&#160;</a></span>Width</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">SizeConstraint ConsoleForge.Widgets.Table.Width = SizeConstraint.Flex(1)</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">get</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Horizontal size constraint. Defaults to SizeConstraint.Flex(int) weight 1 (fill available width). </p>
-
-<p>Implements <a class="el" href="interfaceConsoleForge_1_1Layout_1_1IWidget.html#a4755d176a57385eda84dc972fe0f2848">ConsoleForge.Layout.IWidget</a>.</p>
 
 </div>
 </div>

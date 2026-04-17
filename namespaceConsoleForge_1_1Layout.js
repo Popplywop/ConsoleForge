@@ -12,9 +12,6 @@ var namespaceConsoleForge_1_1Layout =
     [ "ResolvedLayout", "classConsoleForge_1_1Layout_1_1ResolvedLayout.html", "classConsoleForge_1_1Layout_1_1ResolvedLayout" ],
     [ "SubRenderContext", "classConsoleForge_1_1Layout_1_1SubRenderContext.html", "classConsoleForge_1_1Layout_1_1SubRenderContext" ],
     [ "TextUtils", "classConsoleForge_1_1Layout_1_1TextUtils.html", "classConsoleForge_1_1Layout_1_1TextUtils" ],
-    [ "Axis", "namespaceConsoleForge_1_1Layout.html#a5ad525ec3eb9f2080c3f075c393ee264", [
-      [ "Horizontal", "namespaceConsoleForge_1_1Layout.html#a5ad525ec3eb9f2080c3f075c393ee264ac1b5fa03ecdb95d4a45dd1c40b02527f", null ],
-      [ "Vertical", "namespaceConsoleForge_1_1Layout.html#a5ad525ec3eb9f2080c3f075c393ee264a06ce2a25e5d12c166a36f654dbea6012", null ]
-    ] ],
+    [ "Axis", "namespaceConsoleForge_1_1Layout.html#a5ad525ec3eb9f2080c3f075c393ee264", null ],
     [ "Region", "namespaceConsoleForge_1_1Layout.html#ab21cfb8b7d8bf12cc3eb69798735ef97", null ]
 ];

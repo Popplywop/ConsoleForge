@@ -25,7 +25,7 @@
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">ConsoleForge<span id="projectnumber">&#160;0.2.0</span>
+   <div id="projectname">ConsoleForge<span id="projectnumber">&#160;0.2.1</span>
    </div>
    <div id="projectbrief">Elm-architecture TUI framework for .NET 8</div>
   </td>
@@ -103,6 +103,9 @@ $(document).ready(function(){initNavTree('classConsoleForge_1_1Core_1_1Cmd.html'
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
+<tr class="memitem:a1127c69f229ad136b7e4b7c1c7a42b88" id="r_a1127c69f229ad136b7e4b7c1c7a42b88"><td class="memItemLeft" align="right" valign="top">static <a class="el" href="namespaceConsoleForge_1_1Core.html#a45d6a05ca04f21a284e8ebc48a09fbb4">ICmd</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classConsoleForge_1_1Core_1_1Cmd.html#a1127c69f229ad136b7e4b7c1c7a42b88">Debounce</a> (TimeSpan interval, Func&lt; DateTimeOffset, <a class="el" href="interfaceConsoleForge_1_1Core_1_1IMsg.html">IMsg</a> &gt; fn)</td></tr>
+<tr class="memdesc:a1127c69f229ad136b7e4b7c1c7a42b88"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a cmd that, when dispatched, waits <em>interval</em>  after the last dispatch before invoking <em>fn</em> .  <br /></td></tr>
+<tr class="separator:a1127c69f229ad136b7e4b7c1c7a42b88"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a65e48526a8aa2bbd4e5f515f92a4cd1f" id="r_a65e48526a8aa2bbd4e5f515f92a4cd1f"><td class="memItemLeft" align="right" valign="top"><a id="a65e48526a8aa2bbd4e5f515f92a4cd1f" name="a65e48526a8aa2bbd4e5f515f92a4cd1f"></a>
 static <a class="el" href="namespaceConsoleForge_1_1Core.html#a45d6a05ca04f21a284e8ebc48a09fbb4">ICmd</a>&#160;</td><td class="memItemRight" valign="bottom"><b>Quit</b> ()</td></tr>
 <tr class="memdesc:a65e48526a8aa2bbd4e5f515f92a4cd1f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns QuitMsg immediately, ending the program loop. <br /></td></tr>
@@ -110,15 +113,12 @@ static <a class="el" href="namespaceConsoleForge_1_1Core.html#a45d6a05ca04f21a28
 <tr class="memitem:a086a3394bee5399cd0c55d51ad9d4977" id="r_a086a3394bee5399cd0c55d51ad9d4977"><td class="memItemLeft" align="right" valign="top">static ? <a class="el" href="namespaceConsoleForge_1_1Core.html#a45d6a05ca04f21a284e8ebc48a09fbb4">ICmd</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classConsoleForge_1_1Core_1_1Cmd.html#a086a3394bee5399cd0c55d51ad9d4977">Sequence</a> (params <a class="el" href="namespaceConsoleForge_1_1Core.html#a45d6a05ca04f21a284e8ebc48a09fbb4">ICmd</a>?[] cmds)</td></tr>
 <tr class="memdesc:a086a3394bee5399cd0c55d51ad9d4977"><td class="mdescLeft">&#160;</td><td class="mdescRight">Run commands serially: each waits for the previous to complete.  <br /></td></tr>
 <tr class="separator:a086a3394bee5399cd0c55d51ad9d4977"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5c8b8bea5edf952fa068434d9d75df08" id="r_a5c8b8bea5edf952fa068434d9d75df08"><td class="memItemLeft" align="right" valign="top">static <a class="el" href="namespaceConsoleForge_1_1Core.html#a45d6a05ca04f21a284e8ebc48a09fbb4">ICmd</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classConsoleForge_1_1Core_1_1Cmd.html#a5c8b8bea5edf952fa068434d9d75df08">Tick</a> (TimeSpan interval, Func&lt; DateTimeOffset, <a class="el" href="interfaceConsoleForge_1_1Core_1_1IMsg.html">IMsg</a> &gt; fn, CancellationToken cancellationToken=default)</td></tr>
-<tr class="memdesc:a5c8b8bea5edf952fa068434d9d75df08"><td class="mdescLeft">&#160;</td><td class="mdescRight">Fire once after <em>interval</em> .  <br /></td></tr>
-<tr class="separator:a5c8b8bea5edf952fa068434d9d75df08"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1127c69f229ad136b7e4b7c1c7a42b88" id="r_a1127c69f229ad136b7e4b7c1c7a42b88"><td class="memItemLeft" align="right" valign="top">static <a class="el" href="namespaceConsoleForge_1_1Core.html#a45d6a05ca04f21a284e8ebc48a09fbb4">ICmd</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classConsoleForge_1_1Core_1_1Cmd.html#a1127c69f229ad136b7e4b7c1c7a42b88">Debounce</a> (TimeSpan interval, Func&lt; DateTimeOffset, <a class="el" href="interfaceConsoleForge_1_1Core_1_1IMsg.html">IMsg</a> &gt; fn)</td></tr>
-<tr class="memdesc:a1127c69f229ad136b7e4b7c1c7a42b88"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a cmd that, when dispatched, waits <em>interval</em>  after the last dispatch before invoking <em>fn</em> .  <br /></td></tr>
-<tr class="separator:a1127c69f229ad136b7e4b7c1c7a42b88"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a09566cce3cb1fc95bf58339d149d2f85" id="r_a09566cce3cb1fc95bf58339d149d2f85"><td class="memItemLeft" align="right" valign="top">static <a class="el" href="namespaceConsoleForge_1_1Core.html#a45d6a05ca04f21a284e8ebc48a09fbb4">ICmd</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classConsoleForge_1_1Core_1_1Cmd.html#a09566cce3cb1fc95bf58339d149d2f85">Throttle</a> (TimeSpan interval, Func&lt; DateTimeOffset, <a class="el" href="interfaceConsoleForge_1_1Core_1_1IMsg.html">IMsg</a> &gt; fn)</td></tr>
 <tr class="memdesc:a09566cce3cb1fc95bf58339d149d2f85"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a cmd that forwards at most one invocation per <em>interval</em> .  <br /></td></tr>
 <tr class="separator:a09566cce3cb1fc95bf58339d149d2f85"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5c8b8bea5edf952fa068434d9d75df08" id="r_a5c8b8bea5edf952fa068434d9d75df08"><td class="memItemLeft" align="right" valign="top">static <a class="el" href="namespaceConsoleForge_1_1Core.html#a45d6a05ca04f21a284e8ebc48a09fbb4">ICmd</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classConsoleForge_1_1Core_1_1Cmd.html#a5c8b8bea5edf952fa068434d9d75df08">Tick</a> (TimeSpan interval, Func&lt; DateTimeOffset, <a class="el" href="interfaceConsoleForge_1_1Core_1_1IMsg.html">IMsg</a> &gt; fn, CancellationToken cancellationToken=default)</td></tr>
+<tr class="memdesc:a5c8b8bea5edf952fa068434d9d75df08"><td class="mdescLeft">&#160;</td><td class="mdescRight">Fire once after <em>interval</em> .  <br /></td></tr>
+<tr class="separator:a5c8b8bea5edf952fa068434d9d75df08"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-attribs" name="pub-static-attribs"></a>
 Static Public Attributes</h2></td></tr>

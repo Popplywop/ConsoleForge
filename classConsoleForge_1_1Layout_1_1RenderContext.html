@@ -25,7 +25,7 @@
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">ConsoleForge<span id="projectnumber">&#160;0.2.0</span>
+   <div id="projectname">ConsoleForge<span id="projectnumber">&#160;0.2.1</span>
    </div>
    <div id="projectbrief">Elm-architecture TUI framework for .NET 8</div>
   </td>
@@ -120,30 +120,33 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:acb202539e634d956adc508bcbce7a04b" id="r_acb202539e634d956adc508bcbce7a04b"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classConsoleForge_1_1Layout_1_1RenderContext.html#acb202539e634d956adc508bcbce7a04b">Reset</a> (<a class="el" href="classConsoleForge_1_1Layout_1_1RenderContext.html#acae2c8801d0bc5c6d99cbc3dd19c0141">Region</a> region, <a class="el" href="classConsoleForge_1_1Layout_1_1RenderContext.html#a5f5148ee1e285a21df07ee647f081761">Theme</a> theme, <a class="el" href="namespaceConsoleForge_1_1Styling.html#a9111dcd4dc77c663dd44d027bbc67946">ColorProfile</a> colorProfile, <a class="el" href="classConsoleForge_1_1Layout_1_1ResolvedLayout.html">ResolvedLayout</a> layout)</td></tr>
 <tr class="memdesc:acb202539e634d956adc508bcbce7a04b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Prepare this context for a new frame.  <br /></td></tr>
 <tr class="separator:acb202539e634d956adc508bcbce7a04b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3a2255237cd6e364c149a756b6749b0d" id="r_a3a2255237cd6e364c149a756b6749b0d"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classConsoleForge_1_1Layout_1_1RenderContext.html#a3a2255237cd6e364c149a756b6749b0d">Write</a> (int col, int row, string text, <a class="el" href="structConsoleForge_1_1Styling_1_1Style.html">Style</a> style)</td></tr>
-<tr class="memdesc:a3a2255237cd6e364c149a756b6749b0d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Write a styled string at absolute terminal position (col, row).  <br /></td></tr>
-<tr class="separator:a3a2255237cd6e364c149a756b6749b0d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4e5782c4dbeaf1d5e32486a04c70ca03" id="r_a4e5782c4dbeaf1d5e32486a04c70ca03"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classConsoleForge_1_1Layout_1_1RenderContext.html#a4e5782c4dbeaf1d5e32486a04c70ca03">TryReuseWidget</a> (<a class="el" href="interfaceConsoleForge_1_1Layout_1_1IWidget.html">IWidget</a> widget, <a class="el" href="classConsoleForge_1_1Layout_1_1RenderContext.html#acae2c8801d0bc5c6d99cbc3dd19c0141">Region</a> region)</td></tr>
-<tr class="memdesc:a4e5782c4dbeaf1d5e32486a04c70ca03"><td class="mdescLeft">&#160;</td><td class="mdescRight">If <em>widget</em>  (same object reference) was rendered at exactly <em>region</em>  last frame AND the previous cell buffer exists, copy those cells into the current buffer and return <code>true</code> (caller should skip rendering).  <br /></td></tr>
-<tr class="separator:a4e5782c4dbeaf1d5e32486a04c70ca03"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac5cdb26d6a57248b4c612572c0a4c314" id="r_ac5cdb26d6a57248b4c612572c0a4c314"><td class="memItemLeft" align="right" valign="top">string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classConsoleForge_1_1Layout_1_1RenderContext.html#ac5cdb26d6a57248b4c612572c0a4c314">ToAnsiFrame</a> ()</td></tr>
 <tr class="memdesc:ac5cdb26d6a57248b4c612572c0a4c314"><td class="mdescLeft">&#160;</td><td class="mdescRight">Produce a minimal ANSI frame string by diffing current cell buffer against the previous frame.  <br /></td></tr>
 <tr class="separator:ac5cdb26d6a57248b4c612572c0a4c314"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4e5782c4dbeaf1d5e32486a04c70ca03" id="r_a4e5782c4dbeaf1d5e32486a04c70ca03"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classConsoleForge_1_1Layout_1_1RenderContext.html#a4e5782c4dbeaf1d5e32486a04c70ca03">TryReuseWidget</a> (<a class="el" href="interfaceConsoleForge_1_1Layout_1_1IWidget.html">IWidget</a> widget, <a class="el" href="classConsoleForge_1_1Layout_1_1RenderContext.html#acae2c8801d0bc5c6d99cbc3dd19c0141">Region</a> region)</td></tr>
+<tr class="memdesc:a4e5782c4dbeaf1d5e32486a04c70ca03"><td class="mdescLeft">&#160;</td><td class="mdescRight">If <em>widget</em>  (same object reference) was rendered at exactly <em>region</em>  last frame AND the previous cell buffer exists, copy those cells into the current buffer and return <code>true</code> (caller should skip rendering).  <br /></td></tr>
+<tr class="separator:a4e5782c4dbeaf1d5e32486a04c70ca03"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3a2255237cd6e364c149a756b6749b0d" id="r_a3a2255237cd6e364c149a756b6749b0d"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classConsoleForge_1_1Layout_1_1RenderContext.html#a3a2255237cd6e364c149a756b6749b0d">Write</a> (int col, int row, string text, <a class="el" href="structConsoleForge_1_1Styling_1_1Style.html">Style</a> style)</td></tr>
+<tr class="memdesc:a3a2255237cd6e364c149a756b6749b0d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Write a styled string at absolute terminal position (col, row).  <br /></td></tr>
+<tr class="separator:a3a2255237cd6e364c149a756b6749b0d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="properties" name="properties"></a>
 Properties</h2></td></tr>
-<tr class="memitem:acae2c8801d0bc5c6d99cbc3dd19c0141" id="r_acae2c8801d0bc5c6d99cbc3dd19c0141"><td class="memItemLeft" align="right" valign="top">Region&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classConsoleForge_1_1Layout_1_1RenderContext.html#acae2c8801d0bc5c6d99cbc3dd19c0141">Region</a><code> [get]</code></td></tr>
-<tr class="memdesc:acae2c8801d0bc5c6d99cbc3dd19c0141"><td class="mdescLeft">&#160;</td><td class="mdescRight">The allocated region for this widget (absolute terminal coordinates).  <br /></td></tr>
-<tr class="separator:acae2c8801d0bc5c6d99cbc3dd19c0141"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5f5148ee1e285a21df07ee647f081761" id="r_a5f5148ee1e285a21df07ee647f081761"><td class="memItemLeft" align="right" valign="top">Theme&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classConsoleForge_1_1Layout_1_1RenderContext.html#a5f5148ee1e285a21df07ee647f081761">Theme</a><code> [get]</code></td></tr>
-<tr class="memdesc:a5f5148ee1e285a21df07ee647f081761"><td class="mdescLeft">&#160;</td><td class="mdescRight">Active theme for style inheritance. Updated by Reset.  <br /></td></tr>
-<tr class="separator:a5f5148ee1e285a21df07ee647f081761"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad1de973e296526376f5a258e8dc82959" id="r_ad1de973e296526376f5a258e8dc82959"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespaceConsoleForge_1_1Styling.html#a9111dcd4dc77c663dd44d027bbc67946">ColorProfile</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classConsoleForge_1_1Layout_1_1RenderContext.html#ad1de973e296526376f5a258e8dc82959">ColorProfile</a><code> [get]</code></td></tr>
-<tr class="memdesc:ad1de973e296526376f5a258e8dc82959"><td class="mdescLeft">&#160;</td><td class="mdescRight">Detected terminal color capability.  <br /></td></tr>
+<tr class="memitem:ad1de973e296526376f5a258e8dc82959" id="r_ad1de973e296526376f5a258e8dc82959"><td class="memItemLeft" align="right" valign="top"><a id="ad1de973e296526376f5a258e8dc82959" name="ad1de973e296526376f5a258e8dc82959"></a>
+<a class="el" href="namespaceConsoleForge_1_1Styling.html#a9111dcd4dc77c663dd44d027bbc67946">ColorProfile</a>&#160;</td><td class="memItemRight" valign="bottom"><b>ColorProfile</b><code> [get]</code></td></tr>
+<tr class="memdesc:ad1de973e296526376f5a258e8dc82959"><td class="mdescLeft">&#160;</td><td class="mdescRight">Detected terminal color capability. <br /></td></tr>
 <tr class="separator:ad1de973e296526376f5a258e8dc82959"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5408fdfcbe7a42353d90fdc3d9133c68" id="r_a5408fdfcbe7a42353d90fdc3d9133c68"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classConsoleForge_1_1Layout_1_1ResolvedLayout.html">ResolvedLayout</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classConsoleForge_1_1Layout_1_1RenderContext.html#a5408fdfcbe7a42353d90fdc3d9133c68">Layout</a><code> [get]</code></td></tr>
 <tr class="memdesc:a5408fdfcbe7a42353d90fdc3d9133c68"><td class="mdescLeft">&#160;</td><td class="mdescRight">Resolved layout for the current frame.  <br /></td></tr>
 <tr class="separator:a5408fdfcbe7a42353d90fdc3d9133c68"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acae2c8801d0bc5c6d99cbc3dd19c0141" id="r_acae2c8801d0bc5c6d99cbc3dd19c0141"><td class="memItemLeft" align="right" valign="top"><a id="acae2c8801d0bc5c6d99cbc3dd19c0141" name="acae2c8801d0bc5c6d99cbc3dd19c0141"></a>
+Region&#160;</td><td class="memItemRight" valign="bottom"><b>Region</b><code> [get]</code></td></tr>
+<tr class="memdesc:acae2c8801d0bc5c6d99cbc3dd19c0141"><td class="mdescLeft">&#160;</td><td class="mdescRight">The allocated region for this widget (absolute terminal coordinates). <br /></td></tr>
+<tr class="separator:acae2c8801d0bc5c6d99cbc3dd19c0141"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5f5148ee1e285a21df07ee647f081761" id="r_a5f5148ee1e285a21df07ee647f081761"><td class="memItemLeft" align="right" valign="top"><a id="a5f5148ee1e285a21df07ee647f081761" name="a5f5148ee1e285a21df07ee647f081761"></a>
+Theme&#160;</td><td class="memItemRight" valign="bottom"><b>Theme</b><code> [get]</code></td></tr>
+<tr class="memdesc:a5f5148ee1e285a21df07ee647f081761"><td class="mdescLeft">&#160;</td><td class="mdescRight">Active theme for style inheritance. Updated by Reset. <br /></td></tr>
+<tr class="separator:a5f5148ee1e285a21df07ee647f081761"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header properties_interfaceConsoleForge_1_1Layout_1_1IRenderContext"><td colspan="2" onclick="javascript:toggleInherit('properties_interfaceConsoleForge_1_1Layout_1_1IRenderContext')"><img src="closed.png" alt="-"/>&#160;Properties inherited from <a class="el" href="interfaceConsoleForge_1_1Layout_1_1IRenderContext.html">ConsoleForge.Layout.IRenderContext</a></td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
@@ -345,32 +348,6 @@ Properties</h2></td></tr>
 </div>
 </div>
 <h2 class="groupheader">Property Documentation</h2>
-<a id="ad1de973e296526376f5a258e8dc82959" name="ad1de973e296526376f5a258e8dc82959"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ad1de973e296526376f5a258e8dc82959">&#9670;&#160;</a></span>ColorProfile</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="namespaceConsoleForge_1_1Styling.html#a9111dcd4dc77c663dd44d027bbc67946">ColorProfile</a> ConsoleForge.Layout.RenderContext.ColorProfile</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">get</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Detected terminal color capability. </p>
-
-<p>Implements <a class="el" href="interfaceConsoleForge_1_1Layout_1_1IRenderContext.html#ab2457ec75c3de5e7e45a522a106eaea0">ConsoleForge.Layout.IRenderContext</a>.</p>
-
-</div>
-</div>
 <a id="a5408fdfcbe7a42353d90fdc3d9133c68" name="a5408fdfcbe7a42353d90fdc3d9133c68"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a5408fdfcbe7a42353d90fdc3d9133c68">&#9670;&#160;</a></span>Layout</h2>
 
@@ -395,58 +372,6 @@ Properties</h2></td></tr>
 <p>Container widgets use this to retrieve child regions without re-running layout. </p>
 
 <p>Implements <a class="el" href="interfaceConsoleForge_1_1Layout_1_1IRenderContext.html#ab47b442c7707cbb4c2a543d215d8ba1f">ConsoleForge.Layout.IRenderContext</a>.</p>
-
-</div>
-</div>
-<a id="acae2c8801d0bc5c6d99cbc3dd19c0141" name="acae2c8801d0bc5c6d99cbc3dd19c0141"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#acae2c8801d0bc5c6d99cbc3dd19c0141">&#9670;&#160;</a></span>Region</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">Region ConsoleForge.Layout.RenderContext.Region</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">get</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>The allocated region for this widget (absolute terminal coordinates). </p>
-
-<p>Implements <a class="el" href="interfaceConsoleForge_1_1Layout_1_1IRenderContext.html#a465492afff48533de0ab2ed6f0e9f16b">ConsoleForge.Layout.IRenderContext</a>.</p>
-
-</div>
-</div>
-<a id="a5f5148ee1e285a21df07ee647f081761" name="a5f5148ee1e285a21df07ee647f081761"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a5f5148ee1e285a21df07ee647f081761">&#9670;&#160;</a></span>Theme</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">Theme ConsoleForge.Layout.RenderContext.Theme</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">get</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Active theme for style inheritance. Updated by Reset. </p>
-
-<p>Implements <a class="el" href="interfaceConsoleForge_1_1Layout_1_1IRenderContext.html#a1a5bbdcfff7bf88e34af47437d02e7e0">ConsoleForge.Layout.IRenderContext</a>.</p>
 
 </div>
 </div>

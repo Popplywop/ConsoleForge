@@ -1,11 +1,17 @@
 var searchData=
 [
-  ['emptychar_0',['EmptyChar',['../classConsoleForge_1_1Widgets_1_1ProgressBar.html#a6868570959d22026a2c35f9d77211fb0',1,'ConsoleForge::Widgets::ProgressBar']]],
-  ['emptystyle_1',['EmptyStyle',['../classConsoleForge_1_1Widgets_1_1ProgressBar.html#a48b6f684323b3c5abd2ab268d632b558',1,'ConsoleForge::Widgets::ProgressBar']]],
-  ['enablemouse_2',['enablemouse',['../classConsoleForge_1_1Terminal_1_1AnsiTerminal.html#aaf5d69c03f2b07e6fb483fb717521068',1,'ConsoleForge.Terminal.AnsiTerminal.EnableMouse()'],['../interfaceConsoleForge_1_1Terminal_1_1ITerminal.html#ad8068d392f0acda421467045c9b373a0',1,'ConsoleForge.Terminal.ITerminal.EnableMouse()']]],
-  ['enteralternatescreen_3',['enteralternatescreen',['../classConsoleForge_1_1Terminal_1_1AnsiTerminal.html#ad7413b68dfc679eb06469d361b7b95d6',1,'ConsoleForge.Terminal.AnsiTerminal.EnterAlternateScreen()'],['../interfaceConsoleForge_1_1Terminal_1_1ITerminal.html#a856558689f7a236bb950ac26840b184b',1,'ConsoleForge.Terminal.ITerminal.EnterAlternateScreen()']]],
-  ['enterrawmode_4',['enterrawmode',['../classConsoleForge_1_1Terminal_1_1AnsiTerminal.html#ae0f560e6106886eef309675605b91ca6',1,'ConsoleForge.Terminal.AnsiTerminal.EnterRawMode()'],['../interfaceConsoleForge_1_1Terminal_1_1ITerminal.html#a325d04b6438186a6a57254b3ce01d4ce',1,'ConsoleForge.Terminal.ITerminal.EnterRawMode()']]],
-  ['equals_5',['Equals',['../structConsoleForge_1_1Styling_1_1Style.html#a093c3e9717aeb60fcabbc9cbe65dd3ec',1,'ConsoleForge::Styling::Style']]],
-  ['exitalternatescreen_6',['exitalternatescreen',['../classConsoleForge_1_1Terminal_1_1AnsiTerminal.html#a0cf7bdc3905c5f9eb057f24afeba29a3',1,'ConsoleForge.Terminal.AnsiTerminal.ExitAlternateScreen()'],['../interfaceConsoleForge_1_1Terminal_1_1ITerminal.html#a5823ba43bb41c92f1fc6001317910791',1,'ConsoleForge.Terminal.ITerminal.ExitAlternateScreen()']]],
-  ['exitrawmode_7',['exitrawmode',['../classConsoleForge_1_1Terminal_1_1AnsiTerminal.html#a4b7ab90fd4fcb7970e26ad9fda9e1696',1,'ConsoleForge.Terminal.AnsiTerminal.ExitRawMode()'],['../interfaceConsoleForge_1_1Terminal_1_1ITerminal.html#ac27acffaf657a98d38af47de275a51a7',1,'ConsoleForge.Terminal.ITerminal.ExitRawMode()']]]
+  ['backdropstyle_0',['BackdropStyle',['../classConsoleForge_1_1Widgets_1_1Modal.html#ab240ad68bc169cf9b8445cc711ed60bf',1,'ConsoleForge::Widgets::Modal']]],
+  ['basecolorstyle_1',['BaseColorStyle',['../classConsoleForge_1_1Styling_1_1ThemeExtensions.html#a418430c5ca502eadcecff380b89b2083',1,'ConsoleForge::Styling::ThemeExtensions']]],
+  ['bg_2',['bg',['../structConsoleForge_1_1Styling_1_1Style.html#ae15d1910ed7fca02cf722dcfcbbb855c',1,'ConsoleForge.Styling.Style.Bg'],['../classConsoleForge_1_1Styling_1_1ThemeExtensions.html#aa8e2d7f7fd899416c9f1b8e5d07ed39d',1,'ConsoleForge.Styling.ThemeExtensions.Bg()']]],
+  ['body_3',['body',['../interfaceConsoleForge_1_1Layout_1_1ISingleBodyWidget.html#a9c83321c8a83516169489ad1ad7afed6',1,'ConsoleForge.Layout.ISingleBodyWidget.Body'],['../classConsoleForge_1_1Widgets_1_1BorderBox.html#a7df0fee3a1dc3066a02d6ca036024d3a',1,'ConsoleForge.Widgets.BorderBox.Body'],['../classConsoleForge_1_1Widgets_1_1Modal.html#a96387fa7b56bf0015e90c4677d2642d3',1,'ConsoleForge.Widgets.Modal.Body'],['../classConsoleForge_1_1Widgets_1_1Tabs.html#ae83b1ab38728c21047f5ca32b61f1beb',1,'ConsoleForge.Widgets.Tabs.Body']]],
+  ['borderbox_4',['borderbox',['../classConsoleForge_1_1Widgets_1_1BorderBox.html',1,'ConsoleForge.Widgets.BorderBox'],['../classConsoleForge_1_1Widgets_1_1BorderBox.html#ac9eaeea95ff8694fa814c34b26d71f43',1,'ConsoleForge.Widgets.BorderBox.BorderBox()']]],
+  ['bordercolor_5',['BorderColor',['../structConsoleForge_1_1Styling_1_1Style.html#ab033fa233177742e2c4a4047100a6d0b',1,'ConsoleForge::Styling::Style']]],
+  ['borders_6',['Borders',['../classConsoleForge_1_1Styling_1_1Borders.html',1,'ConsoleForge::Styling']]],
+  ['borderspec_7',['BorderSpec',['../structConsoleForge_1_1Styling_1_1BorderSpec.html',1,'ConsoleForge::Styling']]],
+  ['bottom_8',['Bottom',['../structConsoleForge_1_1Styling_1_1BorderSpec.html#a1f2cf606b44120600d6317ec5acd89da',1,'ConsoleForge::Styling::BorderSpec']]],
+  ['bottomleft_9',['BottomLeft',['../structConsoleForge_1_1Styling_1_1BorderSpec.html#a2a0a8dfd3f57bcb6b9dde9c2eea8e2c9',1,'ConsoleForge::Styling::BorderSpec']]],
+  ['bottomright_10',['BottomRight',['../structConsoleForge_1_1Styling_1_1BorderSpec.html#a05aaa1546ca7794c74bf748da32eae6b',1,'ConsoleForge::Styling::BorderSpec']]],
+  ['brailleframes_11',['BrailleFrames',['../classConsoleForge_1_1Widgets_1_1Spinner.html#a4794af7fa3c239fba5fb2f817bf0539c',1,'ConsoleForge::Widgets::Spinner']]],
+  ['building_12',['Building',['../index.html#autotoc_md16',1,'']]],
+  ['buttonevents_13',['ButtonEvents',['../namespaceConsoleForge_1_1Terminal.html#a3fe9b6b3dbab237937bec8897fcae6a2ac5b00cddd5289271d3216af06729c987',1,'ConsoleForge::Terminal']]]
 ];

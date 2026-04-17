@@ -25,7 +25,7 @@
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">ConsoleForge<span id="projectnumber">&#160;0.2.0</span>
+   <div id="projectname">ConsoleForge<span id="projectnumber">&#160;0.2.1</span>
    </div>
    <div id="projectbrief">Elm-architecture TUI framework for .NET 8</div>
   </td>
@@ -103,8 +103,6 @@ $(document).ready(function(){initNavTree('classConsoleForge_1_1Core_1_1Component
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
-<tr class="memitem:a9787ffc24f8c92dd61e47c51d17614c3" id="r_a9787ffc24f8c92dd61e47c51d17614c3"><td class="memItemLeft" align="right" valign="top">static ? T? <a class="el" href="namespaceConsoleForge_1_1Core.html#a45d6a05ca04f21a284e8ebc48a09fbb4">ICmd</a> <a class="el" href="classConsoleForge_1_1Core_1_1Cmd.html">Cmd</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classConsoleForge_1_1Core_1_1Component.html#a9787ffc24f8c92dd61e47c51d17614c3">Delegate&lt; T &gt;</a> (T? component, <a class="el" href="interfaceConsoleForge_1_1Core_1_1IMsg.html">IMsg</a> msg)</td></tr>
-<tr class="separator:a9787ffc24f8c92dd61e47c51d17614c3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0a105f4539398fc046d3c8eae1b02065" id="r_a0a105f4539398fc046d3c8eae1b02065"><td class="memItemLeft" align="right" valign="top">static bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classConsoleForge_1_1Core_1_1Component.html#a0a105f4539398fc046d3c8eae1b02065">IsCompleted&lt; TResult &gt;</a> ([NotNullWhen(false)] this <a class="el" href="interfaceConsoleForge_1_1Core_1_1IComponent.html">IComponent</a>&lt; TResult &gt;? component)</td></tr>
 <tr class="memdesc:a0a105f4539398fc046d3c8eae1b02065"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns <code>true</code> if <em>component</em>  has completed — i.e.  <br /></td></tr>
 <tr class="separator:a0a105f4539398fc046d3c8eae1b02065"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -125,51 +123,6 @@ Static Public Attributes</h2></td></tr>
 <div class="line">var (next, cmd) = <a class="code hl_class" href="classConsoleForge_1_1Core_1_1Component.html">Component</a>.Delegate(myPage, msg);  <span class="comment">// next is MyPage</span></div>
 <div class="ttc" id="aclassConsoleForge_1_1Core_1_1Component_html"><div class="ttname"><a href="classConsoleForge_1_1Core_1_1Component.html">ConsoleForge.Core.Component</a></div><div class="ttdoc">Static helpers for working with IComponent and IComponent&lt;TResult&gt; in parent model Update methods.</div><div class="ttdef"><b>Definition</b> Component.cs:22</div></div>
 </div><!-- fragment --> </div><h2 class="groupheader">Member Function Documentation</h2>
-<a id="a9787ffc24f8c92dd61e47c51d17614c3" name="a9787ffc24f8c92dd61e47c51d17614c3"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a9787ffc24f8c92dd61e47c51d17614c3">&#9670;&#160;</a></span>Delegate&lt; T &gt;()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">static ? T? <a class="el" href="namespaceConsoleForge_1_1Core.html#a45d6a05ca04f21a284e8ebc48a09fbb4">ICmd</a> <a class="el" href="classConsoleForge_1_1Core_1_1Cmd.html">Cmd</a> ConsoleForge.Core.Component.Delegate&lt; T &gt; </td>
-          <td>(</td>
-          <td class="paramtype">T?&#160;</td>
-          <td class="paramname"><em>component</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="interfaceConsoleForge_1_1Core_1_1IMsg.html">IMsg</a>&#160;</td>
-          <td class="paramname"><em>msg</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">static</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-<div class="typeconstraint">
-<dl><dt><b>Type Constraints</b></dt><dd>
-<table border="0" cellspacing="2" cellpadding="0">
-<tr><td valign="top"><em>T</em></td><td>&#160;:</td><td valign="top"><em>class</em></td><td>&#160;</td></tr>
-<tr><td valign="top"><em>T</em></td><td>&#160;:</td><td valign="top"><em>IComponent</em></td><td>&#160;</td></tr>
-</table>
-</dd>
-</dl>
-</div>
-
-</div>
-</div>
 <a id="a0a105f4539398fc046d3c8eae1b02065" name="a0a105f4539398fc046d3c8eae1b02065"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a0a105f4539398fc046d3c8eae1b02065">&#9670;&#160;</a></span>IsCompleted&lt; TResult &gt;()</h2>
 

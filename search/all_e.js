@@ -1,9 +1,21 @@
 var searchData=
 [
-  ['paddingleft_0',['paddingleft',['../classConsoleForge_1_1Widgets_1_1List.html#ad5500b331ab02be051cc23950966480b',1,'ConsoleForge.Widgets.List.PaddingLeft'],['../classConsoleForge_1_1Widgets_1_1Table.html#aae943f547d58cde6a168779770d9a91b',1,'ConsoleForge.Widgets.Table.PaddingLeft']]],
-  ['paddingright_1',['paddingright',['../classConsoleForge_1_1Widgets_1_1List.html#a53f3bb8273033110a660c705003e8d04',1,'ConsoleForge.Widgets.List.PaddingRight'],['../classConsoleForge_1_1Widgets_1_1Table.html#ad18c6442495107209a3d5e8396b64d61',1,'ConsoleForge.Widgets.Table.PaddingRight']]],
-  ['placeholder_2',['Placeholder',['../classConsoleForge_1_1Widgets_1_1TextInput.html#ae401822d7e22d74771aabedccef06894',1,'ConsoleForge::Widgets::TextInput']]],
-  ['press_3',['Press',['../namespaceConsoleForge_1_1Core.html#a0b19fe63275c4899aaf1c92764fbb209a0610123bdd4ffc191a3ea05a847e1307',1,'ConsoleForge::Core']]],
-  ['program_4',['Program',['../classConsoleForge_1_1Core_1_1Program.html',1,'ConsoleForge::Core']]],
-  ['progressbar_5',['progressbar',['../classConsoleForge_1_1Widgets_1_1ProgressBar.html',1,'ConsoleForge.Widgets.ProgressBar'],['../classConsoleForge_1_1Widgets_1_1ProgressBar.html#a74d13edbf1e790223cf2dcb0a697c93b',1,'ConsoleForge.Widgets.ProgressBar.ProgressBar()'],['../classConsoleForge_1_1Widgets_1_1ProgressBar.html#a28ae3c22859fd3492c0d3eace3444368',1,'ConsoleForge.Widgets.ProgressBar.ProgressBar(double value, double maximum=100, bool showPercent=true, char fillChar=&apos;█&apos;, char emptyChar=&apos;░&apos;, Style? style=null)']]]
+  ['maximum_0',['Maximum',['../classConsoleForge_1_1Widgets_1_1ProgressBar.html#a95b3b42df9bb01aaebe411e0acc7d6db',1,'ConsoleForge::Widgets::ProgressBar']]],
+  ['maxlines_1',['MaxLines',['../classConsoleForge_1_1Widgets_1_1TextArea.html#a8135cb81b4d3b0ec117928ee23741958',1,'ConsoleForge::Widgets::TextArea']]],
+  ['merge_2',['Merge',['../classConsoleForge_1_1Core_1_1KeyMap.html#a79577b29f93e84cc7003cb21ab38f129',1,'ConsoleForge::Core::KeyMap']]],
+  ['middle_3',['middle',['../structConsoleForge_1_1Styling_1_1BorderSpec.html#a67e49f2a849a468a6af246834c4db59f',1,'ConsoleForge.Styling.BorderSpec.Middle'],['../namespaceConsoleForge_1_1Core.html#a41c27369bb8f4a11b68352b1c4ac51a9ab1ca34f82e83c52b010f86955f264e05',1,'ConsoleForge.Core.Middle']]],
+  ['middlebottom_4',['MiddleBottom',['../structConsoleForge_1_1Styling_1_1BorderSpec.html#ae75926ec625c0f90fc1dde804a2a6a38',1,'ConsoleForge::Styling::BorderSpec']]],
+  ['middleleft_5',['MiddleLeft',['../structConsoleForge_1_1Styling_1_1BorderSpec.html#aa60e7df27aef2df933d22c8043df1430',1,'ConsoleForge::Styling::BorderSpec']]],
+  ['middleright_6',['MiddleRight',['../structConsoleForge_1_1Styling_1_1BorderSpec.html#aedca16d10c75fa08985541c3878ecf85',1,'ConsoleForge::Styling::BorderSpec']]],
+  ['middletop_7',['MiddleTop',['../structConsoleForge_1_1Styling_1_1BorderSpec.html#acd73c329a57a8bf50011119b7f161b27',1,'ConsoleForge::Styling::BorderSpec']]],
+  ['modal_8',['modal',['../classConsoleForge_1_1Widgets_1_1Modal.html#a6b31fbfc99c7404335d629e8143523c1',1,'ConsoleForge.Widgets.Modal.Modal()'],['../classConsoleForge_1_1Widgets_1_1Modal.html',1,'ConsoleForge.Widgets.Modal'],['../classConsoleForge_1_1Widgets_1_1Modal.html#a4792266757d1c981b401e97a7dd5a351',1,'ConsoleForge.Widgets.Modal.Modal()']]],
+  ['modaldismissedmsg_9',['ModalDismissedMsg',['../namespaceConsoleForge_1_1Widgets.html#aebd25878f55819dc42fdd8333c7bd5f1',1,'ConsoleForge::Widgets']]],
+  ['model_10',['Model',['../interfaceConsoleForge_1_1Core_1_1IModel.html#a061db75f6f84b23b7d93f0dcacda8bac',1,'ConsoleForge::Core::IModel']]],
+  ['mouse_20support_11',['Mouse Support',['../index.html#autotoc_md9',1,'']]],
+  ['mouseaction_12',['MouseAction',['../namespaceConsoleForge_1_1Core.html#a0b19fe63275c4899aaf1c92764fbb209',1,'ConsoleForge::Core']]],
+  ['mousebindingcount_13',['MouseBindingCount',['../classConsoleForge_1_1Core_1_1KeyMap.html#ad8f81b58797ae0b1fadf3aaf58cc3e68',1,'ConsoleForge::Core::KeyMap']]],
+  ['mousebutton_14',['MouseButton',['../namespaceConsoleForge_1_1Core.html#a41c27369bb8f4a11b68352b1c4ac51a9',1,'ConsoleForge::Core']]],
+  ['mousemode_15',['MouseMode',['../namespaceConsoleForge_1_1Terminal.html#a3fe9b6b3dbab237937bec8897fcae6a2',1,'ConsoleForge::Terminal']]],
+  ['move_16',['Move',['../namespaceConsoleForge_1_1Core.html#a0b19fe63275c4899aaf1c92764fbb209a6bc362dbf494c61ea117fe3c71ca48a5',1,'ConsoleForge::Core']]],
+  ['mutedstyle_17',['MutedStyle',['../classConsoleForge_1_1Styling_1_1ThemeExtensions.html#ad94cb9f2eae3aa473f9da13b4417147b',1,'ConsoleForge::Styling::ThemeExtensions']]]
 ];
