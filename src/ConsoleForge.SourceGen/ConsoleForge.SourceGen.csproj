@@ -8,7 +8,7 @@
 
     <!-- NuGet packaging -->
     <PackageId>ConsoleForge.SourceGen</PackageId>
-    <Version>0.2.0</Version>
+    <Version>0.2.1</Version>
     <Authors>Popplywop</Authors>
     <Description>Roslyn source generator for ConsoleForge. Eliminates Update(IMsg) dispatch boilerplate via [DispatchUpdate] and [Component] attributes.</Description>
     <PackageTags>tui;terminal;consoleforge;source-generator;roslyn</PackageTags>
@@ -17,7 +17,7 @@
     <RepositoryType>git</RepositoryType>
     <Copyright>Copyright © 2026 Popplywop</Copyright>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageReleaseNotes>v0.2.0: Initial release — [DispatchUpdate] and [Component] attribute support.</PackageReleaseNotes>
+    <PackageReleaseNotes>v0.2.1: Initial release — [DispatchUpdate] and [Component] attribute support, source generator implementation plan.</PackageReleaseNotes>
     <DevelopmentDependency>true</DevelopmentDependency>
     <IncludeBuildOutput>false</IncludeBuildOutput>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
