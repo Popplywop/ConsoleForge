@@ -30,8 +30,10 @@ public sealed class RenderContext : IRenderContext
     private IWidget?[]? _prevWidgets;
     private Region[]?   _prevRegions;
     private int         _prevWidgetCount;
-    private IWidget[]   _curWidgets  = new IWidget[32];
-    private Region[]    _curRegions  = new Region[32];
+    // Lazy-allocated on first RegisterWidget call — leaf widgets (TextBlock,
+    // TextInput, ProgressBar, etc.) never call Register so they pay nothing.
+    private IWidget[]?  _curWidgets;
+    private Region[]?   _curRegions;
     private int         _curWidgetCount;
 
     public Region         Region       { get; private set; }
@@ -85,16 +87,12 @@ public sealed class RenderContext : IRenderContext
         }
 
         // Swap widget maps: current → previous.
-        _prevWidgets     = _curWidgets;
+        _prevWidgets     = _curWidgets;   // may be null if no composites were rendered
         _prevRegions     = _curRegions;
         _prevWidgetCount = _curWidgetCount;
         _curWidgetCount  = 0;
-        // Reuse arrays if large enough, else keep current allocation
-        if (_curWidgets.Length < 32)
-        {
-            _curWidgets = new IWidget[32];
-            _curRegions = new Region[32];
-        }
+        _curWidgets      = null;          // will be lazy-allocated by next RegisterWidget
+        _curRegions      = null;
 
         // Invalidate widget cache AFTER the swap so TryReuseWidget cannot
         // serve stale cells from the old theme. Setting null here means the
@@ -196,14 +194,32 @@ public sealed class RenderContext : IRenderContext
     /// </summary>
     public void RegisterWidget(IWidget widget, Region region)
     {
-        if (_curWidgetCount >= _curWidgets.Length)
+        // Lazy-allocate on first use. Reuse the prev arrays as the new cur
+        // buffer when available — avoids a fresh allocation every frame.
+        if (_curWidgets is null)
+        {
+            if (_prevWidgets is not null && _prevWidgets.Length >= 32)
+            {
+                _curWidgets  = _prevWidgets!;
+                _curRegions  = _prevRegions!;
+                _prevWidgets = null;   // prevent double-use as both cur and prev
+                _prevRegions = null;
+            }
+            else
+            {
+                _curWidgets = new IWidget[32];
+                _curRegions = new Region[32];
+            }
+        }
+        else if (_curWidgetCount >= _curWidgets.Length)
         {
             int newLen = _curWidgets.Length * 2;
             Array.Resize(ref _curWidgets, newLen);
             Array.Resize(ref _curRegions, newLen);
         }
-        _curWidgets[_curWidgetCount] = widget;
-        _curRegions[_curWidgetCount] = region;
+
+        _curWidgets[_curWidgetCount]  = widget;
+        _curRegions![_curWidgetCount] = region;
         _curWidgetCount++;
     }
 

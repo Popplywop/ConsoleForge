@@ -1,5 +1,4 @@
 using ConsoleForge.Layout;
-using ConsoleForge.Widgets;
 
 namespace ConsoleForge.Core;
 
@@ -89,7 +88,7 @@ public static class FocusManager
         IFocusable? best = null;
         foreach (var f in all)
         {
-            var region = layout.GetRegion((IWidget)f);
+            var region = layout.GetRegion(f);
             if (region is null) continue;
             var r = region.Value;
             if (col >= r.Col && col < r.Col + r.Width &&

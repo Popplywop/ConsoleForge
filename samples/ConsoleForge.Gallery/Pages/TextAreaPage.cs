@@ -23,7 +23,7 @@ sealed record TextAreaComponent(
         TextAreaChangedMsg? changed = null;
         ta.OnKeyEvent(key, m => changed = m as TextAreaChangedMsg);
         if (changed is null) return (this, null);
-        var scroll = ConsoleForge.Widgets.TextArea.ComputeScrollRow(
+        var scroll = TextArea.ComputeScrollRow(
             changed.NewCursorRow, viewportHeight: 12, ScrollRow);
         return (this with {
             Lines     = changed.NewLines,

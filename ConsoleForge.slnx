@@ -1,9 +1,11 @@
 <Solution>
   <Folder Name="/src/">
+    <Project Path="src/ConsoleForge.SourceGen/ConsoleForge.SourceGen.csproj" />
     <Project Path="src/ConsoleForge/ConsoleForge.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/ConsoleForge.Benchmarks/ConsoleForge.Benchmarks.csproj" />
+    <Project Path="tests/ConsoleForge.SourceGen.Tests/ConsoleForge.SourceGen.Tests.csproj" />
     <Project Path="tests/ConsoleForge.Tests/ConsoleForge.Tests.csproj" />
   </Folder>
   <Folder Name="/samples/">

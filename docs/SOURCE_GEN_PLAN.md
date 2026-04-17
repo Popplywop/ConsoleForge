@@ -141,81 +141,255 @@ public sealed class DispatchUpdateGenerator : IIncrementalGenerator
 
 ### 2b. Extract target information
 
-The `GetTarget` method walks the semantic model and collects:
+Define the data model first — `GetTarget` fills these, `Emit` consumes them:
 
 ```csharp
 sealed record GenerationTarget(
     string Namespace,
     string TypeName,
     string TypeKind,               // "record" or "class"
-    bool   HasKeyMap,              // true if a static field named 'Keys' exists
+    bool   HasKeyMap,              // true if a static field/property named 'Keys' of type KeyMap exists
     IReadOnlyList<HandlerInfo> Handlers,
-    bool   EmitInit,               // from [Component]
-    bool   EmitResultProperty,     // from [Component], when IComponent<T> is implemented
-    string? ResultTypeName);       // e.g. "string", "bool?"
+    bool   EmitInit,               // from [Component] — only if user hasn't written Init() already
+    bool   EmitResultProperty,     // from [Component] — only if user hasn't written explicit Result already
+    string? ResultTypeName);       // fully-qualified, e.g. "global::System.String"
 
 sealed record HandlerInfo(
     string MethodName,             // e.g. "OnNavUp"
-    string MsgTypeName,            // e.g. "NavUpMsg" (fully qualified)
-    bool   TakesMsg);              // true if method declares (XMsg msg) parameter
+    string MsgTypeName,            // fully-qualified, e.g. "global::My.App.NavUpMsg"
+    bool   TakesMsg);              // true if method declares a (XMsg msg) parameter
 ```
 
-**Handler discovery rules:**
-- Method return type must be `(IModel Model, ICmd? Cmd)` or `(IModel, ICmd?)`
-- Method name must start with `On` followed by an uppercase letter
-- Infer message type by stripping the `On` prefix and appending `Msg`:
-  `OnNavUp` → look for `NavUpMsg` in scope
-- If the method declares a parameter of type `{X}Msg`, pass it through:
-  `OnPick(PickMsg msg)` → `PickMsg m => OnPick(m)`
-- If no parameter, call with no args: `NavUpMsg => OnNavUp()`
-- Methods can be `private` or internal — generator sees all declarations
+Concrete `GetTarget` implementation:
 
-**KeyMap detection:**
-- Look for a `static` field or property named `Keys` of type `KeyMap`
-- If present, emit `if (Keys.Handle(msg) is { } action) msg = action;`
+```csharp
+private static GenerationTarget? GetTarget(
+    GeneratorAttributeSyntaxContext ctx,
+    CancellationToken ct)
+{
+    if (ctx.TargetSymbol is not INamedTypeSymbol typeSymbol)
+        return null;
+
+    ct.ThrowIfCancellationRequested();
+
+    var ns = typeSymbol.ContainingNamespace.IsGlobalNamespace
+        ? string.Empty
+        : typeSymbol.ContainingNamespace.ToDisplayString();
+
+    var typeName = typeSymbol.Name;
+    var typeKind = typeSymbol.IsRecord ? "record" : "class";
+
+    // If user already wrote Update() manually, skip generation (emit CFG004 info instead)
+    bool hasExistingUpdate = typeSymbol
+        .GetMembers("Update")
+        .OfType<IMethodSymbol>()
+        .Any(m => !m.IsImplicitlyDeclared);
+    if (hasExistingUpdate)
+        return null;
+
+    // KeyMap detection: static field or property named 'Keys' of type KeyMap
+    bool hasKeyMap = typeSymbol.GetMembers("Keys").Any(m =>
+        m is IFieldSymbol    { IsStatic: true } f && f.Type.Name == "KeyMap" ||
+        m is IPropertySymbol { IsStatic: true } p && p.Type.Name == "KeyMap");
+
+    // [Component] / IComponent<T> handling
+    bool hasComponentAttr = typeSymbol.GetAttributes()
+        .Any(a => a.AttributeClass?.Name == "ComponentAttribute");
+
+    string? resultTypeName  = null;
+    bool emitResultProperty = false;
+    bool emitInit           = false;
+
+    if (hasComponentAttr)
+    {
+        var icomp = typeSymbol.AllInterfaces
+            .FirstOrDefault(i => i.Name == "IComponent" && i.TypeArguments.Length == 1);
+
+        if (icomp != null)
+        {
+            resultTypeName = icomp.TypeArguments[0]
+                .ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+
+            // Only emit if the user hasn't hand-written the explicit interface member
+            emitResultProperty = !typeSymbol.GetMembers("Result")
+                .OfType<IPropertySymbol>()
+                .Any(p => !p.IsImplicitlyDeclared
+                       && p.ExplicitInterfaceImplementations.Length > 0);
+
+            emitInit = !typeSymbol.GetMembers("Init")
+                .OfType<IMethodSymbol>()
+                .Any(m => !m.IsImplicitlyDeclared);
+        }
+    }
+
+    // Handler discovery
+    var handlers    = new List<HandlerInfo>();
+    var seenMsgFqns = new HashSet<string>(StringComparer.Ordinal);
+
+    foreach (var method in typeSymbol.GetMembers().OfType<IMethodSymbol>())
+    {
+        ct.ThrowIfCancellationRequested();
+
+        // Name must be On{UpperLetter}...
+        if (method.Name.Length < 3
+            || !method.Name.StartsWith("On")
+            || !char.IsUpper(method.Name[2]))
+            continue;
+
+        // Return type must be (IModel Model, ICmd? Cmd)
+        if (!IsValidHandlerReturnType(method.ReturnType))
+        {
+            // TODO: emit CFG003 warning — wrong return type, handler skipped
+            continue;
+        }
+
+        // Infer message type: OnNavUp -> NavUpMsg
+        var inferredName = method.Name.Substring(2) + "Msg";
+        var msgType = ctx.SemanticModel.Compilation
+            .GetSymbolsWithName(inferredName, SymbolFilter.Type)
+            .OfType<INamedTypeSymbol>()
+            .FirstOrDefault();
+
+        if (msgType == null)
+        {
+            // TODO: emit CFG002 warning — no matching IMsg type found, handler skipped
+            continue;
+        }
+
+        var msgFqn = msgType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+
+        if (!seenMsgFqns.Add(msgFqn))
+        {
+            // TODO: emit CFG002 warning — duplicate handler for same msg type, second skipped
+            continue;
+        }
+
+        // Does the method take the message as a parameter?
+        bool takesMsg = method.Parameters.Length == 1
+            && SymbolEqualityComparer.Default.Equals(method.Parameters[0].Type, msgType);
+
+        handlers.Add(new HandlerInfo(method.Name, msgFqn, takesMsg));
+    }
+
+    return new GenerationTarget(
+        ns, typeName, typeKind, hasKeyMap, handlers,
+        emitInit, emitResultProperty, resultTypeName);
+}
+
+// Return type validity: must be a 2-element tuple whose first element is IModel
+// and second is ICmd? (nullable annotation required)
+private static bool IsValidHandlerReturnType(ITypeSymbol returnType)
+{
+    if (returnType is not INamedTypeSymbol { IsTupleType: true } tuple)
+        return false;
+    if (tuple.TupleElements.Length != 2)
+        return false;
+
+    var first  = tuple.TupleElements[0].Type;
+    var second = tuple.TupleElements[1].Type;
+
+    return first.Name == "IModel"
+        && second.Name == "ICmd"
+        && second.NullableAnnotation == NullableAnnotation.Annotated;
+}
+```
 
 ### 2c. Emit the generated file
 
-Template for `{TypeName}.g.cs`:
+Concrete `Emit` implementation:
+
+```csharp
+private static void Emit(SourceProductionContext spc, GenerationTarget target)
+{
+    var sb = new StringBuilder();
+
+    sb.AppendLine("// <auto-generated/>");
+    sb.AppendLine("// Source: ConsoleForge.SourceGen — DispatchUpdateGenerator");
+    sb.AppendLine("#nullable enable");
+    sb.AppendLine();
+
+    if (!string.IsNullOrEmpty(target.Namespace))
+    {
+        sb.AppendLine($"namespace {target.Namespace};");
+        sb.AppendLine();
+    }
+
+    sb.AppendLine($"partial {target.TypeKind} {target.TypeName}");
+    sb.AppendLine("{");
+
+    // ── [Component] scaffolding ──────────────────────────────────────────
+    if (target.EmitResultProperty && target.ResultTypeName != null)
+    {
+        sb.AppendLine($"    {target.ResultTypeName} "
+            + $"global::ConsoleForge.Core.IComponent<{target.ResultTypeName}>.Result"
+            + " => Result!;");
+        sb.AppendLine();
+    }
+
+    if (target.EmitInit)
+    {
+        sb.AppendLine("    public global::ConsoleForge.Core.ICmd? Init() => null;");
+        sb.AppendLine();
+    }
+
+    // ── Update dispatch ──────────────────────────────────────────────────
+    sb.AppendLine("    public ("
+        + "global::ConsoleForge.Core.IModel Model, "
+        + "global::ConsoleForge.Core.ICmd? Cmd)");
+    sb.AppendLine("        Update(global::ConsoleForge.Core.IMsg msg)");
+    sb.AppendLine("    {");
+
+    if (target.HasKeyMap)
+        sb.AppendLine("        if (Keys.Handle(msg) is { } action) msg = action;");
+
+    sb.AppendLine("        return msg switch");
+    sb.AppendLine("        {");
+
+    foreach (var h in target.Handlers)
+    {
+        if (h.TakesMsg)
+            // Cast required: switch arm binds as IMsg, handler expects concrete type
+            sb.AppendLine($"            {h.MsgTypeName} __m => {h.MethodName}(({h.MsgTypeName})__m),");
+        else
+            sb.AppendLine($"            {h.MsgTypeName} => {h.MethodName}(),");
+    }
+
+    sb.AppendLine("            _ => (this, null),");
+    sb.AppendLine("        };");
+    sb.AppendLine("    }");
+    sb.AppendLine("}");
+
+    spc.AddSource(
+        $"{target.TypeName}.g.cs",
+        SourceText.From(sb.ToString(), Encoding.UTF8));
+}
+```
+
+For a `ListPage` with `OnNavUp()`, `OnNavDown()`, `OnPick(PickMsg msg)`, and a `static KeyMap Keys`, the output would be:
 
 ```csharp
 // <auto-generated/>
 // Source: ConsoleForge.SourceGen — DispatchUpdateGenerator
 #nullable enable
 
-namespace {Namespace};
+namespace My.App;
 
-partial {TypeKind} {TypeName}
+partial record ListPage
 {
-    // ── [Component] scaffolding ───────────────────────────────────────────
-    // (emitted only when [Component] attribute is present)
-    {ResultTypeName} IComponent<{ResultTypeName}>.Result => Result!;
-    public ICmd? Init() => null;
-
-    // ── [DispatchUpdate] generated Update ────────────────────────────────
     public (global::ConsoleForge.Core.IModel Model, global::ConsoleForge.Core.ICmd? Cmd)
         Update(global::ConsoleForge.Core.IMsg msg)
     {
-        {KeyMapLine}  // if HasKeyMap: "if (Keys.Handle(msg) is { } action) msg = action;"
+        if (Keys.Handle(msg) is { } action) msg = action;
         return msg switch
         {
-            {Cases}   // one line per handler
+            global::My.App.NavUpMsg => OnNavUp(),
+            global::My.App.NavDownMsg => OnNavDown(),
+            global::My.App.PickMsg __m => OnPick((global::My.App.PickMsg)__m),
             _ => (this, null),
         };
     }
 }
 ```
-
-Case line formats:
-```csharp
-// Handler with no parameter:
-global::My.NavUpMsg => OnNavUp(),
-
-// Handler with message parameter:
-global::My.PickMsg __m => OnPick((global::My.PickMsg)__m),
-```
-
-Use fully-qualified type names everywhere to avoid namespace collisions.
 
 ---
 

@@ -1,0 +1,35 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
+    <PackageId>ConsoleForge.SourceGen</PackageId>
+    <Version>0.2.0</Version>
+    <Authors>Popplywop</Authors>
+    <Description>Roslyn source generator for ConsoleForge. Eliminates Update(IMsg) dispatch boilerplate via [DispatchUpdate] and [Component] attributes.</Description>
+    <PackageTags>tui;terminal;consoleforge;source-generator;roslyn</PackageTags>
+    <PackageProjectUrl>https://github.com/Popplywop/ConsoleForge</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/Popplywop/ConsoleForge</RepositoryUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <DevelopmentDependency>true</DevelopmentDependency>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" Version="5.3.0">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="5.3.0" />
+  </ItemGroup>
+
+  <!-- Pack generator DLL into the analyzers folder -->
+  <ItemGroup>
+    <None Include="$(OutputPath)\$(AssemblyName).dll"
+          Pack="true"
+          PackagePath="analyzers/dotnet/cs"
+          Visible="false" />
+  </ItemGroup>
+
+</Project>
