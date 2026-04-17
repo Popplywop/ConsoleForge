@@ -168,6 +168,8 @@ public sealed class RenderContext : IRenderContext
     /// Returns true if every character in the string is ASCII (< 128).
     /// These strings have no surrogate pairs and no wide Unicode characters.
     /// </summary>
+    [System.Runtime.CompilerServices.MethodImpl(
+        System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
     private static bool IsAscii(string text)
     {
         foreach (char c in text)

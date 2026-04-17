@@ -197,6 +197,8 @@ public static class LayoutEngine
     /// Returns -1 if the constraint is (or wraps) a Flex or Auto constraint
     /// (both mean "participate in flex distribution" at layout time).
     /// </summary>
+    [System.Runtime.CompilerServices.MethodImpl(
+        System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
     private static int ResolveFixed(SizeConstraint constraint) =>
         constraint switch
         {
