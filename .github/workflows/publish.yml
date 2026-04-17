@@ -1,17 +1,18 @@
-name: Publish to NuGet
+name: Release
 
 on:
   push:
     tags:
       - 'v*.*.*'
 
+permissions:
+  contents: write     # create GitHub Release + upload assets
+  id-token: write     # NuGet OIDC trusted publishing
+
 jobs:
-  publish:
+  release:
     runs-on: ubuntu-latest
     environment: release
-
-    permissions:
-      id-token: write  # required for OIDC trusted publishing
 
     steps:
       - name: Checkout
@@ -26,18 +27,31 @@ jobs:
         id: version
         run: echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
 
-      - name: Build
-        run: dotnet build src/ConsoleForge/ConsoleForge.csproj --configuration Release
+      # ── Build & test the full solution ──────────────────────────────────
+      - name: Restore
+        run: dotnet restore ConsoleForge.slnx
 
-      - name: Pack
+      - name: Build (Release)
+        run: dotnet build ConsoleForge.slnx -c Release --no-restore
+
+      - name: Test
+        run: dotnet test ConsoleForge.slnx -c Release --no-build
+
+      # ── Pack both packages ──────────────────────────────────────────────
+      - name: Pack ConsoleForge
         run: >
           dotnet pack src/ConsoleForge/ConsoleForge.csproj
-          --configuration Release
-          --no-build
-          --output ./artifacts
+          -c Release --no-build -o ./artifacts
           -p:Version=${{ steps.version.outputs.VERSION }}
 
-      - name: NuGet login (OIDC trusted publishing)
+      - name: Pack ConsoleForge.SourceGen
+        run: >
+          dotnet pack src/ConsoleForge.SourceGen/ConsoleForge.SourceGen.csproj
+          -c Release --no-build -o ./artifacts
+          -p:Version=${{ steps.version.outputs.VERSION }}
+
+      # ── Publish to NuGet.org (OIDC trusted publishing) ─────────────────
+      - name: NuGet login (OIDC)
         uses: NuGet/login@v1
         id: login
         with:
@@ -49,3 +63,14 @@ jobs:
           --api-key ${{ steps.login.outputs.NUGET_API_KEY }}
           --source https://api.nuget.org/v3/index.json
           --skip-duplicate
+
+      # ── Create GitHub Release with package artifacts ────────────────────
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            artifacts/*.nupkg
+            artifacts/*.snupkg
+          generate_release_notes: true
+          draft: false
+          prerelease: ${{ contains(github.ref_name, '-') }}
