@@ -16,11 +16,13 @@ OUTPUT_LANGUAGE        = English
 # Input
 #---------------------------------------------------------------------------
 INPUT                  = src/ConsoleForge \
-                         src/ConsoleForge.SourceGen
+                         src/ConsoleForge.SourceGen \
+                         README.md
 INPUT_ENCODING         = UTF-8
-FILE_PATTERNS          = *.cs
+FILE_PATTERNS          = *.cs *.md
 RECURSIVE              = YES
 EXCLUDE_PATTERNS       = */bin/* */obj/*
+USE_MDFILE_AS_MAINPAGE = README.md
 
 # Exclude terminal internals (Termios P/Invoke and Windows kernel details)
 # that are implementation details, not API surface.
@@ -37,10 +39,15 @@ EXTRACT_ALL            = NO
 EXTRACT_PRIVATE        = NO
 EXTRACT_STATIC         = YES
 EXTRACT_ANON_NSPACES   = NO
-HIDE_UNDOC_MEMBERS     = NO
-HIDE_UNDOC_CLASSES     = NO
+HIDE_UNDOC_MEMBERS     = YES
+HIDE_UNDOC_CLASSES     = YES
 SHOW_INCLUDE_FILES     = NO
 INLINE_SOURCES         = NO
+SORT_MEMBER_DOCS       = YES
+SORT_BRIEF_DOCS        = YES
+BRIEF_MEMBER_DESC      = YES
+REPEAT_BRIEF           = YES
+ALWAYS_DETAILED_SEC    = NO
 
 #---------------------------------------------------------------------------
 # Groups / namespaces
@@ -56,15 +63,22 @@ GENERATE_HTML          = YES
 HTML_OUTPUT            = html
 HTML_FILE_EXTENSION    = .html
 HTML_COLORSTYLE        = DARK
+HTML_COLORSTYLE_HUE    = 200
+HTML_COLORSTYLE_SAT    = 80
+HTML_COLORSTYLE_GAMMA  = 100
 GENERATE_TREEVIEW      = YES
 TREEVIEW_WIDTH         = 280
 DISABLE_INDEX          = NO
-FULL_SIDEBAR           = NO
+FULL_SIDEBAR           = YES
 HTML_DYNAMIC_SECTIONS  = YES
 SEARCHENGINE           = YES
+SERVER_BASED_SEARCH    = NO
 
 # Extra CSS tweaks for readability (optional, add docs/custom.css if desired)
 HTML_EXTRA_STYLESHEET  =
+
+# Show the navigation breadcrumb trail
+HTML_FORMULA_FORMAT    = svg
 
 #---------------------------------------------------------------------------
 # No LaTeX / RTF / man / XML
