@@ -6,9 +6,16 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
 
+/// <summary>
+/// Roslyn incremental source generator that handles the <c>[Component]</c>
+/// attribute. Emits <c>Init()</c> and the explicit
+/// <c>IComponent&lt;TResult&gt;.Result</c> property when the type
+/// implements <c>IComponent&lt;TResult&gt;</c> and hasn't declared them manually.
+/// </summary>
 [Generator]
 public sealed class ComponentGenerator : IIncrementalGenerator
 {
+    /// <inheritdoc/>
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
         var targets = context.SyntaxProvider

@@ -15,7 +15,8 @@ OUTPUT_LANGUAGE        = English
 #---------------------------------------------------------------------------
 # Input
 #---------------------------------------------------------------------------
-INPUT                  = src/ConsoleForge
+INPUT                  = src/ConsoleForge \
+                         src/ConsoleForge.SourceGen
 INPUT_ENCODING         = UTF-8
 FILE_PATTERNS          = *.cs
 RECURSIVE              = YES
@@ -24,7 +25,8 @@ EXCLUDE_PATTERNS       = */bin/* */obj/*
 # Exclude terminal internals (Termios P/Invoke and Windows kernel details)
 # that are implementation details, not API surface.
 EXCLUDE                = src/ConsoleForge/Terminal/Termios.cs \
-                         src/ConsoleForge/Terminal/WindowsConsole.cs
+                         src/ConsoleForge/Terminal/WindowsConsole.cs \
+                         src/ConsoleForge.SourceGen/EquatableArray.cs
 
 #---------------------------------------------------------------------------
 # Source parsing — C# XML doc via JAVADOC-style bridge
@@ -103,6 +105,7 @@ WARN_LOGFILE           = docs/doxygen-warnings.log
 # ConsoleForge.Styling  — styles, themes, colours, borders
 # ConsoleForge.Terminal — terminal abstraction and platform implementations
 # ConsoleForge.Widgets  — all built-in widget implementations
+# ConsoleForge.SourceGen — Roslyn source generators and diagnostics
 
 #---------------------------------------------------------------------------
 # Misc

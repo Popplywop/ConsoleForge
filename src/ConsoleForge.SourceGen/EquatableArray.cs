@@ -74,9 +74,11 @@ namespace ConsoleForge.SourceGen
             }
         }
 
+        /// <summary>Structural equality.</summary>
         public static bool operator ==(EquatableArray<T> left, EquatableArray<T> right)
             => left.Equals(right);
 
+        /// <summary>Structural inequality.</summary>
         public static bool operator !=(EquatableArray<T> left, EquatableArray<T> right)
             => !left.Equals(right);
 

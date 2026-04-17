@@ -2,8 +2,12 @@ using Microsoft.CodeAnalysis;
 
 namespace ConsoleForge.SourceGen;
 
+/// <summary>
+/// Diagnostic descriptors for ConsoleForge source generator warnings and errors.
+/// </summary>
 internal static class Diagnostics
 {
+    /// <summary>CFG001: type must be partial to receive generated code.</summary>
     public static readonly DiagnosticDescriptor MissingPartial = new(
         id: "CFG001",
         title: "[DispatchUpdate] requires partial type",
@@ -12,6 +16,7 @@ internal static class Diagnostics
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true);
 
+    /// <summary>CFG002: handler skipped — message type not found or duplicate.</summary>
     public static readonly DiagnosticDescriptor MsgTypeNotFound = new(
         id: "CFG002",
         title: "Handler skipped",
@@ -20,6 +25,7 @@ internal static class Diagnostics
         defaultSeverity: DiagnosticSeverity.Warning,
         isEnabledByDefault: true);
 
+    /// <summary>CFG003: handler return type must be (IModel, ICmd?).</summary>
     public static readonly DiagnosticDescriptor HandlerReturnTypeMismatch = new(
         id: "CFG003",
         title: "Handler return type mismatch",
@@ -28,6 +34,7 @@ internal static class Diagnostics
         defaultSeverity: DiagnosticSeverity.Warning,
         isEnabledByDefault: true);
 
+    /// <summary>CFG004: type already has a hand-written Update method.</summary>
     public static readonly DiagnosticDescriptor HasExistingUpdate = new(
         id: "CFG004",
         title: "Type already has Update method",

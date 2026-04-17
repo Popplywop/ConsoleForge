@@ -11,9 +11,16 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
 using ConsoleForge.SourceGen;
 
+/// <summary>
+/// Roslyn incremental source generator that handles the <c>[DispatchUpdate]</c>
+/// attribute. Scans the target type for <c>On{MsgType}()</c> handler methods and
+/// emits the <c>Update(IMsg)</c> switch dispatch. Optionally emits
+/// <c>[Component]</c> scaffolding when both attributes are present.
+/// </summary>
 [Generator]
 public sealed class DispatchUpdateGenerator : IIncrementalGenerator
 {
+    /// <inheritdoc/>
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
         var targets = context.SyntaxProvider
@@ -295,5 +302,6 @@ public sealed class DispatchUpdateGenerator : IIncrementalGenerator
 namespace System.Runtime.CompilerServices
 #pragma warning restore IDE0130 // Namespace does not match folder structure
 {
+    /// <summary>Polyfill for init-only setter support on netstandard2.0.</summary>
     internal static class IsExternalInit { }
 }
