@@ -11,7 +11,7 @@ var searchData=
   ['modal_8',['modal',['../classConsoleForge_1_1Widgets_1_1Modal.html#a6b31fbfc99c7404335d629e8143523c1',1,'ConsoleForge.Widgets.Modal.Modal()'],['../classConsoleForge_1_1Widgets_1_1Modal.html',1,'ConsoleForge.Widgets.Modal'],['../classConsoleForge_1_1Widgets_1_1Modal.html#a4792266757d1c981b401e97a7dd5a351',1,'ConsoleForge.Widgets.Modal.Modal()']]],
   ['modaldismissedmsg_9',['ModalDismissedMsg',['../namespaceConsoleForge_1_1Widgets.html#aebd25878f55819dc42fdd8333c7bd5f1',1,'ConsoleForge::Widgets']]],
   ['model_10',['Model',['../interfaceConsoleForge_1_1Core_1_1IModel.html#a061db75f6f84b23b7d93f0dcacda8bac',1,'ConsoleForge::Core::IModel']]],
-  ['mouse_20support_11',['Mouse Support',['../index.html#autotoc_md9',1,'']]],
+  ['mouse_20support_11',['Mouse Support',['..//home/runner/work/ConsoleForge/ConsoleForge/README.md#autotoc_md17',1,'']]],
   ['mouseaction_12',['MouseAction',['../namespaceConsoleForge_1_1Core.html#a0b19fe63275c4899aaf1c92764fbb209',1,'ConsoleForge::Core']]],
   ['mousebindingcount_13',['MouseBindingCount',['../classConsoleForge_1_1Core_1_1KeyMap.html#ad8f81b58797ae0b1fadf3aaf58cc3e68',1,'ConsoleForge::Core::KeyMap']]],
   ['mousebutton_14',['MouseButton',['../namespaceConsoleForge_1_1Core.html#a41c27369bb8f4a11b68352b1c4ac51a9',1,'ConsoleForge::Core']]],

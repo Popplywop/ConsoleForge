@@ -30,6 +30,10 @@ var annotated_dup =
         [ "SubRenderContext", "classConsoleForge_1_1Layout_1_1SubRenderContext.html", "classConsoleForge_1_1Layout_1_1SubRenderContext" ],
         [ "TextUtils", "classConsoleForge_1_1Layout_1_1TextUtils.html", "classConsoleForge_1_1Layout_1_1TextUtils" ]
       ] ],
+      [ "SourceGen", "namespaceConsoleForge_1_1SourceGen.html", [
+        [ "ComponentGenerator", "classConsoleForge_1_1SourceGen_1_1ComponentGenerator.html", "classConsoleForge_1_1SourceGen_1_1ComponentGenerator" ],
+        [ "DispatchUpdateGenerator", "classConsoleForge_1_1SourceGen_1_1DispatchUpdateGenerator.html", "classConsoleForge_1_1SourceGen_1_1DispatchUpdateGenerator" ]
+      ] ],
       [ "Styling", "namespaceConsoleForge_1_1Styling.html", [
         [ "Borders", "classConsoleForge_1_1Styling_1_1Borders.html", "classConsoleForge_1_1Styling_1_1Borders" ],
         [ "BorderSpec", "structConsoleForge_1_1Styling_1_1BorderSpec.html", "structConsoleForge_1_1Styling_1_1BorderSpec" ],
@@ -56,7 +60,5 @@ var annotated_dup =
         [ "TextInput", "classConsoleForge_1_1Widgets_1_1TextInput.html", "classConsoleForge_1_1Widgets_1_1TextInput" ],
         [ "ZStack", "classConsoleForge_1_1Widgets_1_1ZStack.html", "classConsoleForge_1_1Widgets_1_1ZStack" ]
       ] ]
-    ] ],
-    [ "ComponentGenerator", "classComponentGenerator.html", "classComponentGenerator" ],
-    [ "DispatchUpdateGenerator", "classDispatchUpdateGenerator.html", "classDispatchUpdateGenerator" ]
+    ] ]
 ];

@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['unshipped_0',['AnalyzerReleases.Unshipped',['../md_src_2ConsoleForge_8SourceGen_2AnalyzerReleases_8Unshipped.html',1,'']]]
+  ['sourcegen_0',['ConsoleForge.SourceGen',['../index.html',1,'']]]
 ];

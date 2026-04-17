@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['consoleforge_0',['ConsoleForge',['../index.html',1,'']]]
+  ['consoleforge_20sourcegen_0',['ConsoleForge.SourceGen',['../index.html',1,'']]]
 ];
