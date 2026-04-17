@@ -9,7 +9,8 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
-using ConsoleForge.SourceGen;
+
+namespace ConsoleForge.SourceGen;
 
 /// <summary>
 /// Roslyn incremental source generator that handles the <c>[DispatchUpdate]</c>
@@ -136,7 +137,7 @@ public sealed class DispatchUpdateGenerator : IIncrementalGenerator
         if (!isPartial)
             return new GenerationTarget(ns, typeName, typeKind, false,
                 EquatableArray<HandlerInfo>.Empty, false, false, null,
-                Diagnostic.Create(ConsoleForge.SourceGen.Diagnostics.MissingPartial,
+                Diagnostic.Create(Diagnostics.MissingPartial,
                     typeSymbol.Locations.FirstOrDefault(), typeName));
 
         // CFG004: user already hand-wrote Update() — skip generation, emit info
@@ -148,7 +149,7 @@ public sealed class DispatchUpdateGenerator : IIncrementalGenerator
         if (hasExistingUpdate)
             return new GenerationTarget(ns, typeName, typeKind, false,
                 EquatableArray<HandlerInfo>.Empty, false, false, null,
-                Diagnostic.Create(ConsoleForge.SourceGen.Diagnostics.HasExistingUpdate,
+                Diagnostic.Create(Diagnostics.HasExistingUpdate,
                     typeSymbol.Locations.FirstOrDefault(), typeName));
 
         // KeyMap detection
@@ -211,7 +212,7 @@ public sealed class DispatchUpdateGenerator : IIncrementalGenerator
             if (!IsValidHandlerReturnType(method.ReturnType))
             {
                 handlerDiags.Add(Diagnostic.Create(
-                    ConsoleForge.SourceGen.Diagnostics.HandlerReturnTypeMismatch,
+                    Diagnostics.HandlerReturnTypeMismatch,
                     method.Locations.FirstOrDefault(),
                     method.Name));
                 continue;
@@ -227,7 +228,7 @@ public sealed class DispatchUpdateGenerator : IIncrementalGenerator
             if (msgType == null)
             {
                 handlerDiags.Add(Diagnostic.Create(
-                    ConsoleForge.SourceGen.Diagnostics.MsgTypeNotFound,
+                    Diagnostics.MsgTypeNotFound,
                     method.Locations.FirstOrDefault(),
                     method.Name,
                     $"'{inferredName}' not found in scope"));
@@ -239,7 +240,7 @@ public sealed class DispatchUpdateGenerator : IIncrementalGenerator
             if (seenMsgFqns.TryGetValue(msgFqn, out var firstMethodName))
             {
                 handlerDiags.Add(Diagnostic.Create(
-                    ConsoleForge.SourceGen.Diagnostics.MsgTypeNotFound,
+                    Diagnostics.MsgTypeNotFound,
                     method.Locations.FirstOrDefault(),
                     method.Name,
                     $"'{msgFqn}' already handled by '{firstMethodName}', first wins"));
@@ -295,13 +296,4 @@ public sealed class DispatchUpdateGenerator : IIncrementalGenerator
         string MethodName,             // e.g. "OnNavUp"
         string MsgTypeName,            // fully-qualified, e.g. "global::My.App.NavUpMsg"
         bool TakesMsg);              // true if method declares a (XMsg msg) parameter
-}
-
-// Polyfill: 'record' init-only setters require this type, absent in netstandard2.0
-#pragma warning disable IDE0130 // Namespace does not match folder structure
-namespace System.Runtime.CompilerServices
-#pragma warning restore IDE0130 // Namespace does not match folder structure
-{
-    /// <summary>Polyfill for init-only setter support on netstandard2.0.</summary>
-    internal static class IsExternalInit { }
 }

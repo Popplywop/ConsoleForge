@@ -2,6 +2,10 @@
 
 An Elm-architecture TUI framework for .NET 8. Immutable model → pure update → declarative view.
 
+**Docs:** [popplywop.github.io/ConsoleForge](https://popplywop.github.io/ConsoleForge) &nbsp;|
+**NuGet:** [ConsoleForge](https://www.nuget.org/packages/ConsoleForge) &nbsp;|
+**SourceGen:** [ConsoleForge.SourceGen](https://www.nuget.org/packages/ConsoleForge.SourceGen)
+
 Built for developers who want the predictability of [Bubble Tea](https://github.com/charmbracelet/bubbletea) in C#: no mutable widget state, no hidden side effects, and a render pipeline that only touches the cells that actually changed.
 
 ## Features

@@ -17,7 +17,8 @@ OUTPUT_LANGUAGE        = English
 #---------------------------------------------------------------------------
 INPUT                  = src/ConsoleForge \
                          src/ConsoleForge.SourceGen \
-                         README.md
+                         README.md \
+                         src/ConsoleForge.SourceGen/README.md
 INPUT_ENCODING         = UTF-8
 FILE_PATTERNS          = *.cs *.md
 RECURSIVE              = YES

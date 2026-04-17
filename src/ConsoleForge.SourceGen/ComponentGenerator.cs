@@ -6,6 +6,8 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
 
+namespace ConsoleForge.SourceGen;
+
 /// <summary>
 /// Roslyn incremental source generator that handles the <c>[Component]</c>
 /// attribute. Emits <c>Init()</c> and the explicit
