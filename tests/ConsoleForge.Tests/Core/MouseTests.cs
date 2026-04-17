@@ -171,15 +171,15 @@ public class MouseTests
     [Fact]
     public void VirtualTerminal_EnqueueMouse_CanBeConsumed()
     {
-        using var vt = new ConsoleForge.Testing.VirtualTerminal();
-        ConsoleForge.Terminal.InputEvent? received = null;
+        using var vt = new Testing.VirtualTerminal();
+        Terminal.InputEvent? received = null;
         vt.Input.Subscribe(ev => received = ev);
 
         var msg = new MouseMsg(MouseButton.Left, MouseAction.Press, 10, 5);
         vt.EnqueueMouse(msg);
 
         Assert.NotNull(received);
-        var mouseEv = Assert.IsType<ConsoleForge.Terminal.MouseInputEvent>(received);
+        var mouseEv = Assert.IsType<Terminal.MouseInputEvent>(received);
         Assert.Equal(MouseButton.Left,  mouseEv.Mouse.Button);
         Assert.Equal(MouseAction.Press, mouseEv.Mouse.Action);
         Assert.Equal(10, mouseEv.Mouse.Col);
@@ -189,9 +189,9 @@ public class MouseTests
     [Fact]
     public void VirtualTerminal_EnqueueMouse_ScrollWheel_Delivered()
     {
-        using var vt = new ConsoleForge.Testing.VirtualTerminal();
-        ConsoleForge.Terminal.MouseInputEvent? received = null;
-        vt.Input.Subscribe(ev => received = ev as ConsoleForge.Terminal.MouseInputEvent);
+        using var vt = new Testing.VirtualTerminal();
+        Terminal.MouseInputEvent? received = null;
+        vt.Input.Subscribe(ev => received = ev as Terminal.MouseInputEvent);
 
         vt.EnqueueMouse(new MouseMsg(MouseButton.ScrollDown, MouseAction.Press, 0, 0));
 

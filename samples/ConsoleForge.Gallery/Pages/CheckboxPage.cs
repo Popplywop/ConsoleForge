@@ -5,10 +5,12 @@ using ConsoleForge.Widgets;
 namespace ConsoleForge.Gallery;
 
 /// <summary>Checkbox page component.</summary>
-sealed record CheckboxComponent(
-    bool[] States   = null!,
-    int    FocusIdx = 0) : IComponent
+[DispatchUpdate, Component]
+public sealed partial class CheckboxComponent : IComponent
 {
+    public bool[] States { get; init; } = null!;
+    public int FocusIdx { get; init; } = 0;
+    
     internal static readonly string[] Labels = ["Enable dark mode", "Show line numbers", "Auto-save on exit"];
 
     /// <summary>The actual checkbox states, with a default when null.</summary>
@@ -19,25 +21,17 @@ sealed record CheckboxComponent(
         .On(ConsoleKey.DownArrow, () => new NavDownMsg())
         .On(ConsoleKey.Spacebar,  () => new ToggleCheckboxMsg())
         .On(ConsoleKey.Enter,     () => new ToggleCheckboxMsg());
-
-    public ICmd? Init() => null;
-
-    public (IModel Model, ICmd? Cmd) Update(IMsg msg)
+        
+    public (IModel Model, ICmd? Cmd) OnToggleCheckbox()
     {
-        if (Keys.Handle(msg) is { } action) msg = action;
-        if (msg is ToggleCheckboxMsg)
-        {
-            var s = (bool[])ActualStates.Clone();
-            s[FocusIdx] = !s[FocusIdx];
-            return (this with { States = s }, null);
-        }
-        return msg switch
-        {
-            NavUpMsg   => (this with { FocusIdx = Math.Max(0, FocusIdx - 1) }, null),
-            NavDownMsg => (this with { FocusIdx = Math.Min(Labels.Length - 1, FocusIdx + 1) }, null),
-            _          => (this, null),
-        };
+        var s = (bool[])ActualStates.Clone();
+        s[FocusIdx] = !s[FocusIdx];
+        return (new CheckboxComponent() { States = s, FocusIdx = FocusIdx }, null);
     }
+
+    public (IModel Model, ICmd? Cmd) OnNavUp() => (new CheckboxComponent() { States = States, FocusIdx = Math.Max(0, FocusIdx - 1) }, null);
+
+    public (IModel Model, ICmd? Cmd) OnNavDown() => (new CheckboxComponent() { States = States, FocusIdx = Math.Min(Labels.Length - 1, FocusIdx + 1) }, null);
 
     public IWidget View()
     {

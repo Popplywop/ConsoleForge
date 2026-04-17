@@ -117,7 +117,7 @@ public sealed class Program
 
             // FPS render timer
             var frameMs = Math.Max(1, 1000 / Math.Clamp(targetFps, 1, 60));
-            using var timer = new System.Threading.Timer(_ =>
+            using var timer = new Timer(_ =>
             {
                 var m = _currentModel;
                 if (m is not null) RenderFrame(m);
@@ -401,4 +401,3 @@ public sealed class Program
         return ColorProfile.NoColor;
     }
 }
-

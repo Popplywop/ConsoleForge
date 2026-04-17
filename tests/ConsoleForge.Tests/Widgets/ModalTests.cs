@@ -164,8 +164,8 @@ public class ModalTests
     {
         var body = new TextBlock("body");
         IWidget modal = new Modal("T", body);
-        Assert.IsAssignableFrom<ConsoleForge.Layout.ISingleBodyWidget>(modal);
-        Assert.Same(body, ((ConsoleForge.Layout.ISingleBodyWidget)modal).Body);
+        Assert.IsAssignableFrom<ISingleBodyWidget>(modal);
+        Assert.Same(body, ((ISingleBodyWidget)modal).Body);
     }
 
     // ── ModalDismissedMsg ─────────────────────────────────────────────────────

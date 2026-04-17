@@ -5,13 +5,13 @@ using ConsoleForge.Widgets;
 namespace ConsoleForge.Gallery;
 
 /// <summary>List page component. Signals the last picked item as its result.</summary>
-sealed record ListPageComponent(
-    int     SelectedIndex = 0,
-    int     ScrollOffset  = 0,
-    string  LastPicked    = "",
-    string? Result        = null) : IComponent<string>
+[DispatchUpdate, Component]
+public sealed partial class ListPageComponent : IComponent<string>
 {
-    string IComponent<string>.Result => Result!;
+    public int SelectedIndex { get; init; } = 0;
+    public int ScrollOffset { get; init; } = 0;
+    public string LastPicked { get; init; } = "";
+    public string? Result { get; init; } = null;
 
     internal static readonly string[] Items = [
         "Apple", "Banana", "Cherry", "Date", "Elderberry",
@@ -23,21 +23,23 @@ sealed record ListPageComponent(
         .On(ConsoleKey.DownArrow, () => new NavDownMsg())
         .On(ConsoleKey.Enter,     () => new NavSelectMsg());
 
-    public ICmd? Init() => null;
-
-    public (IModel Model, ICmd? Cmd) Update(IMsg msg)
+    public (IModel Model, ICmd? Cmd) OnNavUp() => (new ListPageComponent()
     {
-        if (Keys.Handle(msg) is { } action) msg = action;
-        return msg switch
-        {
-            NavUpMsg     => (this with { SelectedIndex = Math.Max(0, SelectedIndex - 1),
-                                         ScrollOffset  = List.ComputeScrollOffset(Math.Max(0, SelectedIndex - 1), 8, ScrollOffset) }, null),
-            NavDownMsg   => (this with { SelectedIndex = Math.Min(Items.Length - 1, SelectedIndex + 1),
-                                         ScrollOffset  = List.ComputeScrollOffset(Math.Min(Items.Length - 1, SelectedIndex + 1), 8, ScrollOffset) }, null),
-            NavSelectMsg => (this with { LastPicked = Items[SelectedIndex], Result = Items[SelectedIndex] }, null),
-            _            => (this, null),
-        };
-    }
+        SelectedIndex = Math.Max(0, SelectedIndex - 1),
+        ScrollOffset = List.ComputeScrollOffset(Math.Max(0, SelectedIndex - 1), 8, ScrollOffset),
+        LastPicked = LastPicked,
+        Result = Result
+    }, null);
+
+    public (IModel Model, ICmd? Cmd) OnNavDown() => (new ListPageComponent()
+    {
+        SelectedIndex = Math.Min(Items.Length - 1, SelectedIndex + 1),
+        ScrollOffset = List.ComputeScrollOffset(Math.Min(Items.Length - 1, SelectedIndex + 1), 8, ScrollOffset),
+        LastPicked = LastPicked,
+        Result = Result
+    }, null);
+
+    public (IModel Model, ICmd? Cmd) OnNavSelect() => (new ListPageComponent() { SelectedIndex = SelectedIndex, ScrollOffset = ScrollOffset, LastPicked = Items[SelectedIndex], Result = Items[SelectedIndex] }, null);
 
     public IWidget View()
     {
@@ -46,7 +48,7 @@ sealed record ListPageComponent(
             : $"Last selected: \"{LastPicked}\"";
         return new Container(Axis.Vertical, [
             new Container(Axis.Vertical, height: SizeConstraint.Fixed(Items.Length + 1), children: [
-                new ConsoleForge.Widgets.List(Items, SelectedIndex,
+                new List(Items, SelectedIndex,
                     scrollOffset: ScrollOffset) { HasFocus = true }
             ]),
             new Container(Axis.Vertical, height: SizeConstraint.Fixed(1), children: [

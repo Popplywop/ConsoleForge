@@ -19,11 +19,11 @@ sealed record TextAreaComponent(
     public (IModel Model, ICmd? Cmd) Update(IMsg msg)
     {
         if (msg is not KeyMsg key) return (this, null);
-        var ta = new ConsoleForge.Widgets.TextArea(ActualLines, CursorRow, CursorCol, ScrollRow);
+        var ta = new TextArea(ActualLines, CursorRow, CursorCol, ScrollRow);
         TextAreaChangedMsg? changed = null;
         ta.OnKeyEvent(key, m => changed = m as TextAreaChangedMsg);
         if (changed is null) return (this, null);
-        var scroll = ConsoleForge.Widgets.TextArea.ComputeScrollRow(
+        var scroll = TextArea.ComputeScrollRow(
             changed.NewCursorRow, viewportHeight: 12, ScrollRow);
         return (this with {
             Lines     = changed.NewLines,
@@ -34,6 +34,6 @@ sealed record TextAreaComponent(
     }
 
     public IWidget View() =>
-        new ConsoleForge.Widgets.TextArea(ActualLines, CursorRow, CursorCol, ScrollRow)
+        new TextArea(ActualLines, CursorRow, CursorCol, ScrollRow)
             { HasFocus = true };
 }

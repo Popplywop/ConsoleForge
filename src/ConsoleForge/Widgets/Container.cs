@@ -61,7 +61,17 @@ public sealed class Container : IWidget, IContainer
     /// <see cref="ResolvedLayout"/> child regions, which are only valid when
     /// the container sits directly at the layout root (not inside a
     /// <see cref="BorderBox"/> or other non-<see cref="IContainer"/> wrapper).
+    /// <summary>
+    /// Returns <see langword="true"/> for composite widgets whose render cost
+    /// justifies cache lookup overhead. Leaf widgets (TextBlock, TextInput, etc.)
+    /// render faster than the cache lookup — skip them.
     /// </summary>
+    [System.Runtime.CompilerServices.MethodImpl(
+        System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+    private static bool IsComposite(IWidget w) =>
+        w is IContainer or ISingleBodyWidget or ILayeredContainer;
+
+        /// </summary>
     public void Render(IRenderContext ctx)
     {
         var region = ctx.Region;
@@ -118,9 +128,11 @@ public sealed class Container : IWidget, IContainer
                     if (!Overlaps(cr, region)) continue;
                     Region cl = Clip(cr, region);
                     if (cl.Width <= 0 || cl.Height <= 0) continue;
-                    if (!ctx.TryReuseWidget(Children[i], cl))
-                        Children[i].Render(new SubRenderContext(ctx, cl));
-                    ctx.RegisterWidget(Children[i], cl);
+                    if (IsComposite(Children[i]) && ctx.TryReuseWidget(Children[i], cl))
+                    { ctx.RegisterWidget(Children[i], cl); }
+                    else
+                    { Children[i].Render(new SubRenderContext(ctx, cl));
+                      if (IsComposite(Children[i])) ctx.RegisterWidget(Children[i], cl); }
                 }
                 return; // ← fast path exits here
             }
@@ -173,9 +185,11 @@ public sealed class Container : IWidget, IContainer
             if (!Overlaps(cr, lReg)) continue;
             Region cl = Clip(cr, lReg);
             if (cl.Width <= 0 || cl.Height <= 0) continue;
-            if (!ctx.TryReuseWidget(Children[i], cl))
-                Children[i].Render(new SubRenderContext(ctx, cl));
-            ctx.RegisterWidget(Children[i], cl);
+            if (IsComposite(Children[i]) && ctx.TryReuseWidget(Children[i], cl))
+            { ctx.RegisterWidget(Children[i], cl); }
+            else
+            { Children[i].Render(new SubRenderContext(ctx, cl));
+              if (IsComposite(Children[i])) ctx.RegisterWidget(Children[i], cl); }
         }
     }
 

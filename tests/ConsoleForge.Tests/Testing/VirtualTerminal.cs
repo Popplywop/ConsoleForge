@@ -120,7 +120,7 @@ public sealed class VirtualTerminal : ITerminal
     }
 
     /// <summary>No-op — mouse mode is not simulated by the virtual terminal.</summary>
-    public void EnableMouse(ConsoleForge.Terminal.MouseMode mode = ConsoleForge.Terminal.MouseMode.ButtonEvents) { }
+    public void EnableMouse(MouseMode mode = ConsoleForge.Terminal.MouseMode.ButtonEvents) { }
 
     /// <summary>No-op.</summary>
     public void DisableMouse() { }
@@ -196,10 +196,10 @@ public sealed class VirtualTerminal : ITerminal
     // ── Test injection surface ────────────────────────────────────────
 
     /// <summary>Enqueue a synthetic mouse event to be delivered to the Input observable.</summary>
-    public void EnqueueMouse(ConsoleForge.Core.MouseMsg mouse)
+    public void EnqueueMouse(MouseMsg mouse)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
-        _input.OnNext(new ConsoleForge.Terminal.MouseInputEvent(mouse));
+        _input.OnNext(new MouseInputEvent(mouse));
     }
 
     /// <summary>Enqueue a synthetic key event to be delivered to the Input observable.</summary>

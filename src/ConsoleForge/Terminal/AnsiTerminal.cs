@@ -6,7 +6,7 @@ using ConsoleForge.Core;
 namespace ConsoleForge.Terminal;
 
 /// <summary>
-/// Production <see cref="ITerminal"/> backed by <see cref="System.Console"/>.
+/// Production <see cref="ITerminal"/> backed by <see cref="Console"/>.
 /// Handles ANSI output, raw mode (Unix/Windows), alternate screen, and resize events.
 /// On Unix: raw mode via termios, resize via SIGWINCH.
 /// On Windows: raw mode via kernel32 console mode, resize via background polling thread.
@@ -255,7 +255,7 @@ public sealed class AnsiTerminal : ITerminal
     /// <summary>Parse a CSI sequence reading continuation bytes via Console.ReadKey().</summary>
     private InputEvent? ParseCsiViaReadKey()
     {
-        var sb = new System.Text.StringBuilder(16);
+        var sb = new StringBuilder(16);
         while (!_disposed)
         {
             ConsoleKeyInfo c;

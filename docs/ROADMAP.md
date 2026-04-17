@@ -95,4 +95,4 @@ Currently only `CmdTests.cs` + stub `UnitTest1.cs`. Coverage is near zero.
 
 **More samples** — `Gallery`, `SysMonitor`, `TodoApp` exist. Missing: file browser, form demo, dashboard with charts, modal dialog demo.
 
-**Source generator** — `Update` methods are a wall of `if (msg is X x)`. A generator emitting typed dispatch tables would cut boilerplate.
+**Source generator** — ✅ **Done.** `ConsoleForge.SourceGen` ships `[DispatchUpdate]` and `[Component]` attributes. Generator emits `Update(IMsg)` dispatch switch and `IComponent<T>` scaffolding. CFG001–CFG004 diagnostics. Gallery `ListPageComponent` and `CheckboxComponent` refactored as canonical demos.

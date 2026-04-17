@@ -17,7 +17,7 @@ namespace ConsoleForge.Widgets;
 /// </para>
 /// </summary>
 /// <remarks>
-/// <see cref="ConsoleForge.Core.FocusManager"/> traverses all layers for focus collection,
+/// <see cref="Core.FocusManager"/> traverses all layers for focus collection,
 /// so interactive widgets in any layer participate in Tab-order traversal.
 /// </remarks>
 public sealed class ZStack : IWidget, ILayeredContainer

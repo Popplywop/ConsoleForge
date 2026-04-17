@@ -18,7 +18,7 @@ namespace ConsoleForge.Widgets;
 /// </para>
 /// </summary>
 /// <remarks>
-/// <b>Focus</b> — <see cref="ConsoleForge.Core.FocusManager"/> traverses into <see cref="Body"/>
+/// <b>Focus</b> — <see cref="FocusManager"/> traverses into <see cref="Body"/>
 /// automatically (Modal implements <see cref="ISingleBodyWidget"/>). The model is responsible
 /// for routing keyboard input to the modal when it is open.
 /// <para>

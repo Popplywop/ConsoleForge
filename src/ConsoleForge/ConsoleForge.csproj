@@ -7,7 +7,7 @@
 
     <!-- NuGet packaging -->
     <PackageId>ConsoleForge</PackageId>
-    <Version>0.2.0</Version>
+    <Version>0.2.1</Version>
     <Authors>Popplywop</Authors>
     <Description>Elm-architecture TUI framework for .NET 8. Immutable model → pure update → declarative view. 13 built-in widgets, 6 themes, mouse support, Unicode-aware layout, composable IComponent sub-programs, and a double-buffered ANSI renderer with per-widget dirty tracking.</Description>
     <PackageTags>tui;terminal;console;elm;ui;widgets;ansi;bubbletea;ncurses;dotnet</PackageTags>
@@ -17,7 +17,7 @@
     <Copyright>Copyright © 2026 Popplywop</Copyright>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <PackageReleaseNotes>v0.2.0: TextArea, Checkbox, Tabs, Modal/ZStack overlays, mouse support (SGR 1006), virtualized List/Table with ScrollOffset, 6 built-in themes with ThemeExtensions, Unicode wide-char layout, margin/padding enforcement, KeyMap declarative bindings, IComponent sub-programs, per-widget render caching.</PackageReleaseNotes>
+    <PackageReleaseNotes>v0.2.1: Performance optimizations (AggressiveInlining on hot-path layout methods, lazy widget cache allocation, composite-only render caching), publish workflow for both NuGet packages + GitHub Releases, Doxyfile improvements (README as landing page, full sidebar, sorted members).</PackageReleaseNotes>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
     <DebugType>embedded</DebugType>
