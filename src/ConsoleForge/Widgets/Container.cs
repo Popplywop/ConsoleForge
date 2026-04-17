@@ -66,6 +66,8 @@ public sealed class Container : IWidget, IContainer
     /// justifies cache lookup overhead. Leaf widgets (TextBlock, TextInput, etc.)
     /// render faster than the cache lookup — skip them.
     /// </summary>
+    [System.Runtime.CompilerServices.MethodImpl(
+        System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
     private static bool IsComposite(IWidget w) =>
         w is IContainer or ISingleBodyWidget or ILayeredContainer;
 
