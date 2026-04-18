@@ -31,7 +31,10 @@ jobs:
           doxygen --version
 
       - name: Generate docs
-        run: doxygen Doxyfile
+        run: |
+          mkdir -p .doxygen-tmp
+          cp src/ConsoleForge.SourceGen/README.md .doxygen-tmp/sourcegen.md
+          doxygen Doxyfile
 
       - name: Setup Pages
         uses: actions/configure-pages@v5

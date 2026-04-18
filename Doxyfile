@@ -17,9 +17,11 @@ OUTPUT_LANGUAGE        = English
 #---------------------------------------------------------------------------
 INPUT                  = src/ConsoleForge \
                          src/ConsoleForge.SourceGen \
-                         README.md
+                         README.md \
+                         .doxygen-tmp
 INPUT_ENCODING         = UTF-8
-FILE_PATTERNS          = *.cs *.md
+FILE_PATTERNS          = *.cs *.md *.dox
+EXAMPLE_PATH           =
 RECURSIVE              = YES
 EXCLUDE_PATTERNS       = */bin/* */obj/*
 USE_MDFILE_AS_MAINPAGE = README.md

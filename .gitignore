@@ -42,3 +42,4 @@ Thumbs.db
 
 # Doxygen generated output (built by CI, served via gh-pages)
 docs/
+.doxygen-tmp/
