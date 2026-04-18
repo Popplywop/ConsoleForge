@@ -23,8 +23,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Doxygen
-        run: sudo apt-get install -y doxygen
+      - name: Install Doxygen 1.16.1
+        run: |
+          wget -q https://github.com/doxygen/doxygen/releases/download/Release_1_16_1/doxygen-1.16.1.linux.bin.tar.gz
+          tar -xzf doxygen-1.16.1.linux.bin.tar.gz
+          sudo mv doxygen-1.16.1/bin/doxygen /usr/local/bin/doxygen
+          doxygen --version
 
       - name: Generate docs
         run: doxygen Doxyfile
