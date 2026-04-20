@@ -1,5 +1,4 @@
 using ConsoleForge.Core;
-using ConsoleForge.Styling;
 
 namespace ConsoleForge.Terminal;
 

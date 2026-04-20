@@ -335,7 +335,7 @@ public sealed class AnsiTerminal : ITerminal
     }
 
     /// <summary>Parse an SS3 (ESC O) sequence via Console.ReadKey().</summary>
-    private InputEvent? ParseSs3ViaReadKey()
+    private static KeyInputEvent? ParseSs3ViaReadKey()
     {
         ConsoleKeyInfo c;
         try   { c = Console.ReadKey(intercept: true); }
@@ -358,7 +358,7 @@ public sealed class AnsiTerminal : ITerminal
     }
 
     /// <summary>Parse an SGR mouse sequence (after "ESC [ &lt;") into a MouseInputEvent.</summary>
-    private static InputEvent? ParseSgrMouse(string param, bool isPress)
+    private static MouseInputEvent? ParseSgrMouse(string param, bool isPress)
     {
         // Format: "Cb;Cx;Cy" where Cb=button, Cx=1-based col, Cy=1-based row
         var parts = param.Split(';');

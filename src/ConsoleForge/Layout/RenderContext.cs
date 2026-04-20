@@ -18,6 +18,12 @@ namespace ConsoleForge.Layout;
 /// </summary>
 public sealed class RenderContext : IRenderContext
 {
+    // Sentinel stored in the cell immediately to the right of any wide (2-column) glyph.
+    // Using a dedicated reference-identical object lets ToAnsiFrame detect wide-char
+    // right-halves with ReferenceEquals — no string comparison, no ambiguity with a
+    // styled space that happens to contain a literal " ".
+    internal static readonly string WideCharSpacer = new(' ', 1);
+
     // Double buffer: _cells = current frame being written; _prev = last emitted frame.
     private string[] _cells;
     private string[]? _prev; // null = no previous frame (first render)
@@ -158,7 +164,7 @@ public sealed class RenderContext : IRenderContext
             _cells[idx] = style.Render(element, ColorProfile);
 
             if (width == 2 && cellCol + 1 < Region.Width)
-                _cells[idx + 1] = " "; // second column of wide char
+                _cells[idx + 1] = WideCharSpacer; // sentinel: right half of wide glyph
 
             cellOffset += width;
         }
@@ -298,6 +304,17 @@ public sealed class RenderContext : IRenderContext
             {
                 int idx = r * w + c;
                 var cell = _cells[idx];
+
+                // Wide-char spacer: the bare " " string written into _cells[idx+1] by the
+                // Write() method to mark the right half of a 2-column glyph. The terminal
+                // positions the glyph's second column automatically when it renders the
+                // wide character at idx; we must NOT emit a cursor-move + space here
+                // because after a wide char the hardware cursor is at c+2, not c+1.
+                // Emitting without a move would land the space one column too far right
+                // and leave the old content at c+1 as a ghost. Skip entirely.
+                if (ReferenceEquals(cell, WideCharSpacer))
+                    continue;
+
                 string cellContent = cell is { Length: > 0 } ? cell : defaultCell;
 
                 // Skip unchanged cells (diff against previous frame)
@@ -320,7 +337,11 @@ public sealed class RenderContext : IRenderContext
 
                 sb.Append(cellContent);
                 lastEmittedRow = r;
-                lastEmittedCol = c + 1; // next expected column after this cell
+
+                // After emitting a wide glyph the hardware cursor is 2 columns ahead.
+                // Detect: the very next cell holds the WideCharSpacer sentinel.
+                bool isWide = (c + 1 < w) && ReferenceEquals(_cells[idx + 1], WideCharSpacer);
+                lastEmittedCol = c + (isWide ? 2 : 1);
             }
         }
 
