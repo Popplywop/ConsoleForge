@@ -111,19 +111,14 @@ public sealed class TextInput : IFocusable
         var display = Value.Length > 0 ? Value : Placeholder;
         // Clip to region width (visual-width-aware for wide chars)
         display = TextUtils.TruncateToWidth(display, textWidth);
-        var displayVisualWidth = TextUtils.VisualWidth(display);
 
         ctx.Write(textCol, region.Row, display, effectiveStyle);
 
         // Draw cursor when focused
         if (HasFocus)
         {
-            int cursorScreenCol = textCol + Math.Min(CursorPosition, textWidth - 1);
-            var cursorChar = CursorPosition < display.Length
-                ? display[CursorPosition].ToString()
-                : " ";
-            var cursorStyle = effectiveStyle.Reverse(true);
-            ctx.Write(cursorScreenCol, region.Row, cursorChar, cursorStyle);
+            int cursorScreenCol = textCol + Math.Min(CursorPosition, textWidth);
+            ctx.SetCursorDescriptor(new(true, cursorScreenCol, region.Row));
         }
     }
 }

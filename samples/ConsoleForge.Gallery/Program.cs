@@ -262,7 +262,7 @@ record GalleryModel(
             // (handled via component delegation below — no inline cases needed)
 
             // ── Content: TextInput (raw key routing) ──────────────────────
-            case KeyMsg keyMsg when FocusIndex == 1 && ActivePage == Page.TextInput:
+            case KeyMsg keyMsg when FocusIndex == 1 && ActivePage == Page.TextInput && keyMsg.Key != ConsoleKey.Tab:
             {
                 IMsg? out1 = null, out2 = null;
                 Input1.OnKeyEvent(keyMsg, m => out1 = m);
@@ -294,13 +294,12 @@ record GalleryModel(
             }
 
             // ── Focus sync (click-to-focus from Program) ──────────────────
-            case FocusIndexChangedMsg { Index: var idx }:
-            {
-                var newFocus = idx == 0 ? 0 : 1;
-                var newNav = new List(
-                    NavList.Items, NavList.SelectedIndex) { HasFocus = newFocus == 0 };
-                return (this with { FocusIndex = newFocus, NavList = newNav }, null);
-            }
+            // FocusIndexChangedMsg is intentionally ignored here: the Gallery manages
+            // its own two-pane focus via ToggleFocusMsg (Tab key). Letting the
+            // framework's flat focusable index drive FocusIndex conflicts with
+            // ToggleFocusMsg and causes double-press issues.
+            case FocusIndexChangedMsg:
+                return (this, null);
 
             // ── Tick ──────────────────────────────────────────────────────
             case TickMsg:
@@ -670,7 +669,7 @@ record GalleryModel(
                 style: T.Warning());
 
             var inputBox2 = new BorderBox(
-                body: new TextInput(Input2.Value, Input2.Placeholder, Input2.CursorPosition) { HasFocus = true },
+                body: new TextInput(Input2.Value, Input2.Placeholder, Input2.CursorPosition) { HasFocus = false },
                 style: PageBorder);
 
             var lengths = new TextBlock(
@@ -1237,5 +1236,5 @@ static class EntryPoint
     static async Task Main() =>
         // Start on Dark theme (index 0 in GalleryModel.AllThemes).
         // Press T in-app to cycle through Dark → Dracula → Nord → Monokai → Tokyo Night → Light → Default.
-        await Program.Run(GalleryModel.Initial(), theme: Theme.Dark, enableMouse: true);
+        await App.Run(GalleryModel.Initial(), theme: Theme.Dark, enableMouse: true);
 }

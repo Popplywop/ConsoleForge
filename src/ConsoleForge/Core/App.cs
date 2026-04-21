@@ -14,7 +14,7 @@ namespace ConsoleForge.Core;
 /// exited) even if an unhandled exception occurs.
 /// </para>
 /// </summary>
-public sealed class Program
+public sealed class App
 {
     private Theme _theme = Theme.Default;
     private ColorProfile _colorProfile = ColorProfile.TrueColor;
@@ -49,7 +49,7 @@ public sealed class Program
         int targetFps = 30,
         bool enableMouse = false)
     {
-        var program = new Program
+        var program = new App
         {
             _theme      = theme ?? Theme.Default,
             _colorProfile = DetectColorProfile(),
@@ -242,8 +242,12 @@ public sealed class Program
         ReconcileSubscriptions(newModel);
 
         // Mark dirty whenever model changed or an explicit redraw is requested.
+        // Also render immediately so keystrokes appear without waiting for the timer tick.
         if (!ReferenceEquals(newModel, prevModel) || msg is RedrawMsg)
+        {
             _renderer.MarkDirty();
+            RenderFrame(newModel);
+        }
 
         // Force immediate re-render on resize; invalidate prev buffer to force full redraw
         if (msg is WindowResizeMsg && _terminal is not null)

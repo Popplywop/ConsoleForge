@@ -24,6 +24,11 @@ public interface IRenderContext
     ResolvedLayout Layout { get; }
 
     /// <summary>
+    /// Cursor information for TextArea and TextInput widgets
+    /// </summary>
+    CursorDescriptor? Cursor { get; }
+
+    /// <summary>
     /// Write a styled string at an absolute terminal position.
     /// The call is a no-op if (col, row) falls outside Region.
     /// </summary>
@@ -43,4 +48,9 @@ public interface IRenderContext
     /// Default implementation is a no-op.
     /// </summary>
     void RegisterWidget(IWidget widget, Region region) { }
+
+    /// <summary>
+    /// Set <paramref name="cursor"/> on the Rendering Context
+    /// </summary>
+    void SetCursorDescriptor(CursorDescriptor cursor);
 }

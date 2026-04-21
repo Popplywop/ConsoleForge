@@ -48,6 +48,8 @@ public sealed class RenderContext : IRenderContext
     public ColorProfile   ColorProfile { get; private set; }
     public ResolvedLayout Layout       { get; private set; }
 
+    public CursorDescriptor? Cursor    { get; private set; }
+
     /// <summary>
     /// Initialises a fresh render context for a single full-redraw frame.
     /// </summary>
@@ -79,6 +81,7 @@ public sealed class RenderContext : IRenderContext
         Theme        = theme;
         ColorProfile = colorProfile;
         Layout       = layout;
+        Cursor       = null;
 
         if (sizeChanged)
         {
@@ -355,4 +358,7 @@ public sealed class RenderContext : IRenderContext
 
         return sb.ToString();
     }
+
+    public void SetCursorDescriptor(CursorDescriptor cursor)
+        => Cursor = cursor;
 }
