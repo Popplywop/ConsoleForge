@@ -1,11 +1,11 @@
-# Doxyfile for ConsoleForge v0.2.2
+# Doxyfile for ConsoleForge v0.3.0
 # Generated for Doxygen 1.16.x
 
 #---------------------------------------------------------------------------
 # Project
 #---------------------------------------------------------------------------
 PROJECT_NAME           = "ConsoleForge"
-PROJECT_NUMBER         = 0.2.1
+PROJECT_NUMBER         = 0.3.0
 PROJECT_BRIEF          = "Elm-architecture TUI framework for .NET 8"
 PROJECT_LOGO           =
 OUTPUT_DIRECTORY       = docs
