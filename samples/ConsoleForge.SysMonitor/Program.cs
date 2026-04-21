@@ -449,6 +449,6 @@ static class EntryPoint
             focusedStyle: Style.Default.BorderForeground(Color.FromHex("#FFB347"))
         );
 
-        await Program.Run(SysMonitorModel.Initial(), theme: theme);
+        await App.Run(SysMonitorModel.Initial(), theme: theme);
     }
 }

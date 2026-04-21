@@ -8,7 +8,7 @@
 
     <!-- NuGet packaging -->
     <PackageId>ConsoleForge.SourceGen</PackageId>
-    <Version>0.2.2</Version>
+    <Version>0.3.0</Version>
     <Authors>Popplywop</Authors>
     <Description>Roslyn source generator for ConsoleForge. Eliminates Update(IMsg) dispatch boilerplate via [DispatchUpdate] and [Component] attributes.</Description>
     <PackageTags>tui;terminal;consoleforge;source-generator;roslyn</PackageTags>

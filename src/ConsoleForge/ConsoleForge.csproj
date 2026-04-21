@@ -7,7 +7,7 @@
 
     <!-- NuGet packaging -->
     <PackageId>ConsoleForge</PackageId>
-    <Version>0.2.2</Version>
+    <Version>0.3.0</Version>
     <Authors>Popplywop</Authors>
     <Description>Elm-architecture TUI framework for .NET 8. Immutable model → pure update → declarative view. 13 built-in widgets, 6 themes, mouse support, Unicode-aware layout, composable IComponent sub-programs, and a double-buffered ANSI renderer with per-widget dirty tracking.</Description>
     <PackageTags>tui;terminal;console;elm;ui;widgets;ansi;bubbletea;ncurses;dotnet</PackageTags>

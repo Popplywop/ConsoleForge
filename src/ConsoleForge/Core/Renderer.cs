@@ -71,7 +71,7 @@ internal sealed class Renderer
         _lastView = new ViewDescriptor
         {
             Content    = _ctx.ToAnsiFrame(),
-            Cursor     = new CursorDescriptor(Visible: false),
+            Cursor     = _ctx.Cursor ?? new(Visible: false),
             RootWidget = root
         };
 
@@ -107,7 +107,7 @@ internal sealed class Renderer
         var view = new ViewDescriptor
         {
             Content    = _ctx.ToAnsiFrame(),
-            Cursor     = new CursorDescriptor(Visible: false),
+            Cursor     = _ctx.Cursor ?? new(Visible: false),
             RootWidget = root
         };
         _lastView = view;
@@ -125,11 +125,12 @@ internal sealed class Renderer
         if (!string.IsNullOrEmpty(view.Title))
             terminal.SetTitle(view.Title);
 
+        terminal.SetCursorVisible(false);
         terminal.Write(view.Content);
 
-        terminal.SetCursorVisible(view.Cursor.Visible);
         if (view.Cursor.Visible)
             terminal.SetCursorPosition(view.Cursor.Col, view.Cursor.Row);
+        terminal.SetCursorVisible(view.Cursor.Visible);
 
         terminal.Flush();
     }

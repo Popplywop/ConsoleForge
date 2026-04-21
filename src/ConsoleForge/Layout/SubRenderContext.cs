@@ -20,6 +20,8 @@ public sealed class SubRenderContext : IRenderContext
     /// <inheritdoc/>
     public ResolvedLayout Layout => _parent.Layout;
 
+    public CursorDescriptor? Cursor => _parent.Cursor;
+
     /// <summary>
     /// Initialises a sub-context that forwards writes to <paramref name="parent"/>
     /// but restricts rendering to <paramref name="region"/>.
@@ -45,4 +47,7 @@ public sealed class SubRenderContext : IRenderContext
     /// <inheritdoc/>
     public void RegisterWidget(IWidget widget, Region region) =>
         _parent.RegisterWidget(widget, region);
+
+    public void SetCursorDescriptor(CursorDescriptor cursor)
+        => _parent.SetCursorDescriptor(cursor);
 }

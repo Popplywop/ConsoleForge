@@ -252,7 +252,6 @@ public sealed class TextArea : IFocusable
         if (region.Width <= 0 || region.Height <= 0) return;
 
         var effectiveStyle = Style.Inherit(ctx.Theme.BaseStyle);
-        var cursorStyle    = effectiveStyle.Reverse(true);
         var fill           = new string(' ', region.Width);
 
         for (var rowOffset = 0; rowOffset < region.Height; rowOffset++)
@@ -276,10 +275,7 @@ public sealed class TextArea : IFocusable
             if (HasFocus && lineIdx == CursorRow)
             {
                 var cursorScreenCol = Math.Min(CursorCol, region.Width - 1);
-                var cursorChar = CursorCol < line.Length
-                    ? line[CursorCol].ToString()
-                    : " ";
-                ctx.Write(region.Col + cursorScreenCol, absRow, cursorChar, cursorStyle);
+                ctx.SetCursorDescriptor(new(true, cursorScreenCol, absRow));
             }
         }
     }

@@ -224,6 +224,6 @@ static class EntryPoint
             focusedStyle: Style.Default.BorderForeground(Color.Yellow)
         );
 
-        await Program.Run(TodoModel.Initial(), theme: theme);
+        await App.Run(TodoModel.Initial(), theme: theme);
     }
 }
