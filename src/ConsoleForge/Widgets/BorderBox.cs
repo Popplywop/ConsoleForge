@@ -8,7 +8,7 @@ namespace ConsoleForge.Widgets;
 /// Default border style is <see cref="Borders.Normal"/> unless overridden by the widget
 /// style or theme.
 /// </summary>
-public sealed class BorderBox : IWidget, ISingleBodyWidget
+public sealed record BorderBox : IWidget, ISingleBodyWidget
 {
     /// <summary>Positional/named constructor for inline usage.</summary>
     public BorderBox(string title = "", IWidget? body = null, Style? style = null)

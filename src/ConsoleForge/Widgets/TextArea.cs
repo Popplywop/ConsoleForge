@@ -17,7 +17,7 @@ namespace ConsoleForge.Widgets;
 /// <para><b>Line endings</b> — All text is stored as a list of strings (one per logical
 /// line). The widget does not produce or consume <c>\n</c> in its messages.</para>
 /// </remarks>
-public sealed class TextArea : IFocusable
+public sealed record TextArea : IFocusable
 {
     // ── IFocusable ───────────────────────────────────────────────────────────
     /// <inheritdoc/>
@@ -72,7 +72,7 @@ public sealed class TextArea : IFocusable
         int maxLines = 0,
         Style? style = null)
     {
-        Lines     = lines is { Count: > 0 } ? lines : (IReadOnlyList<string>)[""];
+        Lines     = lines is { Count: > 0 } ? lines : [""];
         CursorRow = Math.Clamp(cursorRow, 0, Lines.Count - 1);
         CursorCol = Math.Clamp(cursorCol, 0, Lines[CursorRow].Length);
         ScrollRow = Math.Max(0, scrollRow);
@@ -87,7 +87,7 @@ public sealed class TextArea : IFocusable
     /// new document state. The model should replace this widget instance with one
     /// constructed from the message fields using <c>with</c> expressions.
     /// </summary>
-    public void OnKeyEvent(KeyMsg key, Action<IMsg> dispatch)
+    public (IFocusable Next, ICmd? Cmd) Update(KeyMsg key)
     {
         var mutableLines = Lines.ToList();
         var row = CursorRow;
@@ -202,7 +202,7 @@ public sealed class TextArea : IFocusable
                     mutableLines[row] = mutableLines[row][..col] + c + mutableLines[row][col..];
                     col++;
                 }
-                else return; // Unhandled key — dispatch nothing
+                else return (this, null); // Unhandled key — dispatch nothing
                 break;
             }
         }
@@ -211,7 +211,7 @@ public sealed class TextArea : IFocusable
         row = Math.Clamp(row, 0, mutableLines.Count - 1);
         col = Math.Clamp(col, 0, mutableLines[row].Length);
 
-        dispatch(new TextAreaChangedMsg(this, mutableLines.AsReadOnly(), row, col));
+        return (this with { Lines = mutableLines.AsReadOnly(), CursorRow = row, CursorCol = col}, null);
     }
 
     // ── Scroll helper ─────────────────────────────────────────────────────────

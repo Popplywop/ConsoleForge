@@ -20,7 +20,7 @@ namespace ConsoleForge.Widgets;
 /// <see cref="Core.FocusManager"/> traverses all layers for focus collection,
 /// so interactive widgets in any layer participate in Tab-order traversal.
 /// </remarks>
-public sealed class ZStack : IWidget, ILayeredContainer
+public sealed record ZStack : IWidget, ILayeredContainer
 {
     // ── IWidget ─────────────────────────────────────────────────────────────
     public SizeConstraint Width  { get; init; } = SizeConstraint.Flex(1);

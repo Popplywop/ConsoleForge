@@ -33,7 +33,7 @@ record GalleryModel(
     List NavList,
     int FocusIndex,
     // TextInput page (uses raw widget state — not converted to component
-    // because it routes every keypress directly to the widget's OnKeyEvent)
+    // because it routes every keypress directly to the widget's Update)
     TextInput Input1,
     TextInput Input2,
     // Page components — each owns its own state and KeyMap
@@ -264,15 +264,12 @@ record GalleryModel(
             // ── Content: TextInput (raw key routing) ──────────────────────
             case KeyMsg keyMsg when FocusIndex == 1 && ActivePage == Page.TextInput && keyMsg.Key != ConsoleKey.Tab:
             {
-                IMsg? out1 = null, out2 = null;
-                Input1.OnKeyEvent(keyMsg, m => out1 = m);
-                Input2.OnKeyEvent(keyMsg, m => out2 = m);
-                var m1 = out1 is TextInputChangedMsg t1
-                    ? this with { Input1 = new TextInput(t1.NewValue, Input1.Placeholder, t1.NewCursorPosition) { HasFocus = true } }
-                    : this;
-                var m2 = out2 is TextInputChangedMsg t2
-                    ? m1 with { Input2 = new TextInput(t2.NewValue, Input2.Placeholder, t2.NewCursorPosition) { HasFocus = true } }
-                    : m1;
+                var (next1, _) = Input1.Update(keyMsg);
+                var (next2, _) = Input2.Update(keyMsg);
+                var r1 = (TextInput)next1;
+                var r2 = (TextInput)next2;
+                var m1 = ReferenceEquals(Input1, next1) ? this : this with { Input1 = r1 with { HasFocus = true } };
+                var m2 = ReferenceEquals(Input2, next2) ? m1  : m1  with { Input2 = r2 with { HasFocus = true } };
                 return (m2, null);
             }
 

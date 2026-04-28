@@ -1,6 +1,5 @@
 using ConsoleForge.Core;
 using ConsoleForge.Layout;
-using ConsoleForge.Styling;
 using ConsoleForge.Widgets;
 
 namespace ConsoleForge.Tests.Widgets;

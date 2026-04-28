@@ -7,7 +7,7 @@ namespace ConsoleForge.Widgets;
 /// A widget that renders a single string, wrapping at region width.
 /// Inherits style from the active theme's BaseStyle when widget style has no properties set.
 /// </summary>
-public sealed class TextBlock : IWidget
+public sealed record TextBlock : IWidget
 {
     /// <summary>Positional constructor for inline usage.</summary>
     public TextBlock(string text, Style? style = null)

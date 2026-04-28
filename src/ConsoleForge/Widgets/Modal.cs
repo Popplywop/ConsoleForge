@@ -27,7 +27,7 @@ namespace ConsoleForge.Widgets;
 /// content with a dark overlay. When false (default), content behind the modal remains visible.
 /// </para>
 /// </remarks>
-public sealed class Modal : IWidget, ISingleBodyWidget
+public sealed record Modal : IWidget, ISingleBodyWidget
 {
     // ── IWidget ─────────────────────────────────────────────────────────────
     /// <summary>

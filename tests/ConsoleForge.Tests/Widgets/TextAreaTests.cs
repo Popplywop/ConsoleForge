@@ -33,268 +33,263 @@ public class TextAreaTests
     // ── Printable character input ─────────────────────────────────────────────
 
     [Fact]
-    public void OnKeyEvent_PrintableChar_InsertsAtCursor()
+    public void Update_PrintableChar_InsertsAtCursor()
     {
         var ta = new TextArea(["hello"], cursorRow: 0, cursorCol: 5);
-        TextAreaChangedMsg? msg = null;
-        ta.OnKeyEvent(new KeyMsg(ConsoleKey.NoName, '!'), m => msg = m as TextAreaChangedMsg);
+        var (next, _) = ta.Update(new KeyMsg(ConsoleKey.NoName, '!'));
+        var result = (TextArea)next;
 
-        Assert.NotNull(msg);
-        Assert.Equal("hello!", msg!.NewLines[0]);
-        Assert.Equal(6, msg.NewCursorCol);
+        Assert.Equal("hello!", result.Lines[0]);
+        Assert.Equal(6, result.CursorCol);
     }
 
     [Fact]
-    public void OnKeyEvent_PrintableChar_InsertsInMiddle()
+    public void Update_PrintableChar_InsertsInMiddle()
     {
         var ta = new TextArea(["ac"], cursorRow: 0, cursorCol: 1);
-        TextAreaChangedMsg? msg = null;
-        ta.OnKeyEvent(new KeyMsg(ConsoleKey.NoName, 'b'), m => msg = m as TextAreaChangedMsg);
+        var (next, _) = ta.Update(new KeyMsg(ConsoleKey.NoName, 'b'));
+        var result = (TextArea)next;
 
-        Assert.Equal("abc", msg!.NewLines[0]);
-        Assert.Equal(2, msg.NewCursorCol);
+        Assert.Equal("abc", result.Lines[0]);
+        Assert.Equal(2, result.CursorCol);
     }
 
     [Fact]
-    public void OnKeyEvent_ControlChar_NoDispatch()
+    public void Update_ControlChar_NoDispatch()
     {
         var ta = new TextArea(["text"], cursorRow: 0, cursorCol: 4);
-        TextAreaChangedMsg? msg = null;
-        ta.OnKeyEvent(new KeyMsg(ConsoleKey.A, '\x01', Ctrl: true), m => msg = m as TextAreaChangedMsg);
-        Assert.Null(msg);
+        var (next, _) = ta.Update(new KeyMsg(ConsoleKey.A, '\x01', Ctrl: true));
+        Assert.Same(ta, next);
     }
 
     // ── Backspace ─────────────────────────────────────────────────────────────
 
     [Fact]
-    public void OnKeyEvent_Backspace_DeletesCharBeforeCursor()
+    public void Update_Backspace_DeletesCharBeforeCursor()
     {
         var ta = new TextArea(["hello"], cursorCol: 5);
-        TextAreaChangedMsg? msg = null;
-        ta.OnKeyEvent(new KeyMsg(ConsoleKey.Backspace, null), m => msg = m as TextAreaChangedMsg);
+        var (next, _) = ta.Update(new KeyMsg(ConsoleKey.Backspace, null));
+        var result = (TextArea)next;
 
-        Assert.Equal("hell", msg!.NewLines[0]);
-        Assert.Equal(4, msg.NewCursorCol);
+        Assert.Equal("hell", result.Lines[0]);
+        Assert.Equal(4, result.CursorCol);
     }
 
     [Fact]
-    public void OnKeyEvent_Backspace_AtLineStart_JoinsWithPrevLine()
+    public void Update_Backspace_AtLineStart_JoinsWithPrevLine()
     {
         var ta = new TextArea(["first", "second"], cursorRow: 1, cursorCol: 0);
-        TextAreaChangedMsg? msg = null;
-        ta.OnKeyEvent(new KeyMsg(ConsoleKey.Backspace, null), m => msg = m as TextAreaChangedMsg);
+        var (next, _) = ta.Update(new KeyMsg(ConsoleKey.Backspace, null));
+        var result = (TextArea)next;
 
-        Assert.Single(msg!.NewLines);
-        Assert.Equal("firstsecond", msg.NewLines[0]);
-        Assert.Equal(0, msg.NewCursorRow);
-        Assert.Equal(5, msg.NewCursorCol); // cursor at join point
+        Assert.Single(result.Lines);
+        Assert.Equal("firstsecond", result.Lines[0]);
+        Assert.Equal(0, result.CursorRow);
+        Assert.Equal(5, result.CursorCol); // cursor at join point
     }
 
     [Fact]
-    public void OnKeyEvent_Backspace_AtFirstLineStart_NoChange()
+    public void Update_Backspace_AtFirstLineStart_NoChange()
     {
         var ta = new TextArea(["hello"], cursorRow: 0, cursorCol: 0);
-        TextAreaChangedMsg? msg = null;
-        ta.OnKeyEvent(new KeyMsg(ConsoleKey.Backspace, null), m => msg = m as TextAreaChangedMsg);
+        var (next, _) = ta.Update(new KeyMsg(ConsoleKey.Backspace, null));
+        var result = (TextArea)next;
 
-        // Clamped — no change, but msg still dispatched with same state
-        Assert.NotNull(msg);
-        Assert.Equal("hello", msg!.NewLines[0]);
-        Assert.Equal(0, msg.NewCursorRow);
-        Assert.Equal(0, msg.NewCursorCol);
+        Assert.Equal("hello", result.Lines[0]);
+        Assert.Equal(0, result.CursorRow);
+        Assert.Equal(0, result.CursorCol);
     }
 
     // ── Delete ────────────────────────────────────────────────────────────────
 
     [Fact]
-    public void OnKeyEvent_Delete_DeletesCharAtCursor()
+    public void Update_Delete_DeletesCharAtCursor()
     {
         var ta = new TextArea(["hello"], cursorCol: 0);
-        TextAreaChangedMsg? msg = null;
-        ta.OnKeyEvent(new KeyMsg(ConsoleKey.Delete, null), m => msg = m as TextAreaChangedMsg);
+        var (next, _) = ta.Update(new KeyMsg(ConsoleKey.Delete, null));
+        var result = (TextArea)next;
 
-        Assert.Equal("ello", msg!.NewLines[0]);
-        Assert.Equal(0, msg.NewCursorCol);
+        Assert.Equal("ello", result.Lines[0]);
+        Assert.Equal(0, result.CursorCol);
     }
 
     [Fact]
-    public void OnKeyEvent_Delete_AtLineEnd_JoinsNextLine()
+    public void Update_Delete_AtLineEnd_JoinsNextLine()
     {
         var ta = new TextArea(["first", "second"], cursorRow: 0, cursorCol: 5);
-        TextAreaChangedMsg? msg = null;
-        ta.OnKeyEvent(new KeyMsg(ConsoleKey.Delete, null), m => msg = m as TextAreaChangedMsg);
+        var (next, _) = ta.Update(new KeyMsg(ConsoleKey.Delete, null));
+        var result = (TextArea)next;
 
-        Assert.Single(msg!.NewLines);
-        Assert.Equal("firstsecond", msg.NewLines[0]);
-        Assert.Equal(0, msg.NewCursorRow);
-        Assert.Equal(5, msg.NewCursorCol);
+        Assert.Single(result.Lines);
+        Assert.Equal("firstsecond", result.Lines[0]);
+        Assert.Equal(0, result.CursorRow);
+        Assert.Equal(5, result.CursorCol);
     }
 
     [Fact]
-    public void OnKeyEvent_Delete_AtLastLineEnd_NoChange()
+    public void Update_Delete_AtLastLineEnd_NoChange()
     {
         var ta = new TextArea(["only"], cursorRow: 0, cursorCol: 4);
-        TextAreaChangedMsg? msg = null;
-        ta.OnKeyEvent(new KeyMsg(ConsoleKey.Delete, null), m => msg = m as TextAreaChangedMsg);
+        var (next, _) = ta.Update(new KeyMsg(ConsoleKey.Delete, null));
+        var result = (TextArea)next;
 
-        Assert.Single(msg!.NewLines);
-        Assert.Equal("only", msg.NewLines[0]);
+        Assert.Single(result.Lines);
+        Assert.Equal("only", result.Lines[0]);
     }
 
     // ── Enter ─────────────────────────────────────────────────────────────────
 
     [Fact]
-    public void OnKeyEvent_Enter_SplitsLineAtCursor()
+    public void Update_Enter_SplitsLineAtCursor()
     {
         var ta = new TextArea(["hello world"], cursorRow: 0, cursorCol: 5);
-        TextAreaChangedMsg? msg = null;
-        ta.OnKeyEvent(new KeyMsg(ConsoleKey.Enter, null), m => msg = m as TextAreaChangedMsg);
+        var (next, _) = ta.Update(new KeyMsg(ConsoleKey.Enter, null));
+        var result = (TextArea)next;
 
-        Assert.Equal(2, msg!.NewLines.Count);
-        Assert.Equal("hello", msg.NewLines[0]);
-        Assert.Equal(" world", msg.NewLines[1]);
-        Assert.Equal(1, msg.NewCursorRow);
-        Assert.Equal(0, msg.NewCursorCol);
+        Assert.Equal(2, result.Lines.Count);
+        Assert.Equal("hello", result.Lines[0]);
+        Assert.Equal(" world", result.Lines[1]);
+        Assert.Equal(1, result.CursorRow);
+        Assert.Equal(0, result.CursorCol);
     }
 
     [Fact]
-    public void OnKeyEvent_Enter_AtLineEnd_AddsEmptyLine()
+    public void Update_Enter_AtLineEnd_AddsEmptyLine()
     {
         var ta = new TextArea(["hello"], cursorRow: 0, cursorCol: 5);
-        TextAreaChangedMsg? msg = null;
-        ta.OnKeyEvent(new KeyMsg(ConsoleKey.Enter, null), m => msg = m as TextAreaChangedMsg);
+        var (next, _) = ta.Update(new KeyMsg(ConsoleKey.Enter, null));
+        var result = (TextArea)next;
 
-        Assert.Equal(2, msg!.NewLines.Count);
-        Assert.Equal("hello", msg.NewLines[0]);
-        Assert.Equal("", msg.NewLines[1]);
+        Assert.Equal(2, result.Lines.Count);
+        Assert.Equal("hello", result.Lines[0]);
+        Assert.Equal("", result.Lines[1]);
     }
 
     [Fact]
-    public void OnKeyEvent_Enter_MaxLinesReached_NoOp()
+    public void Update_Enter_MaxLinesReached_NoOp()
     {
         var ta = new TextArea(["a", "b"], cursorRow: 0, cursorCol: 0, maxLines: 2);
-        TextAreaChangedMsg? msg = null;
-        ta.OnKeyEvent(new KeyMsg(ConsoleKey.Enter, null), m => msg = m as TextAreaChangedMsg);
+        var (next, _) = ta.Update(new KeyMsg(ConsoleKey.Enter, null));
+        var result = (TextArea)next;
 
-        Assert.NotNull(msg);
-        Assert.Equal(2, msg!.NewLines.Count); // count unchanged
+        Assert.Equal(2, result.Lines.Count); // count unchanged
     }
 
     // ── Cursor navigation ─────────────────────────────────────────────────────
 
     [Fact]
-    public void OnKeyEvent_Left_DecrementsCursorCol()
+    public void Update_Left_DecrementsCursorCol()
     {
         var ta = new TextArea(["hello"], cursorRow: 0, cursorCol: 3);
-        TextAreaChangedMsg? msg = null;
-        ta.OnKeyEvent(new KeyMsg(ConsoleKey.LeftArrow, null), m => msg = m as TextAreaChangedMsg);
+        var (next, _) = ta.Update(new KeyMsg(ConsoleKey.LeftArrow, null));
+        var result = (TextArea)next;
 
-        Assert.Equal(2, msg!.NewCursorCol);
+        Assert.Equal(2, result.CursorCol);
     }
 
     [Fact]
-    public void OnKeyEvent_Left_AtLineStart_MovesToPrevLineEnd()
+    public void Update_Left_AtLineStart_MovesToPrevLineEnd()
     {
         var ta = new TextArea(["abc", "def"], cursorRow: 1, cursorCol: 0);
-        TextAreaChangedMsg? msg = null;
-        ta.OnKeyEvent(new KeyMsg(ConsoleKey.LeftArrow, null), m => msg = m as TextAreaChangedMsg);
+        var (next, _) = ta.Update(new KeyMsg(ConsoleKey.LeftArrow, null));
+        var result = (TextArea)next;
 
-        Assert.Equal(0, msg!.NewCursorRow);
-        Assert.Equal(3, msg.NewCursorCol); // end of "abc"
+        Assert.Equal(0, result.CursorRow);
+        Assert.Equal(3, result.CursorCol); // end of "abc"
     }
 
     [Fact]
-    public void OnKeyEvent_Right_IncrementsCursorCol()
+    public void Update_Right_IncrementsCursorCol()
     {
         var ta = new TextArea(["hello"], cursorRow: 0, cursorCol: 2);
-        TextAreaChangedMsg? msg = null;
-        ta.OnKeyEvent(new KeyMsg(ConsoleKey.RightArrow, null), m => msg = m as TextAreaChangedMsg);
+        var (next, _) = ta.Update(new KeyMsg(ConsoleKey.RightArrow, null));
+        var result = (TextArea)next;
 
-        Assert.Equal(3, msg!.NewCursorCol);
+        Assert.Equal(3, result.CursorCol);
     }
 
     [Fact]
-    public void OnKeyEvent_Right_AtLineEnd_MovesToNextLineStart()
+    public void Update_Right_AtLineEnd_MovesToNextLineStart()
     {
         var ta = new TextArea(["abc", "def"], cursorRow: 0, cursorCol: 3);
-        TextAreaChangedMsg? msg = null;
-        ta.OnKeyEvent(new KeyMsg(ConsoleKey.RightArrow, null), m => msg = m as TextAreaChangedMsg);
+        var (next, _) = ta.Update(new KeyMsg(ConsoleKey.RightArrow, null));
+        var result = (TextArea)next;
 
-        Assert.Equal(1, msg!.NewCursorRow);
-        Assert.Equal(0, msg.NewCursorCol);
+        Assert.Equal(1, result.CursorRow);
+        Assert.Equal(0, result.CursorCol);
     }
 
     [Fact]
-    public void OnKeyEvent_Up_MovesCursorRowUp()
+    public void Update_Up_MovesCursorRowUp()
     {
         var ta = new TextArea(["abc", "def"], cursorRow: 1, cursorCol: 2);
-        TextAreaChangedMsg? msg = null;
-        ta.OnKeyEvent(new KeyMsg(ConsoleKey.UpArrow, null), m => msg = m as TextAreaChangedMsg);
+        var (next, _) = ta.Update(new KeyMsg(ConsoleKey.UpArrow, null));
+        var result = (TextArea)next;
 
-        Assert.Equal(0, msg!.NewCursorRow);
-        Assert.Equal(2, msg.NewCursorCol);
+        Assert.Equal(0, result.CursorRow);
+        Assert.Equal(2, result.CursorCol);
     }
 
     [Fact]
-    public void OnKeyEvent_Up_AtFirstRow_StaysAtRow0()
+    public void Update_Up_AtFirstRow_StaysAtRow0()
     {
         var ta = new TextArea(["hello"], cursorRow: 0, cursorCol: 3);
-        TextAreaChangedMsg? msg = null;
-        ta.OnKeyEvent(new KeyMsg(ConsoleKey.UpArrow, null), m => msg = m as TextAreaChangedMsg);
+        var (next, _) = ta.Update(new KeyMsg(ConsoleKey.UpArrow, null));
+        var result = (TextArea)next;
 
-        Assert.Equal(0, msg!.NewCursorRow);
+        Assert.Equal(0, result.CursorRow);
     }
 
     [Fact]
-    public void OnKeyEvent_Down_MovesCursorRowDown()
+    public void Update_Down_MovesCursorRowDown()
     {
         var ta = new TextArea(["abc", "def"], cursorRow: 0, cursorCol: 1);
-        TextAreaChangedMsg? msg = null;
-        ta.OnKeyEvent(new KeyMsg(ConsoleKey.DownArrow, null), m => msg = m as TextAreaChangedMsg);
+        var (next, _) = ta.Update(new KeyMsg(ConsoleKey.DownArrow, null));
+        var result = (TextArea)next;
 
-        Assert.Equal(1, msg!.NewCursorRow);
+        Assert.Equal(1, result.CursorRow);
     }
 
     [Fact]
-    public void OnKeyEvent_Down_AtLastRow_StaysAtLastRow()
+    public void Update_Down_AtLastRow_StaysAtLastRow()
     {
         var ta = new TextArea(["abc", "def"], cursorRow: 1, cursorCol: 0);
-        TextAreaChangedMsg? msg = null;
-        ta.OnKeyEvent(new KeyMsg(ConsoleKey.DownArrow, null), m => msg = m as TextAreaChangedMsg);
+        var (next, _) = ta.Update(new KeyMsg(ConsoleKey.DownArrow, null));
+        var result = (TextArea)next;
 
-        Assert.Equal(1, msg!.NewCursorRow);
+        Assert.Equal(1, result.CursorRow);
     }
 
     [Fact]
-    public void OnKeyEvent_Up_ClampsColToShortPrevLine()
+    public void Update_Up_ClampsColToShortPrevLine()
     {
         // prev line "ab" (len 2), cursor on longer line at col 5
         var ta = new TextArea(["ab", "hello"], cursorRow: 1, cursorCol: 5);
-        TextAreaChangedMsg? msg = null;
-        ta.OnKeyEvent(new KeyMsg(ConsoleKey.UpArrow, null), m => msg = m as TextAreaChangedMsg);
+        var (next, _) = ta.Update(new KeyMsg(ConsoleKey.UpArrow, null));
+        var result = (TextArea)next;
 
-        Assert.Equal(0, msg!.NewCursorRow);
-        Assert.Equal(2, msg.NewCursorCol); // clamped to "ab".Length
+        Assert.Equal(0, result.CursorRow);
+        Assert.Equal(2, result.CursorCol); // clamped to "ab".Length
     }
 
     [Fact]
-    public void OnKeyEvent_Home_MovesCursorToLineStart()
+    public void Update_Home_MovesCursorToLineStart()
     {
         var ta = new TextArea(["hello"], cursorCol: 4);
-        TextAreaChangedMsg? msg = null;
-        ta.OnKeyEvent(new KeyMsg(ConsoleKey.Home, null), m => msg = m as TextAreaChangedMsg);
+        var (next, _) = ta.Update(new KeyMsg(ConsoleKey.Home, null));
+        var result = (TextArea)next;
 
-        Assert.Equal(0, msg!.NewCursorCol);
+        Assert.Equal(0, result.CursorCol);
     }
 
     [Fact]
-    public void OnKeyEvent_End_MovesCursorToLineEnd()
+    public void Update_End_MovesCursorToLineEnd()
     {
         var ta = new TextArea(["hello"], cursorCol: 0);
-        TextAreaChangedMsg? msg = null;
-        ta.OnKeyEvent(new KeyMsg(ConsoleKey.End, null), m => msg = m as TextAreaChangedMsg);
+        var (next, _) = ta.Update(new KeyMsg(ConsoleKey.End, null));
+        var result = (TextArea)next;
 
-        Assert.Equal(5, msg!.NewCursorCol);
+        Assert.Equal(5, result.CursorCol);
     }
 
     // ── ComputeScrollRow ──────────────────────────────────────────────────────
@@ -383,15 +378,16 @@ public class TextAreaTests
         Assert.Null(ex);
     }
 
-    // ── Source identity ───────────────────────────────────────────────────────
+    // ── Return identity ───────────────────────────────────────────────────────
 
     [Fact]
-    public void OnKeyEvent_Msg_SourceIsThisTextArea()
+    public void Update_ReturnsNewInstance_WhenValueChanges()
     {
         var ta = new TextArea(["hi"], cursorCol: 2);
-        TextAreaChangedMsg? msg = null;
-        ta.OnKeyEvent(new KeyMsg(ConsoleKey.NoName, '!'), m => msg = m as TextAreaChangedMsg);
+        var (next, _) = ta.Update(new KeyMsg(ConsoleKey.NoName, '!'));
+        var result = (TextArea)next;
 
-        Assert.Same(ta, msg!.Source);
+        Assert.NotSame(ta, result);
+        Assert.Equal("hi!", result.Lines[0]);
     }
 }

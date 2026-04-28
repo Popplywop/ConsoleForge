@@ -12,7 +12,7 @@ namespace ConsoleForge.Widgets;
 /// <c>Frame % Frames.Length</c>. Advance <see cref="Frame"/> in your model's
 /// Update handler to produce motion.
 /// </remarks>
-public sealed class Spinner : IWidget
+public sealed record Spinner : IWidget
 {
     /// <summary>Default braille dot spinner frames.</summary>
     public static readonly IReadOnlyList<string> BrailleFrames =

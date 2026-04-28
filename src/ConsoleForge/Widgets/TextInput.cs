@@ -7,7 +7,7 @@ namespace ConsoleForge.Widgets;
 /// <summary>
 /// A single-line text input widget that accepts keyboard input when focused.
 /// </summary>
-public sealed class TextInput : IFocusable
+public sealed record TextInput : IFocusable
 {
     // ── IFocusable ───────────────────────────────────────────────────────────
     /// <inheritdoc/>
@@ -55,42 +55,19 @@ public sealed class TextInput : IFocusable
     /// <see cref="HasFocus"/> but keyboard changes are returned as a model message.
     /// Callers must update the model's reference to this widget.
     /// </summary>
-    public void OnKeyEvent(KeyMsg key, Action<IMsg> dispatch)
+    public (IFocusable Next, ICmd? Cmd) Update(KeyMsg key) => key.Key switch
     {
-        // Mutate via replacement — callers should replace this instance
-        // by dispatching a TextInputChangedMsg carrying the new value/cursor.
-        switch (key.Key)
-        {
-            case ConsoleKey.Backspace when Value.Length > 0 && CursorPosition > 0:
-            {
-                var newValue = Value[..(CursorPosition - 1)] + Value[CursorPosition..];
-                dispatch(new TextInputChangedMsg(this, newValue, CursorPosition - 1));
-                break;
-            }
-            case ConsoleKey.Delete when CursorPosition < Value.Length:
-            {
-                var newValue = Value[..CursorPosition] + Value[(CursorPosition + 1)..];
-                dispatch(new TextInputChangedMsg(this, newValue, CursorPosition));
-                break;
-            }
-            case ConsoleKey.LeftArrow:
-                dispatch(new TextInputChangedMsg(this, Value, Math.Max(0, CursorPosition - 1)));
-                break;
-            case ConsoleKey.RightArrow:
-                dispatch(new TextInputChangedMsg(this, Value, Math.Min(Value.Length, CursorPosition + 1)));
-                break;
-            default:
-            {
-                // Printable characters
-                if (key.Character is char c && !char.IsControl(c))
-                {
-                    var newValue = Value[..CursorPosition] + c + Value[CursorPosition..];
-                    dispatch(new TextInputChangedMsg(this, newValue, CursorPosition + 1));
-                }
-                break;
-            }
-        }
-    }
+        ConsoleKey.Backspace when Value.Length > 0 && CursorPosition > 0 => (this with { Value = Value[..(CursorPosition - 1)] + Value[CursorPosition..], CursorPosition = CursorPosition - 1 }, null),
+        ConsoleKey.Delete when CursorPosition < Value.Length => (this with { Value = Value[..CursorPosition] + Value[(CursorPosition + 1)..] }, null),
+        ConsoleKey.LeftArrow => (this with { CursorPosition = Math.Max(0, CursorPosition - 1) }, null),
+        ConsoleKey.RightArrow => (this with { CursorPosition = Math.Min(Value.Length, CursorPosition + 1) }, null),
+        _ when key.Character is char c && !char.IsControl(c) => (this with 
+                { 
+                    Value = Value[..CursorPosition] + c + Value[CursorPosition..],
+                    CursorPosition = CursorPosition + 1
+                }, null),
+        _ => (this, null)
+    };
 
     // ── Render ───────────────────────────────────────────────────────────────
     /// <inheritdoc/>

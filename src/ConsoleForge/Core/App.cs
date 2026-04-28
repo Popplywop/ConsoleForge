@@ -17,11 +17,10 @@ namespace ConsoleForge.Core;
 public sealed class App
 {
     private Theme _theme = Theme.Default;
-    private ColorProfile _colorProfile = ColorProfile.TrueColor;
     private bool _enableMouse;
 
     /// <summary>Detected color capability of the current terminal.</summary>
-    public ColorProfile ColorProfile => _colorProfile;
+    public ColorProfile ColorProfile { get; private set; } = ColorProfile.TrueColor;
     private ITerminal? _terminal;
     private readonly Channel<IMsg> _channel = Channel.CreateUnbounded<IMsg>();
     private readonly Renderer _renderer = new();
@@ -52,7 +51,7 @@ public sealed class App
         var program = new App
         {
             _theme      = theme ?? Theme.Default,
-            _colorProfile = DetectColorProfile(),
+            ColorProfile = DetectColorProfile(),
             _enableMouse  = enableMouse,
         };
         return program.RunInternal(model, terminal, targetFps);
@@ -76,7 +75,7 @@ public sealed class App
     private IModel? _currentModel;
 
     /// <summary>Active subscriptions: key → linked CancellationTokenSource.</summary>
-    private readonly Dictionary<string, CancellationTokenSource> _activeSubs = new();
+    private readonly Dictionary<string, CancellationTokenSource> _activeSubs = [];
 
     private async Task RunInternal(IModel model, ITerminal? terminal, int targetFps)
     {
@@ -220,7 +219,7 @@ public sealed class App
         {
             if (_terminal is null || _quitting) return;
 
-            _renderer.RenderIfDirty(model, _terminal.Width, _terminal.Height, _theme, _colorProfile, _terminal);
+            _renderer.RenderIfDirty(model, _terminal.Width, _terminal.Height, _theme, ColorProfile, _terminal);
         }
     }
 
@@ -243,13 +242,6 @@ public sealed class App
         if (msg is MouseMsg { Button: MouseButton.Left, Action: MouseAction.Press } click)
         {
             HandleMouseFocus(model, click);
-        }
-
-        // Route key events to the focused widget
-        if (msg is KeyMsg keyMsg)
-        {
-            RouteKeyToFocused(model, keyMsg);
-            // Also pass to model for global key handling
         }
 
         var prevModel = model;
@@ -276,7 +268,7 @@ public sealed class App
                 if (!_quitting && _terminal is not null)
                 {
                     var root = model.View();
-                    _renderer.Render(root, _terminal.Width, _terminal.Height, _theme, _colorProfile);
+                    _renderer.Render(root, _terminal.Width, _terminal.Height, _theme, ColorProfile);
                     _renderer.Flush(_terminal);
                 }
             }
@@ -314,16 +306,6 @@ public sealed class App
         if (idx < 0 || idx == _focusIndex) return;
         _focusIndex = idx;
         _channel.Writer.TryWrite(new FocusIndexChangedMsg(_focusIndex));
-    }
-
-    private void RouteKeyToFocused(IModel model, KeyMsg keyMsg)
-    {
-        // Key routing to focused widget: the widget is owned by the model.
-        // We dispatch the event to the model via the normal Update path.
-        // For widgets that implement IFocusable, their OnKeyEvent is called
-        // by the model's Update handler.
-        // The framework provides the dispatch mechanism via FocusChangedMsg.
-        // Direct OnKeyEvent invocation is available via the FocusManager API.
     }
 
     private void DispatchCmd(ICmd? cmd)

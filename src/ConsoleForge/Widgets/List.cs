@@ -8,7 +8,7 @@ namespace ConsoleForge.Widgets;
 /// A scrollable list widget that displays items and highlights the selected one.
 /// Dispatches <see cref="ListItemSelectedMsg"/> when the user presses Enter.
 /// </summary>
-public sealed class List : IFocusable
+public sealed record List : IFocusable
 {
     // ── IFocusable ───────────────────────────────────────────────────────────
     /// <inheritdoc/>
@@ -86,21 +86,14 @@ public sealed class List : IFocusable
 
     // ── Key handling ─────────────────────────────────────────────────────────
     /// <inheritdoc/>
-    public void OnKeyEvent(KeyMsg key, Action<IMsg> dispatch)
+    public (IFocusable Next, ICmd? Cmd) Update(KeyMsg key) => key.Key switch
     {
-        switch (key.Key)
-        {
-            case ConsoleKey.UpArrow:
-                dispatch(new ListSelectionChangedMsg(this, Math.Max(0, SelectedIndex - 1)));
-                break;
-            case ConsoleKey.DownArrow:
-                dispatch(new ListSelectionChangedMsg(this, Math.Min(Items.Count - 1, SelectedIndex + 1)));
-                break;
-            case ConsoleKey.Enter when Items.Count > 0:
-                dispatch(new ListItemSelectedMsg(SelectedIndex, Items[SelectedIndex]));
-                break;
-        }
-    }
+        ConsoleKey.UpArrow => (this with { SelectedIndex = Math.Max(0, SelectedIndex -1 )}, null),
+        ConsoleKey.DownArrow => (this with { SelectedIndex = Math.Min(Items.Count - 1, SelectedIndex + 1)}, null),
+        ConsoleKey.Enter when Items.Count > 0
+            => (this, Cmd.Msg(new ListItemSelectedMsg(SelectedIndex, Items[SelectedIndex]))),
+        _    => (this, null),
+    };
 
     // ── Render ───────────────────────────────────────────────────────────────
     /// <inheritdoc/>
@@ -119,8 +112,6 @@ public sealed class List : IFocusable
         var padRight = Math.Max(0, PaddingRight);
         // Width available for item text after subtracting horizontal padding
         var textWidth = Math.Max(0, region.Width - padLeft - padRight);
-        var leftPad  = new string(' ', padLeft);
-        var rightPad = new string(' ', padRight);
 
         var maxRows = Math.Min(Items.Count - ScrollOffset, region.Height);
         for (var i = 0; i < maxRows; i++)

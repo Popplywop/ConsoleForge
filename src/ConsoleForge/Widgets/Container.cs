@@ -8,7 +8,7 @@ namespace ConsoleForge.Widgets;
 /// Participates in two-pass layout via <see cref="IContainer"/>.
 /// Supports optional scrolling along the main axis.
 /// </summary>
-public sealed class Container : IWidget, IContainer
+public sealed record Container : IWidget, IContainer
 {
     /// <summary>
     /// Primary constructor matching quickstart usage:
@@ -26,7 +26,7 @@ public sealed class Container : IWidget, IContainer
         bool scrollable = false)
     {
         Direction  = direction;
-        Children   = (IReadOnlyList<IWidget>)(children ?? []);
+        Children   = children ?? [];
         Width      = width  ?? SizeConstraint.Flex(1);
         Height     = height ?? SizeConstraint.Flex(1);
         if (style is not null) Style = style.Value;

@@ -9,7 +9,7 @@ namespace ConsoleForge.Widgets;
 /// Renders as <c>[✓] Label</c> or <c>[ ] Label</c>.
 /// Dispatches <see cref="CheckboxToggledMsg"/> when the user presses Space or Enter.
 /// </summary>
-public sealed class Checkbox : IFocusable
+public sealed record Checkbox : IFocusable
 {
     // ── IFocusable ───────────────────────────────────────────────────────────
     /// <inheritdoc/>
@@ -58,17 +58,6 @@ public sealed class Checkbox : IFocusable
         if (style is not null) Style = style.Value;
     }
 
-    // ── Key handling ─────────────────────────────────────────────────────────
-
-    /// <summary>
-    /// Toggle the checkbox state when Space or Enter is pressed.
-    /// </summary>
-    public void OnKeyEvent(KeyMsg key, Action<IMsg> dispatch)
-    {
-        if (key.Key is ConsoleKey.Spacebar or ConsoleKey.Enter)
-            dispatch(new CheckboxToggledMsg(this, !IsChecked));
-    }
-
     // ── Render ───────────────────────────────────────────────────────────────
 
     /// <summary>
@@ -97,6 +86,16 @@ public sealed class Checkbox : IFocusable
             var pad = new string(' ', region.Width - textVisualWidth);
             ctx.Write(region.Col + textVisualWidth, region.Row, pad, baseStyle);
         }
+    }
+
+    public (IFocusable Next, ICmd? Cmd) Update(KeyMsg key)
+    {
+        if (key.Key is ConsoleKey.Spacebar or ConsoleKey.Enter)
+        {
+            return (this with { IsChecked = !IsChecked }, null);
+        }
+
+        return (this, null);
     }
 }
 
