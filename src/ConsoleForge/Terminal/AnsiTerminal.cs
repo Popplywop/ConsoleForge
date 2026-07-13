@@ -68,7 +68,10 @@ public sealed class AnsiTerminal : ITerminal
     /// <summary>Shows or hides the hardware cursor by writing directly to the terminal (bypasses the render buffer).</summary>
     public void SetCursorVisible(bool visible)
     {
-        _outputBuffer.Append(visible ? "\x1b[?25h" : "\x1b[?25l");
+        // Direct write: the quit path calls this after the render loop has
+        // stopped, so anything left in _outputBuffer would never be flushed.
+        Console.Write(visible ? "\x1b[?25h" : "\x1b[?25l");
+        Console.Out.Flush();
     }
 
     /// <summary>Appends an ANSI cursor-position escape sequence (converts 0-based col/row to 1-based ANSI).</summary>
@@ -495,6 +498,10 @@ public sealed class AnsiTerminal : ITerminal
         try { DisableMouse(); } catch { /* ensure cleanup */ }
         try { ExitRawMode(); } catch { /* ensure cleanup */ }
         try { ExitAlternateScreen(); } catch { /* ensure cleanup */ }
+        // After ExitAlternateScreen: ?1049l restores saved cursor state on
+        // some terminals (VTE, tmux), which would re-hide a cursor shown
+        // while still on the alternate screen.
+        try { SetCursorVisible(true); } catch { /* ensure cleanup */ }
 
         _sigwinchRegistration?.Dispose();
         _inputSubject.OnCompleted();

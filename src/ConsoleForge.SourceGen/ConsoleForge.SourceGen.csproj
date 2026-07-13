@@ -8,7 +8,7 @@
 
     <!-- NuGet packaging -->
     <PackageId>ConsoleForge.SourceGen</PackageId>
-    <Version>0.3.0</Version>
+    <Version>0.3.1</Version>
     <Authors>Popplywop</Authors>
     <Description>Roslyn source generator for ConsoleForge. Eliminates Update(IMsg) dispatch boilerplate via [DispatchUpdate] and [Component] attributes.</Description>
     <PackageTags>tui;terminal;consoleforge;source-generator;roslyn</PackageTags>
@@ -17,7 +17,9 @@
     <RepositoryType>git</RepositoryType>
     <Copyright>Copyright © 2026 Popplywop</Copyright>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageReleaseNotes>v.0.2.2: Small changes to EquatableArray class
+    <PackageReleaseNotes>v0.3.1: Retarget to Roslyn 4.4.0 so the generator loads on stable SDKs (was 5.3.0, which failed with CS9057 on any SDK older than .NET 10).
+
+        v.0.2.2: Small changes to EquatableArray class
 
         v0.2.1: Initial release — [DispatchUpdate] and [Component] attribute support, source generator implementation plan.</PackageReleaseNotes>
     <DevelopmentDependency>true</DevelopmentDependency>
@@ -33,11 +35,15 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" Version="5.3.0">
+    <!-- Reference the OLDEST Roslyn the generator needs (ForAttributeWithMetadataName
+         = 4.3.1+), not the newest available: analyzers fail to load (CS9057) on any
+         SDK whose compiler is older than the referenced version. 4.4.0 loads on
+         .NET SDK 7.0.100+ including all .NET 8 SDKs. -->
+    <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" Version="3.3.4">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="5.3.0" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.4.0" PrivateAssets="all" />
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="all" />
   </ItemGroup>
 
