@@ -330,4 +330,61 @@ public class DispatchUpdateGeneratorTests
         Assert.NotNull(cfg001);
         Assert.Equal(DiagnosticSeverity.Error, cfg001!.Severity);
     }
+
+    // ── framework message types (regression) ────────────────────────────────
+
+    [Fact]
+    public void FrameworkMsgHandlers_ResolveFromReferencedAssembly()
+    {
+        // Regression: GetSymbolsWithName only sees source declarations, so
+        // handlers for ConsoleForge.Core msgs (KeyMsg, WindowResizeMsg) failed
+        // with CFG002. Parameter type / metadata fallback must resolve them.
+        const string source = """
+            using ConsoleForge.Core;
+            namespace MyApp;
+
+            [DispatchUpdate]
+            public sealed partial record Page : IModel
+            {
+                public ConsoleForge.Core.ICmd? Init() => null;
+                public IWidget View() => null!;
+
+                public (IModel Model, ICmd? Cmd) OnWindowResize(WindowResizeMsg msg) => (this, null);
+                public (IModel Model, ICmd? Cmd) OnKey(KeyMsg msg) => (this, null);
+            }
+            """;
+
+        var (comp, diags) = RunGenerator(source);
+
+        Assert.DoesNotContain(diags, d => d.Id == "CFG002");
+        var generated = GetGeneratedSource(comp, "Page.g.cs");
+        Assert.Contains("global::ConsoleForge.Core.WindowResizeMsg", generated);
+        Assert.Contains("global::ConsoleForge.Core.KeyMsg", generated);
+    }
+
+    [Fact]
+    public void FrameworkMsgHandler_Parameterless_ResolvesViaMetadataFallback()
+    {
+        // No parameter to infer from — must fall back to
+        // GetTypeByMetadataName("ConsoleForge.Core.QuitMsg").
+        const string source = """
+            using ConsoleForge.Core;
+            namespace MyApp;
+
+            [DispatchUpdate]
+            public sealed partial record Page : IModel
+            {
+                public ConsoleForge.Core.ICmd? Init() => null;
+                public IWidget View() => null!;
+
+                public (IModel Model, ICmd? Cmd) OnQuit() => (this, null);
+            }
+            """;
+
+        var (comp, diags) = RunGenerator(source);
+
+        Assert.DoesNotContain(diags, d => d.Id == "CFG002");
+        Assert.Contains("global::ConsoleForge.Core.QuitMsg => OnQuit()",
+            GetGeneratedSource(comp, "Page.g.cs"));
+    }
 }

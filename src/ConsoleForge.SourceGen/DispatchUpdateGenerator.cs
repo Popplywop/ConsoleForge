@@ -220,10 +220,31 @@ public sealed class DispatchUpdateGenerator : IIncrementalGenerator
 
             // Infer message type: OnNavUp -> NavUpMsg
             var inferredName = method.Name.Substring(2) + "Msg";
-            var msgType = ctx.SemanticModel.Compilation
+
+            // 1. A single parameter implementing IMsg names the type
+            //    authoritatively — works for types the name search can't see.
+            INamedTypeSymbol? msgType = null;
+            if (method.Parameters.Length == 1
+                    && method.Parameters[0].Type is INamedTypeSymbol paramType
+                    && paramType.Name == inferredName
+                    && paramType.AllInterfaces.Any(i => i.Name == "IMsg"))
+            {
+                msgType = paramType;
+            }
+
+            // 2. Name search over source declarations (GetSymbolsWithName only
+            //    sees the current compilation, not referenced assemblies).
+            msgType ??= ctx.SemanticModel.Compilation
                 .GetSymbolsWithName(inferredName, SymbolFilter.Type)
                 .OfType<INamedTypeSymbol>()
                 .FirstOrDefault();
+
+            // 3. Framework messages from the referenced ConsoleForge assembly
+            //    (KeyMsg, WindowResizeMsg, QuitMsg, widget msgs...).
+            msgType ??= ctx.SemanticModel.Compilation
+                    .GetTypeByMetadataName("ConsoleForge.Core." + inferredName)
+                ?? ctx.SemanticModel.Compilation
+                    .GetTypeByMetadataName("ConsoleForge.Widgets." + inferredName);
 
             if (msgType == null)
             {
