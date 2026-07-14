@@ -28,6 +28,11 @@ public sealed record FocusIndexChangedMsg(int Index) : IMsg;
 /// <summary>Internal: aggregates results from Cmd.Batch concurrent execution.</summary>
 public sealed record BatchMsg(IMsg[] Messages) : IMsg;
 
+/// <summary>Carries the children of a <see cref="Cmd.Batch"/> to the event
+/// loop, which dispatches each independently so every message is delivered
+/// as soon as its command completes (no barrier).</summary>
+public sealed record BatchDispatchMsg(IReadOnlyList<ICmd> Cmds) : IMsg;
+
 /// <summary>Internal: aggregates results from Cmd.Sequence serial execution.</summary>
 public sealed record SequenceMsg(IMsg[] Messages) : IMsg;
 

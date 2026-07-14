@@ -34,6 +34,9 @@ public static class Cmd
     /// <summary>
     /// Run all commands concurrently. Null commands filtered out.
     /// Returns null if zero cmds remain; the single cmd if one remains.
+    /// Each command's message is delivered as soon as that command completes —
+    /// batching is NOT a barrier (a slow fetch doesn't delay a fast tick).
+    /// Nesting is safe: an inner Batch dispatches its own children the same way.
     /// </summary>
     public static ICmd? Batch(params ICmd?[] cmds)
     {
@@ -41,11 +44,9 @@ public static class Cmd
         if (active.Length == 0) return null;
         if (active.Length == 1) return active[0];
 
-        return async () =>
-        {
-            var msgs = await Task.WhenAll(active.Select(c => c()));
-            return new BatchMsg(msgs);
-        };
+        // Resolve immediately to a dispatch request; the event loop fires each
+        // child independently so results stream in as they complete.
+        return () => Task.FromResult<IMsg>(new BatchDispatchMsg(active));
     }
 
     /// <summary>

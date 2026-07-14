@@ -141,11 +141,24 @@ public sealed class App
                 {
                     if (msg is QuitMsg) break;
 
-                    if (msg is BatchMsg bm)
+                    if (msg is BatchDispatchMsg bd)
+                    {
+                        // Fire each batched cmd independently — results stream
+                        // into the channel as they complete (no barrier), and
+                        // nested batches unfold the same way.
+                        foreach (var cmd in bd.Cmds)
+                            DispatchCmd(cmd);
+                    }
+                    else if (msg is BatchMsg bm)
                     {
                         foreach (var m in bm.Messages)
                         {
                             if (m is QuitMsg) goto quit;
+                            if (m is BatchDispatchMsg nestedBatch)
+                            {
+                                foreach (var cmd in nestedBatch.Cmds) DispatchCmd(cmd);
+                                continue;
+                            }
                             ProcessMsg(m, ref currentModel);
                         }
                     }
@@ -154,6 +167,11 @@ public sealed class App
                         foreach (var m in sm.Messages)
                         {
                             if (m is QuitMsg) goto quit;
+                            if (m is BatchDispatchMsg nestedBatch)
+                            {
+                                foreach (var cmd in nestedBatch.Cmds) DispatchCmd(cmd);
+                                continue;
+                            }
                             ProcessMsg(m, ref currentModel);
                         }
                     }
@@ -316,15 +334,40 @@ public sealed class App
         // write the result directly to the channel — no Task.Run scheduling delay.
         // This ensures follow-up messages (like ThemeChangedMsg) arrive before the
         // next render timer tick, preventing stale-cache frames.
-        var task = cmd();
+        Task<IMsg> task;
+        try
+        {
+            task = cmd();
+        }
+        catch (Exception ex)
+        {
+            _channel.Writer.TryWrite(new CmdErrorMsg(ex));
+            return;
+        }
+
         if (task.IsCompletedSuccessfully)
         {
             _channel.Writer.TryWrite(task.Result);
             return;
         }
 
-        // Slow path: genuinely async commands go through the thread pool.
-        CmdDispatcher.Dispatch(cmd, _channel.Writer, _cts.Token);
+        // Slow path: await the already-started task — do NOT re-invoke the cmd
+        // (that would execute its side effects twice).
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                _channel.Writer.TryWrite(await task);
+            }
+            catch (OperationCanceledException) when (_cts.IsCancellationRequested)
+            {
+                // Suppress cancellation on clean shutdown.
+            }
+            catch (Exception ex)
+            {
+                _channel.Writer.TryWrite(new CmdErrorMsg(ex));
+            }
+        }, _cts.Token);
     }
 
     private void ReconcileSubscriptions(IModel model)

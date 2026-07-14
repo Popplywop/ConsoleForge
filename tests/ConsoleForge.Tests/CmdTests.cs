@@ -71,19 +71,54 @@ public class CmdTests
     }
 
     [Fact]
-    public async Task Cmd_Batch_MultipleCmds_ReturnsBatchMsg()
+    public async Task Cmd_Batch_MultipleCmds_ResolvesToDispatchRequest()
     {
-        var cmd = Cmd.Batch(
-            () => Task.FromResult<IMsg>(new TestMsg("a")),
-            () => Task.FromResult<IMsg>(new TestMsg("b")));
+        // Batch must NOT await its children (no barrier): it resolves
+        // immediately to a BatchDispatchMsg carrying them, and the event loop
+        // fires each independently so messages stream in as they complete.
+        ICmd a = () => Task.FromResult<IMsg>(new TestMsg("a"));
+        ICmd b = () => Task.FromResult<IMsg>(new TestMsg("b"));
+        var cmd = Cmd.Batch(a, b);
 
         Assert.NotNull(cmd);
         var msg = await cmd!();
 
-        var batchMsg = Assert.IsType<BatchMsg>(msg);
-        Assert.Equal(2, batchMsg.Messages.Length);
-        var values = batchMsg.Messages.Cast<TestMsg>().Select(m => m.Value).OrderBy(v => v).ToArray();
-        Assert.Equal(["a", "b"], values);
+        var dispatch = Assert.IsType<BatchDispatchMsg>(msg);
+        Assert.Equal(2, dispatch.Cmds.Count);
+        Assert.Same(a, dispatch.Cmds[0]);
+        Assert.Same(b, dispatch.Cmds[1]);
+    }
+
+    [Fact]
+    public async Task Cmd_Batch_DoesNotAwaitSlowChildren()
+    {
+        // Regression: the old implementation was Task.WhenAll — a never-ending
+        // child hung the whole batch (spinner ticks waited on fetches).
+        var never = new TaskCompletionSource<IMsg>();
+        var cmd = Cmd.Batch(
+            () => never.Task,
+            () => Task.FromResult<IMsg>(new TestMsg("fast")));
+
+        var resolved = await cmd!().WaitAsync(TimeSpan.FromSeconds(1));
+        Assert.IsType<BatchDispatchMsg>(resolved);
+    }
+
+    [Fact]
+    public async Task Cmd_Batch_Nested_UnfoldsOneLevelPerDispatch()
+    {
+        // Regression: nested batches were silently swallowed by the event loop.
+        ICmd a = () => Task.FromResult<IMsg>(new TestMsg("a"));
+        ICmd b = () => Task.FromResult<IMsg>(new TestMsg("b"));
+        ICmd c = () => Task.FromResult<IMsg>(new TestMsg("c"));
+        var outer = Cmd.Batch(Cmd.Batch(a, b), c);
+
+        var outerDispatch = Assert.IsType<BatchDispatchMsg>(await outer!());
+        Assert.Equal(2, outerDispatch.Cmds.Count);
+
+        var innerDispatch = Assert.IsType<BatchDispatchMsg>(await outerDispatch.Cmds[0]());
+        Assert.Same(a, innerDispatch.Cmds[0]);
+        Assert.Same(b, innerDispatch.Cmds[1]);
+        Assert.Same(c, outerDispatch.Cmds[1]);
     }
 
     // ── Cmd.Sequence ─────────────────────────────────────────────────────────
