@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Threading.Channels;
 using ConsoleForge.Layout;
 using ConsoleForge.Styling;
@@ -122,7 +123,15 @@ public sealed class App
                 if (m is not null) RenderFrame(m);
             }, null, 0, frameMs);
 
-            // Event loop
+            // Event loop.
+            //
+            // Each pass waits for one message, then drains everything already queued
+            // behind it before drawing. Input arrives far faster than a frame can be
+            // drawn — key auto-repeat alone outruns it — and a frame per event throws
+            // away almost all of that work, since only the final state is ever seen.
+            // Draining is self-regulating: while the loop keeps up, each pass handles
+            // a single message and draws immediately; when it falls behind, the queue
+            // batches and the intermediate frames are skipped instead of queueing up.
             IModel currentModel = model;
             while (true)
             {
@@ -138,46 +147,57 @@ public sealed class App
 
                 try
                 {
-                    if (msg is QuitMsg) break;
+                    while (true)
+                    {
+                        if (msg is QuitMsg) goto quit;
 
-                    if (msg is BatchDispatchMsg bd)
-                    {
-                        // Fire each batched cmd independently — results stream
-                        // into the channel as they complete (no barrier), and
-                        // nested batches unfold the same way.
-                        foreach (var cmd in bd.Cmds)
-                            DispatchCmd(cmd);
-                    }
-                    else if (msg is BatchMsg bm)
-                    {
-                        foreach (var m in bm.Messages)
+                        if (msg is BatchDispatchMsg bd)
                         {
-                            if (m is QuitMsg) goto quit;
-                            if (m is BatchDispatchMsg nestedBatch)
-                            {
-                                foreach (var cmd in nestedBatch.Cmds) DispatchCmd(cmd);
-                                continue;
-                            }
-                            ProcessMsg(m, ref currentModel);
+                            // Fire each batched cmd independently — results stream
+                            // into the channel as they complete (no barrier), and
+                            // nested batches unfold the same way. Anything that
+                            // finishes synchronously lands in the queue the drain
+                            // below is still reading, so a batch costs one frame.
+                            foreach (var cmd in bd.Cmds)
+                                DispatchCmd(cmd);
                         }
-                    }
-                    else if (msg is SequenceMsg sm)
-                    {
-                        foreach (var m in sm.Messages)
+                        else if (msg is BatchMsg bm)
                         {
-                            if (m is QuitMsg) goto quit;
-                            if (m is BatchDispatchMsg nestedBatch)
+                            foreach (var m in bm.Messages)
                             {
-                                foreach (var cmd in nestedBatch.Cmds) DispatchCmd(cmd);
-                                continue;
+                                if (m is QuitMsg) goto quit;
+                                if (m is BatchDispatchMsg nestedBatch)
+                                {
+                                    foreach (var cmd in nestedBatch.Cmds) DispatchCmd(cmd);
+                                    continue;
+                                }
+                                ProcessMsg(m, ref currentModel);
                             }
-                            ProcessMsg(m, ref currentModel);
                         }
+                        else if (msg is SequenceMsg sm)
+                        {
+                            foreach (var m in sm.Messages)
+                            {
+                                if (m is QuitMsg) goto quit;
+                                if (m is BatchDispatchMsg nestedBatch)
+                                {
+                                    foreach (var cmd in nestedBatch.Cmds) DispatchCmd(cmd);
+                                    continue;
+                                }
+                                ProcessMsg(m, ref currentModel);
+                            }
+                        }
+                        else
+                        {
+                            ProcessMsg(msg, ref currentModel);
+                        }
+
+                        // Take whatever else is already waiting — including messages
+                        // the handlers above just queued — so the burst costs one frame.
+                        if (!_channel.Reader.TryRead(out msg!)) break;
                     }
-                    else
-                    {
-                        ProcessMsg(msg, ref currentModel);
-                    }
+
+                    DrawPendingFrame(currentModel, frameMs);
                     continue;
                 quit:
                     break;
@@ -219,8 +239,28 @@ public sealed class App
         {
             if (_terminal is null || _quitting) return;
 
-            _renderer.RenderIfDirty(model, _terminal.Width, _terminal.Height, _theme, ColorProfile, _terminal);
+            if (_renderer.RenderIfDirty(model, _terminal.Width, _terminal.Height, _theme, ColorProfile, _terminal))
+                _lastFrameTimestamp = Stopwatch.GetTimestamp();
         }
+    }
+
+    /// <summary>Timestamp of the last frame actually written to the terminal.</summary>
+    private long _lastFrameTimestamp;
+
+    /// <summary>
+    /// Draw the frame the just-drained batch produced, unless the previous frame is
+    /// still younger than the frame budget — in that case the model stays marked
+    /// dirty and the FPS timer picks it up, capping output at the target rate while
+    /// keeping latency below one frame interval.
+    /// </summary>
+    private void DrawPendingFrame(IModel model, int frameMs)
+    {
+        if (_terminal is null || _quitting) return;
+
+        var elapsedMs = (Stopwatch.GetTimestamp() - _lastFrameTimestamp) * 1000.0 / Stopwatch.Frequency;
+        if (elapsedMs < frameMs) return;
+
+        RenderFrame(model);
     }
 
     private void ProcessMsg(IMsg msg, ref IModel model)
@@ -251,13 +291,12 @@ public sealed class App
         DispatchCmd(cmd);
         ReconcileSubscriptions(newModel);
 
-        // Mark dirty whenever model changed or an explicit redraw is requested.
-        // Also render immediately so keystrokes appear without waiting for the timer tick.
+        // Mark dirty whenever the model changed or an explicit redraw is requested.
+        // The frame itself is drawn by DrawPendingFrame once the event loop has
+        // drained the queue, so a burst of input costs one frame rather than one
+        // frame per message.
         if (!ReferenceEquals(newModel, prevModel) || msg is RedrawMsg)
-        {
             _renderer.MarkDirty();
-            RenderFrame(newModel);
-        }
 
         // Force immediate re-render on resize; invalidate prev buffer to force full redraw
         if (msg is WindowResizeMsg && _terminal is not null)
