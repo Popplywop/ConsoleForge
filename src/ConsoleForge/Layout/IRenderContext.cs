@@ -38,6 +38,8 @@ public interface IRenderContext
     /// If <paramref name="widget"/> (same reference) was rendered at the same
     /// <paramref name="region"/> last frame, copy its cells from the previous buffer
     /// and return true. Caller should skip rendering that widget.
+    /// A hit re-registers the widget for the current frame, so the caller must not
+    /// call <see cref="RegisterWidget"/> again for it.
     /// Default implementation returns false (no caching).
     /// </summary>
     bool TryReuseWidget(IWidget widget, Region region) => false;
@@ -53,4 +55,17 @@ public interface IRenderContext
     /// Set <paramref name="cursor"/> on the Rendering Context
     /// </summary>
     void SetCursorDescriptor(CursorDescriptor cursor);
+
+    /// <summary>
+    /// Register a raw escape payload for <paramref name="region"/>.
+    /// All terminal cells covered by the region are sentinel-filled so the cell diff
+    /// does not overwrite the image with styled spaces. The payload's sequences are
+    /// emitted after the full cell-diff pass in the same frame, preceded by a
+    /// cursor-move to <paramref name="region"/>'s top-left corner.
+    /// Re-emission is skipped when <see cref="IRawEscapePayload.ContentHash"/> and
+    /// the region both match the previous frame (hash-based deduplication).
+    /// Default implementation is a no-op — test fakes and
+    /// <see cref="SubRenderContext"/> override this.
+    /// </summary>
+    void WriteRawEscape(Region region, IRawEscapePayload payload) { }
 }
