@@ -128,8 +128,8 @@ public sealed record Container : IWidget, IContainer
                     if (!Overlaps(cr, region)) continue;
                     Region cl = Clip(cr, region);
                     if (cl.Width <= 0 || cl.Height <= 0) continue;
-                    if (IsComposite(Children[i]) && ctx.TryReuseWidget(Children[i], cl))
-                    { ctx.RegisterWidget(Children[i], cl); }
+                    // A cache hit re-registers the widget itself; only the miss path registers here.
+                    if (IsComposite(Children[i]) && ctx.TryReuseWidget(Children[i], cl)) { }
                     else
                     { Children[i].Render(new SubRenderContext(ctx, cl));
                       if (IsComposite(Children[i])) ctx.RegisterWidget(Children[i], cl); }
@@ -185,8 +185,8 @@ public sealed record Container : IWidget, IContainer
             if (!Overlaps(cr, lReg)) continue;
             Region cl = Clip(cr, lReg);
             if (cl.Width <= 0 || cl.Height <= 0) continue;
-            if (IsComposite(Children[i]) && ctx.TryReuseWidget(Children[i], cl))
-            { ctx.RegisterWidget(Children[i], cl); }
+            // A cache hit re-registers the widget itself; only the miss path registers here.
+            if (IsComposite(Children[i]) && ctx.TryReuseWidget(Children[i], cl)) { }
             else
             { Children[i].Render(new SubRenderContext(ctx, cl));
               if (IsComposite(Children[i])) ctx.RegisterWidget(Children[i], cl); }
