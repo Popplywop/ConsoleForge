@@ -1,9 +1,13 @@
 # ConsoleForge Wishlist
 
-Gaps and improvement ideas found while building [devo](https://github.com/Popplywop/azboard)
-(a C# port of azboard) on top of ConsoleForge — a real Elm-loop application
-with API-backed pages, a modal picker, tables, spinners, and keybound
-navigation. Ordered roughly by impact.
+Gaps and improvement ideas found while building real Elm-loop applications on
+top of ConsoleForge, ordered roughly by impact:
+
+- [devo](https://github.com/Popplywop/azboard) (a C# port of azboard) —
+  API-backed pages, a modal picker, tables, spinners, keybound navigation.
+- PlexTui — a Plex client with drill-down navigation, long scrolling lists and
+  poster artwork, which is what surfaced the renderer and event-loop entries in
+  the 0.4.0 rows below.
 
 ## Open
 
@@ -119,7 +123,37 @@ rather than blanking them) for a proper modal feel.
   `.Terminal` shadows `ConsoleForge.Terminal` for partially-qualified
   references in sibling tests.
 
-## Fixed during the devo build (for the record)
+### 9. `Cmd.Debounce` / `Cmd.Throttle` can't debounce from `Update`
+
+Both hold their state in the closure the factory returns, so they only work if
+the *same cmd instance* is re-dispatched — as their XML docs say. But `Update`
+is where you decide to debounce, and it builds a fresh cmd each call, so the
+natural Elm usage silently never debounces. Storing one instance is not a way
+out either: the captured `fn` usually varies per item (PlexTui needed a
+different poster URL per row), and parking a mutable closure in the model
+violates the immutability rule the architecture is built on.
+
+**Proposal:** key the state outside the closure — `Cmd.Debounce(key, interval,
+fn)` with the pending-cancellation table owned by the dispatcher, so re-dispatch
+under the same key supersedes the previous one. PlexTui works around it with a
+generation counter plus `Cmd.Tick`, which is the pattern the framework should
+be providing.
+
+### 10. Widget render cache is defeated after the first composite
+
+`RenderContext.RegisterWidget` lazily allocates its current-frame buffer by
+*stealing* `_prevWidgets` and nulling it. `TryReuseWidget` returns early when
+`_prevWidgets is null`, so the first registration of a frame disables the cache
+for every widget after it — the tree re-renders in full every frame. It also
+overwrites entry 0 of the map it is still treating as valid.
+
+No visual defect (a re-render produces identical cells), purely wasted work,
+which is why it survives the test suite. Wants its own buffer rather than
+reusing the previous frame's, and a benchmark that would notice.
+
+## Fixed (for the record)
+
+What each gap turned out to be, and what shipped.
 
 | Version | Fix |
 |---------|-----|
@@ -128,3 +162,9 @@ rather than blanking them) for a proper modal feel.
 | 0.3.2 | SourceGen couldn't resolve framework message types (`KeyMsg`, `WindowResizeMsg`) — `GetSymbolsWithName` sees source declarations only. Now: parameter-type inference + `ConsoleForge.Core`/`Widgets` metadata fallback. |
 | 0.3.2 | `Cmd.Batch` was a `Task.WhenAll` barrier (spinner ticks waited on fetches) and **nested batches were silently dropped** by the event loop. Batch now resolves to `BatchDispatchMsg`; the loop dispatches children independently — messages stream in as they complete, and nesting unfolds correctly. |
 | 0.3.2 | `DispatchCmd` executed every async command **twice** (the synchronous fast-path check invoked it, then the slow path re-invoked it via `CmdDispatcher`). The slow path now awaits the already-started task. |
+| 0.4.0 | Character widths came from hand-written ranges that called the whole `U+1F300`–`U+1FAFF` block 2 columns wide. Many pictographs there have default *text* presentation and East_Asian_Width `N`, so terminals draw them in one column (`U+1F39E` FILM FRAMES among them), and combining marks / ZWJ / variation selectors were counted as 1 rather than 0. Every glyph after one drifted a column, and since the frame diff trusts its own model of the screen it never repaired it. Table is now generated from the UCD; `WidthWalker` applies the `U+FE0F` promotion that a single rune can't express. |
+| 0.4.0 | The frame diff skipped its comparison entirely for cells holding `null` — i.e. every cell no widget wrote, which is most of the screen — and re-emitted them each frame. A 300-key burst emitted 27403 characters against 27435 for a full repaint, so "only changed cells are emitted" was close to false. `null` now compares as the themed default cell, and a cell whose previous content was a sentinel always repaints, because what the terminal shows there isn't derivable from the buffer. |
+| 0.4.0 | Fixing the above made a theme switch skip untouched cells and strand the old background on screen. `Reset` now drops the previous buffer when the theme or colour profile changes, comparing themes by value so an equal-but-distinct instance per frame doesn't force a full repaint. |
+| 0.4.0 | The event loop rendered synchronously inside `ProcessMsg`, so every message paid for `View` + layout + render + diff + a blocking terminal write. Key auto-repeat outruns a frame, so holding an arrow key queued a redraw per row: scrolling lagged and the selection appeared to skip. Each pass now drains what's already queued and draws once — the same 300-key burst went from 302 frames to 3, with all 300 events applied — rate-limited to the frame budget with the FPS timer as the backstop. |
+| 0.4.0 | `Container` called `RegisterWidget` for a widget `TryReuseWidget` had already registered, so every cache hit took two slots in the frame's widget map. |
+| 0.4.0 | `ImageWidget` rebuilt its Kitty payload every render, hashing and base64-encoding the whole image each frame to produce a value the diff then used to decide nothing had changed. The encoding is now cached against the byte array's identity, held weakly. |
