@@ -50,24 +50,23 @@ public sealed record TextInput : IFocusable
     }
 
     /// <summary>
-    /// Handle printable char input, Backspace, and Left/Right cursor movement.
-    /// NOTE: <see cref="TextInput"/> is immutable — this method mutates state via
-    /// <see cref="HasFocus"/> but keyboard changes are returned as a model message.
-    /// Callers must update the model's reference to this widget.
+    /// Apply one key press to <see cref="Value"/> and <see cref="CursorPosition"/> and
+    /// return the edited widget — this instance is never mutated, so the model must store
+    /// what comes back.
     /// </summary>
-    public (IFocusable Next, ICmd? Cmd) Update(KeyMsg key) => key.Key switch
+    /// <remarks>
+    /// The editing rules live in <see cref="TextInputState"/>; this only carries them
+    /// across, so a model that keeps its own <see cref="TextInputState"/> and one that
+    /// stores the widget behave identically.
+    /// </remarks>
+    public (IFocusable Next, ICmd? Cmd) Update(KeyMsg key)
     {
-        ConsoleKey.Backspace when Value.Length > 0 && CursorPosition > 0 => (this with { Value = Value[..(CursorPosition - 1)] + Value[CursorPosition..], CursorPosition = CursorPosition - 1 }, null),
-        ConsoleKey.Delete when CursorPosition < Value.Length => (this with { Value = Value[..CursorPosition] + Value[(CursorPosition + 1)..] }, null),
-        ConsoleKey.LeftArrow => (this with { CursorPosition = Math.Max(0, CursorPosition - 1) }, null),
-        ConsoleKey.RightArrow => (this with { CursorPosition = Math.Min(Value.Length, CursorPosition + 1) }, null),
-        _ when key.Character is char c && !char.IsControl(c) => (this with 
-                { 
-                    Value = Value[..CursorPosition] + c + Value[CursorPosition..],
-                    CursorPosition = CursorPosition + 1
-                }, null),
-        _ => (this, null)
-    };
+        var before = new TextInputState(Value, CursorPosition);
+        var after  = before.HandleKey(key);
+        if (ReferenceEquals(after, before)) return (this, null);
+
+        return (this with { Value = after.Value, CursorPosition = after.Cursor }, null);
+    }
 
     // ── Render ───────────────────────────────────────────────────────────────
     /// <inheritdoc/>
@@ -101,10 +100,11 @@ public sealed record TextInput : IFocusable
 }
 
 /// <summary>
-/// Dispatched when a <see cref="TextInput"/> value or cursor position changes.
-/// The model should replace its reference to the input with a new instance
-/// having <see cref="NewValue"/> and <see cref="NewCursorPosition"/>.
+/// Was dispatched when a <see cref="TextInput"/> value or cursor position changed, back
+/// when widgets emitted messages through a callback. Nothing raises it now —
+/// <see cref="TextInput.Update"/> returns the edited widget directly.
 /// </summary>
+[Obsolete("Unused since widgets stopped emitting messages. TextInput.Update returns the next widget; store that instead.")]
 public sealed record TextInputChangedMsg(
     TextInput Source,
     string NewValue,

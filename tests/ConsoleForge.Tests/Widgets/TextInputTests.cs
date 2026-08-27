@@ -54,11 +54,37 @@ public class TextInputTests
     }
 
     [Fact]
-    public void Update_ControlChar_Ignored()
+    public void Update_ControlChar_IsNotTyped()
     {
+        // Ctrl+A carries \x01 as its character; it moves the cursor (readline's
+        // beginning-of-line) but must never end up in the text.
         var input = new TextInput("hello", cursorPosition: 5);
         var (next, _) = input.Update(new KeyMsg(ConsoleKey.A, '\x01', Ctrl: true));
+        var typed = Assert.IsType<TextInput>(next);
+        Assert.Equal("hello", typed.Value);
+        Assert.Equal(0, typed.CursorPosition);
+    }
+
+    [Fact]
+    public void Update_UnhandledKey_ReturnsTheSameInstance()
+    {
+        var input = new TextInput("hello", cursorPosition: 5);
+        var (next, _) = input.Update(new KeyMsg(ConsoleKey.F5, null));
         Assert.Same(input, next);
+    }
+
+    [Fact]
+    public void Update_SharesEditingRulesWithTextInputState()
+    {
+        // The widget must not grow its own copy of the editing logic.
+        var key   = new KeyMsg(ConsoleKey.W, '\u0017', Ctrl: true);
+        var state = new TextInputState("one two three").HandleKey(key);
+
+        var (next, _) = new TextInput("one two three", cursorPosition: 13).Update(key);
+        var typed = Assert.IsType<TextInput>(next);
+
+        Assert.Equal(state.Value,  typed.Value);
+        Assert.Equal(state.Cursor, typed.CursorPosition);
     }
 
     // ── Backspace ─────────────────────────────────────────────────────────────
