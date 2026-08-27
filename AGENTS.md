@@ -26,7 +26,7 @@ it changes, and the helper is a pure function over it.
 
 | Namespace | Purpose |
 |---|---|
-| `ConsoleForge.Core` | Runtime: `App`, `Renderer`, `FocusManager`, `Cmd`, `Sub`, `KeyMap`, `IModel`, `IMsg`, `IComponent` |
+| `ConsoleForge.Core` | Runtime: `App`, `Renderer`, `FocusManager`, `Cmd`, `Sub`, `KeyMap`, `IModel`, `IMsg`, `IComponent`, `TextInputState` |
 | `ConsoleForge.Layout` | Layout engine, `SizeConstraint`, `IWidget`, `IFocusable`, `IRenderContext` |
 | `ConsoleForge.Styling` | `Style`, `Color`, `Borders`, `Theme` |
 | `ConsoleForge.Widgets` | Built-in widgets: `TextBlock`, `TextInput`, `TextArea`, `List`, `Table`, `Checkbox`, `Tabs`, `ProgressBar`, `Spinner`, `BorderBox`, `Container`, `Modal`, `ZStack`, `ImageWidget` |
@@ -38,6 +38,7 @@ it changes, and the helper is a pure function over it.
 - **Immutable model.** `IModel.Update` returns new model via `with` expressions. Never mutate `this`.
 - **Message dispatch.** A focusable widget's `Update(KeyMsg)` returns the next widget plus an optional `ICmd` — it never invokes a callback and never mutates itself. Callers fold that result into the model.
 - **Render is pure.** `IWidget.Render(IRenderContext)` must have no side effects other than writing to `ctx`.
+- **Editing logic is a reducer, not a widget.** Rules for changing text/selection/scroll belong in a pure state record in `ConsoleForge.Core` (`TextInputState` is the pattern), which the widget's `Update` delegates to. One copy of the rules, usable from a model that never builds the widget.
 - **`SizeConstraint`** — use `Fixed(n)` for known sizes, `Flex(n)` for proportional fill. Never hardcode pixel positions.
 
 ---

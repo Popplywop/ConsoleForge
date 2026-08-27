@@ -7,8 +7,8 @@ namespace ConsoleForge.Widgets;
 /// <summary>
 /// A multi-line text input widget.
 /// Cursor position and scroll state live in the model (all properties are
-/// <c>{ get; init; }</c>) — use the <see cref="TextAreaChangedMsg"/> returned from
-/// <see cref="OnKeyEvent"/> to derive the next widget state via <c>with</c>.
+/// <c>{ get; init; }</c>) — <see cref="Update"/> returns the next widget rather than
+/// mutating this one, so the model stores what it returns.
 /// </summary>
 /// <remarks>
 /// <para><b>Scroll</b> — The widget renders lines

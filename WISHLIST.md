@@ -20,10 +20,13 @@ example, and is why items 5 and 6 rank above the `bubbles`-shaped items 3 and 7.
 ### 1. `Auto` size constraint doesn't measure content
 
 `LayoutEngine.ResolveFixed` treats `AutoConstraint` as flex weight 1
-(`LayoutEngine.cs`, "Auto = flex weight 1"), while the README and XML docs say
-"shrink to content". Consequence: flex-spacer centering silently becomes
-equal-thirds splitting — devo had to hand-compute `Fixed(label.Length + 2)`
-widths to center a spinner.
+(`LayoutEngine.cs`, "Auto = flex weight 1"). Consequence: flex-spacer centering
+silently becomes equal-thirds splitting — devo had to hand-compute
+`Fixed(label.Length + 2)` widths to center a spinner.
+
+The README and XML docs used to promise "shrink to content"; both now state the real
+behaviour and point here, so the gap is documented rather than misleading — but
+`Auto` still does not measure.
 
 **Proposal:** real measure pass. Widgets expose a desired size
 (`TextBlock` = text width/line count, `Spinner` = frame + label,
@@ -74,7 +77,7 @@ assume a US keyboard layout: devo binds `?` as `WithShift(Oem2)` and `/` as
 preferred for printable bindings (`?`, `/`, case-sensitive letters like
 `n` vs `N`).
 
-### 5. `TextInputState` — pure editing reducer
+### 5. `TextInputState` — pure editing reducer *(landed for TextInput)*
 
 Text-editing logic (cursor movement, backspace/delete, word jumps, paste,
 unicode handling) currently lives nowhere reusable: the `TextInput` widget is
@@ -95,6 +98,16 @@ sealed record TextInputState(string Value = "", int Cursor = 0)
 Same pattern later for `TextAreaState` and `ListState` (selection + scroll
 clamping). Cursor blink: render-side, or a framework subscription once #2
 lands.
+
+**Landed (0.4.0):** `ConsoleForge.Core.TextInputState` — `Value`, `Cursor`, and a
+pure `HandleKey(KeyMsg)`. Cursor movement and deletion work in grapheme clusters,
+so an emoji or a combining mark moves and deletes as one unit instead of leaving
+half a surrogate pair behind, and the cursor is re-normalised on every `with`, so
+no copy can land mid-cluster. Adds word jumps (`Ctrl+←/→`, `Ctrl+W`), line jumps
+(`Home`/`End`, `Ctrl+A`/`Ctrl+E`), kill-to-edge (`Ctrl+U`/`Ctrl+K`), and `Insert`
+for paste. `TextInput.Update` now delegates to it, so the widget and the reducer
+cannot drift — and the widget picked up all of the above for free. Still open:
+`TextAreaState` and `ListState`.
 
 ### 6. Consolidate input handling into one model *(partly done)*
 
@@ -123,18 +136,7 @@ lower layers show through — good — but nothing dims them.
 `BackdropStyle`-driven dim (restyle the underlying cells faint/desaturated
 rather than blanking them) for a proper modal feel.
 
-### 8. Documentation drift
-
-- README `Subscriptions()` example returns `IEnumerable<(string, ISub)>`;
-  the interface requires `IReadOnlyList`.
-- README `KeyPattern` lists `Of/WithCtrl/WithAlt/Plain` but omits
-  `WithShift` (it exists and is essential for case-sensitive bindings).
-- `SizeConstraint.Auto` docs vs. actual flex behavior (#1).
-- Test-suite footgun worth a comment somewhere: a test namespace ending in
-  `.Terminal` shadows `ConsoleForge.Terminal` for partially-qualified
-  references in sibling tests.
-
-### 9. `Cmd.Debounce` / `Cmd.Throttle` can't debounce from `Update`
+### 8. `Cmd.Debounce` / `Cmd.Throttle` can't debounce from `Update`
 
 Both hold their state in the closure the factory returns, so they only work if
 the *same cmd instance* is re-dispatched — as their XML docs say. But `Update`
@@ -149,18 +151,6 @@ fn)` with the pending-cancellation table owned by the dispatcher, so re-dispatch
 under the same key supersedes the previous one. PlexTui works around it with a
 generation counter plus `Cmd.Tick`, which is the pattern the framework should
 be providing.
-
-### 10. Widget render cache is defeated after the first composite
-
-`RenderContext.RegisterWidget` lazily allocates its current-frame buffer by
-*stealing* `_prevWidgets` and nulling it. `TryReuseWidget` returns early when
-`_prevWidgets is null`, so the first registration of a frame disables the cache
-for every widget after it — the tree re-renders in full every frame. It also
-overwrites entry 0 of the map it is still treating as valid.
-
-No visual defect (a re-render produces identical cells), purely wasted work,
-which is why it survives the test suite. Wants its own buffer rather than
-reusing the previous frame's, and a benchmark that would notice.
 
 ## Fixed (for the record)
 
@@ -179,3 +169,5 @@ What each gap turned out to be, and what shipped.
 | 0.4.0 | The event loop rendered synchronously inside `ProcessMsg`, so every message paid for `View` + layout + render + diff + a blocking terminal write. Key auto-repeat outruns a frame, so holding an arrow key queued a redraw per row: scrolling lagged and the selection appeared to skip. Each pass now drains what's already queued and draws once — the same 300-key burst went from 302 frames to 3, with all 300 events applied — rate-limited to the frame budget with the FPS timer as the backstop. |
 | 0.4.0 | `Container` called `RegisterWidget` for a widget `TryReuseWidget` had already registered, so every cache hit took two slots in the frame's widget map. |
 | 0.4.0 | `ImageWidget` rebuilt its Kitty payload every render, hashing and base64-encoding the whole image each frame to produce a value the diff then used to decide nothing had changed. The encoding is now cached against the byte array's identity, held weakly. |
+| 0.4.0 | The widget render cache switched itself off after the first composite of each frame: `RegisterWidget` lazily allocated its buffer by *stealing* `_prevWidgets` and nulling it, and `TryReuseWidget` bails when that is null — so every widget after the first missed and re-rendered. The two maps now ping-pong in `Reset`, which keeps the previous frame readable all frame and still allocates nothing in steady state. A frame where nothing changed went from 192.8 µs / 131 KB to 22.4 µs / 6.5 KB. Invisible in output — a re-render produces identical cells — so it needed benchmarks and cache-level tests to see at all. |
+| 0.4.0 | Documentation drift: README called the entry point `Program.Run` (it is `App.Run`), typed `Subscriptions()` as `IEnumerable` where the interface requires `IReadOnlyList`, omitted `KeyPattern.WithShift`, and never mentioned `ImageWidget` or Kitty graphics. `SizeConstraint.Auto` claimed to shrink to content in both README and XML docs while resolving as flex weight 1; both now state the real behaviour and point at item 1. `TextArea` carried a `<see cref="OnKeyEvent"/>` to a member deleted in this version, which Doxygen published. `TextInputChangedMsg` and `CheckboxToggledMsg` documented a dispatch that no longer happens; both are now `[Obsolete]`. |

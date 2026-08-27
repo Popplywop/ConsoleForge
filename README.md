@@ -11,15 +11,17 @@ Built for developers who want the predictability of [Bubble Tea](https://github.
 ## Features
 
 - **Elm loop** — `Init` → `Update` → `View`. Your model is an immutable record. `Update` returns a new copy. `View` is pure.
-- **13 built-in widgets** — TextBlock, TextInput, TextArea, List, Table, Checkbox, Tabs, ProgressBar, Spinner, BorderBox, Container, Modal, ZStack
+- **14 built-in widgets** — TextBlock, TextInput, TextArea, List, Table, Checkbox, Tabs, ProgressBar, Spinner, BorderBox, Container, Modal, ZStack, ImageWidget
 - **6 named themes** — Dark, Light, Dracula, Nord, Monokai, Tokyo Night. Switch at runtime with one message.
 - **Mouse support** — SGR 1006 extended mouse tracking. Click-to-focus, scroll wheel, button/motion events.
-- **Unicode-aware layout** — CJK, emoji, and full-width characters render at correct column widths.
+- **Unicode-aware layout** — CJK, emoji, and full-width characters render at correct column widths, from a table generated out of the Unicode Character Database.
+- **Inline images** — `ImageWidget` draws PNGs through the Kitty graphics protocol where the terminal supports it, and falls back to half-block cells with 24-bit colour everywhere else.
 - **Composable sub-programs** — `IComponent` / `IComponent<TResult>` for self-contained pages with own state, keymaps, and lifecycle.
 - **Declarative keybindings** — `KeyMap` + `KeyPattern` replace giant switch statements. Composable, context-aware.
 - **Virtualized scrolling** — List and Table render only visible rows. 1,000 items costs the same as 20.
 - **Double-buffered renderer** — Cell-level diff with per-widget dirty tracking. Only changed cells hit the terminal.
 - **Margin & padding** — `Style.Padding(1)` and `Style.Margin(1)` enforced by the layout engine.
+- **Pure editing reducer** — `TextInputState`: cursor movement, word jumps, and grapheme-aware deletion as a value in your model, not a stateful sub-widget.
 - **Async commands** — `Cmd.Run`, `Cmd.Batch`, `Cmd.Sequence`, `Cmd.Tick`, `Cmd.Debounce`, `Cmd.Throttle`.
 - **Subscriptions** — `Sub.Interval`, `Sub.FromAsyncEnumerable`, `Sub.FromObservable` for continuous data streams.
 
@@ -56,7 +58,7 @@ sealed record HelloModel(int Count = 0) : IModel
             ]));
 }
 
-await Program.Run(new HelloModel(), theme: Theme.Dark);
+await App.Run(new HelloModel(), theme: Theme.Dark);
 ```
 
 ## Widgets
@@ -76,13 +78,14 @@ await Program.Run(new HelloModel(), theme: Theme.Dark);
 | `Container` | Flex layout along horizontal or vertical axis. Supports scrolling. |
 | `Modal` | Centered dialog overlay. Compose with `ZStack` for layered UIs. |
 | `ZStack` | Renders layers back-to-front. The foundation for overlays and modals. |
+| `ImageWidget` | Inline image. Kitty graphics protocol when available, half-block cells otherwise. |
 
 ## Themes
 
 Six built-in themes with background colours, accent styles, and semantic colour slots:
 
 ```csharp
-await Program.Run(model, theme: Theme.Dracula);
+await App.Run(model, theme: Theme.Dracula);
 ```
 
 | Theme | Background | Accent | Focus |
@@ -121,10 +124,15 @@ Children declare `Width` and `Height` as `SizeConstraint`:
 ```csharp
 SizeConstraint.Fixed(24)        // exact columns/rows
 SizeConstraint.Flex(1)          // proportional share of free space
-SizeConstraint.Auto             // shrink to content
+SizeConstraint.Auto             // currently equivalent to Flex(1) — see note below
 SizeConstraint.Min(10, inner)   // minimum bound
 SizeConstraint.Max(40, inner)   // maximum bound
 ```
+
+> **`Auto` does not measure content yet.** `LayoutEngine` resolves it as flex weight 1,
+> so an `Auto` child takes an equal share of free space rather than shrinking to fit.
+> Use `Fixed(n)` where you need content-sized children. Tracked as item 1 in
+> [`WISHLIST.md`](WISHLIST.md).
 
 `Container` runs a two-pass layout: fixed children first, then flex children share the remainder. Supports padding and margin:
 
@@ -158,7 +166,7 @@ Styles inherit from the active theme when properties are unset — set only what
 ## Mouse Support
 
 ```csharp
-await Program.Run(model, theme: Theme.Dark, enableMouse: true);
+await App.Run(model, theme: Theme.Dark, enableMouse: true);
 ```
 
 - **Click-to-focus** — left-click moves focus to the clicked widget (automatic)
@@ -189,7 +197,7 @@ static readonly KeyMap SidebarKeys = new KeyMap()
 if (SidebarKeys.Handle(msg) is { } action) msg = action;
 ```
 
-`KeyPattern` supports modifier wildcards: `Of(key)`, `WithCtrl(key)`, `WithAlt(key)`, `Plain(key)`.
+`KeyPattern` supports modifier wildcards: `Of(key)` (any modifiers), `WithCtrl(key)`, `WithAlt(key)`, `WithShift(key)`, and `Plain(key)` (no modifiers). `WithShift` is what makes case-sensitive and symbol bindings work — `?` is `WithShift(ConsoleKey.Oem2)` on a US layout.
 
 Compose maps: `globalKeys.Merge(pageKeys)` — first map takes priority.
 
@@ -251,6 +259,37 @@ if (next.IsCompleted())
     return (this with { Picker = null, ChosenFile = next.Result }, cmd);
 ```
 
+## Text Editing — `TextInputState`
+
+Editing rules as a pure value, so a model owns its input state and never needs a
+stateful sub-program to manage it:
+
+```csharp
+sealed record Model(TextInputState Filter) : IModel
+{
+    public (IModel, ICmd?) Update(IMsg msg) => msg switch
+    {
+        KeyMsg k => (this with { Filter = Filter.HandleKey(k) }, null),
+        _        => (this, null),
+    };
+
+    public IWidget View() => new TextInput(Filter.Value, cursorPosition: Filter.Cursor);
+}
+```
+
+`HandleKey` covers insert, Backspace/Delete, Left/Right, `Ctrl+←`/`Ctrl+→` word jumps,
+`Home`/`End` (and `Ctrl+A`/`Ctrl+E`), `Ctrl+W` delete-word, and `Ctrl+U`/`Ctrl+K`
+kill-to-edge. `Insert(text)` handles paste. It returns the same instance when a key
+changes nothing, so `ReferenceEquals` tells you whether to do more work.
+
+`Cursor` is an index into `Value`, always on a grapheme cluster boundary — an emoji or
+an accented letter moves and deletes as one unit, and a `with` expression that would
+leave the cursor mid-cluster is normalised instead. It is not a column: a wide glyph is
+two columns but one cursor step.
+
+`TextInput.Update` delegates to this type, so storing the widget and storing the state
+behave identically.
+
 ## Commands
 
 ```csharp
@@ -269,7 +308,7 @@ Cmd.Throttle(TimeSpan, ts => msg)             // throttled (first wins)
 For continuous data streams, implement `IHasSubscriptions`:
 
 ```csharp
-public IEnumerable<(string Key, ISub Sub)> Subscriptions() =>
+public IReadOnlyList<(string Key, ISub Sub)> Subscriptions() =>
 [
     ("timer", Sub.Interval(TimeSpan.FromSeconds(1), ts => new TickMsg(ts))),
     ("data",  Sub.FromAsyncEnumerable(ct => GetDataStream(ct))),
@@ -280,7 +319,7 @@ public IEnumerable<(string Key, ISub Sub)> Subscriptions() =>
 
 | Sample | Description |
 |--------|-------------|
-| [`ConsoleForge.Gallery`](samples/ConsoleForge.Gallery/) | Widget showcase — all 13 widgets, 6 themes, mouse support, IComponent pages |
+| [`ConsoleForge.Gallery`](samples/ConsoleForge.Gallery/) | Widget showcase — widgets, 6 themes, mouse support, IComponent pages |
 | [`ConsoleForge.TodoApp`](samples/ConsoleForge.TodoApp/) | Todo list — browse, add, toggle, delete |
 | [`ConsoleForge.SysMonitor`](samples/ConsoleForge.SysMonitor/) | Live system stats via async subscriptions |
 

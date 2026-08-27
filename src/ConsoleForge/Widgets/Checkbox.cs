@@ -7,7 +7,8 @@ namespace ConsoleForge.Widgets;
 /// <summary>
 /// A single toggleable checkbox widget.
 /// Renders as <c>[✓] Label</c> or <c>[ ] Label</c>.
-/// Dispatches <see cref="CheckboxToggledMsg"/> when the user presses Space or Enter.
+/// Space or Enter toggles the value; <see cref="Update"/> returns the toggled checkbox
+/// for the model to store.
 /// </summary>
 public sealed record Checkbox : IFocusable
 {
@@ -100,8 +101,9 @@ public sealed record Checkbox : IFocusable
 }
 
 /// <summary>
-/// Dispatched when a <see cref="Checkbox"/> is toggled by the user.
-/// The model should replace its Checkbox reference with
-/// <c>checkbox with { IsChecked = msg.NewValue }</c>.
+/// Was dispatched when a <see cref="Checkbox"/> was toggled, back when widgets emitted
+/// messages through a callback. Nothing raises it now — <see cref="Checkbox.Update"/>
+/// returns the toggled widget directly.
 /// </summary>
+[Obsolete("Unused since widgets stopped emitting messages. Checkbox.Update returns the next widget; store that instead.")]
 public sealed record CheckboxToggledMsg(Checkbox Source, bool NewValue) : IMsg;
