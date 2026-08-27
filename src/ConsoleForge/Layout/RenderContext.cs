@@ -46,12 +46,14 @@ public sealed class RenderContext : IRenderContext
     // Widget render cache: flat arrays for widget→region map from previous frame.
     // Used by Container.Render to skip re-rendering unchanged model-stored widgets.
     // Flat arrays are cheaper than Dictionary for typical widget counts (<100).
+    // Two buffers that ping-pong in Reset. The previous frame's map must stay
+    // readable for the whole frame, so RegisterWidget may never consume it.
     private IWidget?[]? _prevWidgets;
     private Region[]?   _prevRegions;
     private int         _prevWidgetCount;
     // Lazy-allocated on first RegisterWidget call — leaf widgets (TextBlock,
     // TextInput, ProgressBar, etc.) never call Register so they pay nothing.
-    private IWidget[]?  _curWidgets;
+    private IWidget?[]? _curWidgets;
     private Region[]?   _curRegions;
     private int         _curWidgetCount;
 
@@ -105,8 +107,6 @@ public sealed class RenderContext : IRenderContext
         {
             _cells = new string[region.Width * region.Height];
             _prev  = null;
-            _prevWidgets     = null;
-            _prevWidgetCount = 0;
             // Force raw regions to re-emit after resize — placed images are
             // cleared by the terminal when the viewport changes.
             _prevRawRegions = null;
@@ -116,29 +116,26 @@ public sealed class RenderContext : IRenderContext
             Array.Clear(_cells, 0, _cells.Length);
         }
 
-        // Swap widget maps: current → previous.
-        _prevWidgets     = _curWidgets;   // may be null if no composites were rendered
-        _prevRegions     = _curRegions;
+        // Swap widget maps: this frame writes into the array the previous frame read
+        // from, and vice versa. Both stay allocated, so steady-state frames allocate
+        // nothing here and _prevWidgets survives the whole frame — RegisterWidget used
+        // to steal it, which switched the cache off for every widget after the first.
+        (_prevWidgets, _curWidgets) = (_curWidgets, _prevWidgets);
+        (_prevRegions, _curRegions) = (_curRegions, _prevRegions);
         _prevWidgetCount = _curWidgetCount;
         _curWidgetCount  = 0;
-        _curWidgets      = null;          // will be lazy-allocated by next RegisterWidget
-        _curRegions      = null;
 
         // Invalidate the caches AFTER the swap so TryReuseWidget cannot serve stale
-        // cells from the old theme. Setting null here means the now-swapped
-        // _prevWidgets is discarded; all widgets render fresh.
+        // cells from the old theme or a differently-sized buffer. Zeroing the count
+        // rather than dropping the array keeps the buffer available for recycling.
         //
-        // The previous cell buffer goes too, forcing a full redraw. Both the widget
-        // cells and the themed default cell behind them are re-rendered under the new
-        // theme, and cells no widget writes to differ only in that default — without
-        // this the diff would match them against the new default and skip repainting,
-        // leaving the old background on screen.
-        if (styleChanged)
-        {
-            _prevWidgets     = null;
-            _prevWidgetCount = 0;
-            _prev            = null;
-        }
+        // On a style change the previous cell buffer goes too, forcing a full redraw.
+        // Both the widget cells and the themed default cell behind them are re-rendered
+        // under the new theme, and cells no widget writes to differ only in that
+        // default — without this the diff would match them against the new default and
+        // skip repainting, leaving the old background on screen.
+        if (styleChanged) _prev = null;
+        if (styleChanged || sizeChanged) _prevWidgetCount = 0;
     }
 
     /// <summary>
@@ -265,22 +262,14 @@ public sealed class RenderContext : IRenderContext
     /// </summary>
     public void RegisterWidget(IWidget widget, Region region)
     {
-        // Lazy-allocate on first use. Reuse the prev arrays as the new cur
-        // buffer when available — avoids a fresh allocation every frame.
+        // Lazy-allocate on first use. Never take _prevWidgets: TryReuseWidget reads it
+        // for the rest of the frame, and every widget registered after this one would
+        // miss. Reset recycles the buffers instead, so this allocates once, not
+        // per frame.
         if (_curWidgets is null)
         {
-            if (_prevWidgets is not null && _prevWidgets.Length >= 32)
-            {
-                _curWidgets  = _prevWidgets!;
-                _curRegions  = _prevRegions!;
-                _prevWidgets = null;   // prevent double-use as both cur and prev
-                _prevRegions = null;
-            }
-            else
-            {
-                _curWidgets = new IWidget[32];
-                _curRegions = new Region[32];
-            }
+            _curWidgets = new IWidget?[32];
+            _curRegions = new Region[32];
         }
         else if (_curWidgetCount >= _curWidgets.Length)
         {
