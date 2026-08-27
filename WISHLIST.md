@@ -9,6 +9,12 @@ top of ConsoleForge, ordered roughly by impact:
   poster artwork, which is what surfaced the renderer and event-loop entries in
   the 0.4.0 rows below.
 
+**Design target: Elm-correct in C#, with helpers** — see `AGENTS.md`. Not
+`bubbles` parity. Several items below cite `bubbles` as prior art; take the
+ergonomic goal from it, never the stateful-component mechanism. Where the two
+conflict, Elm wins and the gap closes with a pure helper. Item 5 is the worked
+example, and is why items 5 and 6 rank above the `bubbles`-shaped items 3 and 7.
+
 ## Open
 
 ### 1. `Auto` size constraint doesn't measure content
@@ -90,7 +96,7 @@ Same pattern later for `TextAreaState` and `ListState` (selection + scroll
 clamping). Cursor blink: render-side, or a framework subscription once #2
 lands.
 
-### 6. Consolidate input handling into one model
+### 6. Consolidate input handling into one model *(partly done)*
 
 Three input mechanisms coexist: model `Update` + `KeyMap` (Elm style), widget
 `OnKeyEvent(KeyMsg, Action<IMsg>)` + `HasFocus`/FocusManager (imperative
@@ -101,7 +107,12 @@ lives outside the model.
 **Proposal:** standardize on the Elm path plus reducers; deprecate
 `OnKeyEvent` before more code depends on it.
 
-### 7. `Modal` backdrop semantics
+**Landed:** `OnKeyEvent` is gone — `IFocusable` is now
+`(IFocusable Next, ICmd? Cmd) Update(KeyMsg key)`. Still open: the reducers (#5),
+and `IFocusable.HasFocus { get; set; }`, a mutable setter that keeps focus state
+outside the model. Under the design target that setter is the next thing to go.
+
+### 7. `Modal` backdrop semantics *(documented, dim not implemented)*
 
 `showBackdrop: true` paints over everything beneath it, which reads as "the
 application disappeared" when composed with `ZStack` (devo's PR list vanished

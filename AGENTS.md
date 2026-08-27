@@ -3,23 +3,40 @@
 ## Project
 
 TUI framework for .NET. Elm-inspired architecture (Model → Update → View).
-Single library: `src/ConsoleForge/`. Gallery sample: `samples/ConsoleForge.Gallery/`.
+Two packages: `src/ConsoleForge/` (framework) and `src/ConsoleForge.SourceGen/`
+(Roslyn generator). Gallery sample: `samples/ConsoleForge.Gallery/`.
 Solution file: `ConsoleForge.slnx`.
+
+### Design target
+
+**Elm-correct in C#, with helpers.** Not parity with Bubble Tea or its `bubbles`
+component library — the README's Bubble Tea comparison is about predictability,
+not about copying its component model.
+
+When ergonomics pull against Elm purity, purity wins and the gap is closed with a
+*helper*: a pure reducer, a static factory, a computed helper on the model. Never
+a nested mutable update loop, and never widget-owned state. `bubbles` makes each
+input a stateful mini-program with its own update loop; that works in Go and
+fights every rule in the section below.
+
+A proposed API passes if state stays in the model, `Update` stays the only place
+it changes, and the helper is a pure function over it.
 
 ### Key namespaces
 
 | Namespace | Purpose |
 |---|---|
-| `ConsoleForge.Core` | Runtime: `Program`, `Renderer`, `FocusManager`, `Cmd`, `IModel`, `IMsg` |
+| `ConsoleForge.Core` | Runtime: `App`, `Renderer`, `FocusManager`, `Cmd`, `Sub`, `KeyMap`, `IModel`, `IMsg`, `IComponent` |
 | `ConsoleForge.Layout` | Layout engine, `SizeConstraint`, `IWidget`, `IFocusable`, `IRenderContext` |
 | `ConsoleForge.Styling` | `Style`, `Color`, `Borders`, `Theme` |
-| `ConsoleForge.Widgets` | Built-in widgets: `TextInput`, `TextBlock`, `Container`, `BorderBox`, `List`, `Table`, `ProgressBar`, `Spinner` |
+| `ConsoleForge.Widgets` | Built-in widgets: `TextBlock`, `TextInput`, `TextArea`, `List`, `Table`, `Checkbox`, `Tabs`, `ProgressBar`, `Spinner`, `BorderBox`, `Container`, `Modal`, `ZStack`, `ImageWidget` |
+| `ConsoleForge.Terminal` | `ITerminal`, `AnsiTerminal`, `TerminalCapabilities`, `KittyProtocol` |
 
 ### Architecture rules
 
 - **Immutable widgets.** All `IWidget` implementations use `{ get; init; }` props. No mutation after construction.
 - **Immutable model.** `IModel.Update` returns new model via `with` expressions. Never mutate `this`.
-- **Message dispatch.** Widgets signal intent via `IMsg` records dispatched through `Action<IMsg>`. Callers update model state; widgets do not hold mutable state.
+- **Message dispatch.** A focusable widget's `Update(KeyMsg)` returns the next widget plus an optional `ICmd` — it never invokes a callback and never mutates itself. Callers fold that result into the model.
 - **Render is pure.** `IWidget.Render(IRenderContext)` must have no side effects other than writing to `ctx`.
 - **`SizeConstraint`** — use `Fixed(n)` for known sizes, `Flex(n)` for proportional fill. Never hardcode pixel positions.
 
