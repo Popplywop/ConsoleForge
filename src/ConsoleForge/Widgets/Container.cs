@@ -103,17 +103,12 @@ public sealed record Container : IWidget, IContainer
                 bool isHO = Direction == Axis.Horizontal;
                 int availO = isHO ? region.Width : region.Height;
                 var resO = new int[Children.Count];
-                int tFO = 0, tWO = 0;
-                for (var i = 0; i < Children.Count; i++)
-                {
-                    int sz = ResolveFixed(isHO ? Children[i].Width : Children[i].Height);
-                    if (sz >= 0) { resO[i] = sz; tFO += sz; }
-                    else { int w = GetFlexWeight(isHO ? Children[i].Width : Children[i].Height); resO[i] = -w; tWO += w; }
-                }
-                int frO = Math.Max(0, availO - tFO), dO = 0, lO = -1;
-                for (var i = 0; i < Children.Count; i++)
-                    if (resO[i] < 0) { int w = -resO[i]; int s = tWO > 0 ? frO * w / tWO : 0; resO[i] = s; dO += s; lO = i; }
-                if (lO >= 0) resO[lO] += frO - dO;
+                // clampOverflow stays false here: the render path clips overflow rather
+                // than scaling it back, and LayoutEngine has already thrown on a layout
+                // that cannot fit at all.
+                LayoutSolver.ResolveSizes(
+                    Children, Direction, availO,
+                    includeMargins: false, clampOverflow: false, resO);
 
                 int curO = isHO ? region.Col : region.Row;
                 for (var i = 0; i < Children.Count; i++)
@@ -152,19 +147,9 @@ public sealed record Container : IWidget, IContainer
         bool isH = Direction == Axis.Horizontal;
         int avail = isH ? lW : lH;
         var resolved = new int[Children.Count];
-        int tF = 0, tW = 0;
-        for (var i = 0; i < Children.Count; i++)
-        {
-            var cs = Children[i].Style;
-            int mM = cs.HasMargin ? (isH ? cs.MarginLeft + cs.MarginRight : cs.MarginTop + cs.MarginBottom) : 0;
-            int sz = ResolveFixed(isH ? Children[i].Width : Children[i].Height);
-            if (sz >= 0) { resolved[i] = sz + mM; tF += sz + mM; }
-            else { int w = GetFlexWeight(isH ? Children[i].Width : Children[i].Height); resolved[i] = -w; tW += w; }
-        }
-        int fr = Math.Max(0, avail - tF), di = 0, la = -1;
-        for (var i = 0; i < Children.Count; i++)
-            if (resolved[i] < 0) { int w = -resolved[i]; int s = tW > 0 ? fr * w / tW : 0; resolved[i] = s; di += s; la = i; }
-        if (la >= 0) resolved[la] += fr - di;
+        LayoutSolver.ResolveSizes(
+            Children, Direction, avail,
+            includeMargins: true, clampOverflow: false, resolved);
 
         int cur = isH ? lCol : lRow, cross = isH ? lH : lW, crossO = isH ? lRow : lCol;
         for (var i = 0; i < Children.Count; i++)
@@ -194,30 +179,6 @@ public sealed record Container : IWidget, IContainer
     }
 
     // Removed helper methods — fast path and full path both inline above.
-
-    // ── Layout helpers (mirrors LayoutEngine logic) ──────────────────────────
-
-    private static int ResolveFixed(SizeConstraint constraint) =>
-        constraint switch
-        {
-            SizeConstraint.FixedConstraint f  => f.Size,
-            SizeConstraint.AutoConstraint     => -1,   // Auto = flex weight 1 in a Container
-            SizeConstraint.MinConstraint m    => Math.Max(m.MinSize, ResolveFixed(m.Inner)),
-            SizeConstraint.MaxConstraint mx   => ResolveFixed(mx.Inner) is int inner and >= 0
-                                                    ? Math.Min(mx.MaxSize, inner)
-                                                    : -1,
-            SizeConstraint.FlexConstraint     => -1,
-            _                                 => -1
-        };
-
-    private static int GetFlexWeight(SizeConstraint constraint) =>
-        constraint switch
-        {
-            SizeConstraint.FlexConstraint f => f.Weight,
-            SizeConstraint.MinConstraint m  => GetFlexWeight(m.Inner),
-            SizeConstraint.MaxConstraint mx => GetFlexWeight(mx.Inner),
-            _                               => 1
-        };
 
     private static bool Overlaps(Region a, Region b) =>
         a.Col < b.Col + b.Width  &&

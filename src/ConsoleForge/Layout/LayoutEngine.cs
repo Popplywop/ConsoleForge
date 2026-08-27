@@ -68,38 +68,10 @@ public static class LayoutEngine
                 var resolved  = ArrayPool<int>.Shared.Rent(children.Count);
                 try
                 {
-                    int totalFixed = 0, totalFlexWeight = 0;
-                    for (var i = 0; i < children.Count; i++)
-                    {
-                        var constraint = isHorizontal ? children[i].Width : children[i].Height;
-                        int size = ResolveFixed(constraint);
-                        if (size >= 0) { resolved[i] = size; totalFixed += size; }
-                        else { int w = GetFlexWeight(constraint); resolved[i] = -w; totalFlexWeight += w; }
-                    }
-                    int freeSpace = Math.Max(0, available - totalFixed), distributed = 0, lastFlex = -1;
-                    for (var i = 0; i < children.Count; i++)
-                        if (resolved[i] < 0) { int w = -resolved[i]; int s = totalFlexWeight > 0 ? freeSpace * w / totalFlexWeight : 0; resolved[i] = s; distributed += s; lastFlex = i; }
-                    if (lastFlex >= 0) resolved[lastFlex] += freeSpace - distributed;
-
-                    // Overflow clamping (unchanged)
-                    int total = 0;
-                    for (var i = 0; i < children.Count; i++) total += Math.Max(0, resolved[i]);
-                    if (total > available && total > 0)
-                    {
-                        if (totalFlexWeight == 0)
-                            throw new LayoutConstraintException(
-                                $"Fixed children ({total}px) collectively exceed available space ({available}px) " +
-                                $"in a {container.Direction} container with no flex children.");
-                        int lastNonZero = -1;
-                        for (var i = children.Count - 1; i >= 0; i--) if (resolved[i] > 0) { lastNonZero = i; break; }
-                        int remainder = available;
-                        for (var i = 0; i < children.Count; i++)
-                        {
-                            if (resolved[i] <= 0) { resolved[i] = 0; continue; }
-                            int clamped = i != lastNonZero ? resolved[i] * available / total : remainder;
-                            resolved[i] = Math.Max(0, clamped); remainder -= resolved[i];
-                        }
-                    }
+                    LayoutSolver.ResolveSizes(
+                        children, container.Direction, available,
+                        includeMargins: false, clampOverflow: true,
+                        resolved.AsSpan(0, children.Count));
 
                     int cursor = isHorizontal ? region.Col : region.Row;
                     for (var i = 0; i < children.Count; i++)
@@ -133,42 +105,10 @@ public static class LayoutEngine
         var resolved2 = ArrayPool<int>.Shared.Rent(children.Count);
         try
         {
-            int tF2 = 0, tW2 = 0;
-            for (var i = 0; i < children.Count; i++)
-            {
-                var cs = children[i].Style;
-                int mM = isHorizontal
-                    ? (cs.HasMargin ? cs.MarginLeft  + cs.MarginRight  : 0)
-                    : (cs.HasMargin ? cs.MarginTop   + cs.MarginBottom : 0);
-                var constraint = isHorizontal ? children[i].Width : children[i].Height;
-                int size = ResolveFixed(constraint);
-                if (size >= 0) { resolved2[i] = size + mM; tF2 += size + mM; }
-                else { int w = GetFlexWeight(constraint); resolved2[i] = -w; tW2 += w; }
-            }
-            int fr2 = Math.Max(0, avail2 - tF2), di2 = 0, la2 = -1;
-            for (var i = 0; i < children.Count; i++)
-                if (resolved2[i] < 0) { int w = -resolved2[i]; int s = tW2 > 0 ? fr2 * w / tW2 : 0; resolved2[i] = s; di2 += s; la2 = i; }
-            if (la2 >= 0) resolved2[la2] += fr2 - di2;
-
-            // Overflow clamping for full path
-            int total2 = 0;
-            for (var i = 0; i < children.Count; i++) total2 += Math.Max(0, resolved2[i]);
-            if (total2 > avail2 && total2 > 0)
-            {
-                if (tW2 == 0)
-                    throw new LayoutConstraintException(
-                        $"Fixed children ({total2}px) collectively exceed available space ({avail2}px) " +
-                        $"in a {container.Direction} container with no flex children.");
-                int lastNZ2 = -1;
-                for (var i = children.Count - 1; i >= 0; i--) if (resolved2[i] > 0) { lastNZ2 = i; break; }
-                int rem2 = avail2;
-                for (var i = 0; i < children.Count; i++)
-                {
-                    if (resolved2[i] <= 0) { resolved2[i] = 0; continue; }
-                    int clamped = i != lastNZ2 ? resolved2[i] * avail2 / total2 : rem2;
-                    resolved2[i] = Math.Max(0, clamped); rem2 -= resolved2[i];
-                }
-            }
+            LayoutSolver.ResolveSizes(
+                children, container.Direction, avail2,
+                includeMargins: true, clampOverflow: true,
+                resolved2.AsSpan(0, children.Count));
 
             int cursor2 = isHorizontal ? layout.Col : layout.Row;
             int cross2   = isHorizontal ? layout.Height : layout.Width;
@@ -192,32 +132,4 @@ public static class LayoutEngine
         finally { ArrayPool<int>.Shared.Return(resolved2); }
     }
 
-    /// <summary>
-    /// Returns the fixed pixel size for a constraint.
-    /// Returns -1 if the constraint is (or wraps) a Flex or Auto constraint
-    /// (both mean "participate in flex distribution" at layout time).
-    /// </summary>
-    [System.Runtime.CompilerServices.MethodImpl(
-        System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-    private static int ResolveFixed(SizeConstraint constraint) =>
-        constraint switch
-        {
-            SizeConstraint.FixedConstraint f  => f.Size,
-            SizeConstraint.AutoConstraint     => -1,   // Auto = flex weight 1, same as Container.cs
-            SizeConstraint.MinConstraint m    => Math.Max(m.MinSize, ResolveFixed(m.Inner)),
-            SizeConstraint.MaxConstraint mx   => ResolveFixed(mx.Inner) is int inner and >= 0
-                                                    ? Math.Min(mx.MaxSize, inner)
-                                                    : -1,
-            SizeConstraint.FlexConstraint     => -1,
-            _                                 => -1
-        };
-
-    private static int GetFlexWeight(SizeConstraint constraint) =>
-        constraint switch
-        {
-            SizeConstraint.FlexConstraint f => f.Weight,
-            SizeConstraint.MinConstraint m  => GetFlexWeight(m.Inner),
-            SizeConstraint.MaxConstraint mx => GetFlexWeight(mx.Inner),
-            _                               => 1
-        };
 }
