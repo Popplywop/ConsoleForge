@@ -8,7 +8,7 @@ namespace ConsoleForge.Widgets;
 /// Participates in two-pass layout via <see cref="IContainer"/>.
 /// Supports optional scrolling along the main axis.
 /// </summary>
-public sealed record Container : IWidget, IContainer
+public sealed record Container : IWidget, IContainer, IMeasurable
 {
     /// <summary>
     /// Primary constructor matching quickstart usage:
@@ -72,6 +72,62 @@ public sealed record Container : IWidget, IContainer
         w is IContainer or ISingleBodyWidget or ILayeredContainer;
 
         /// </summary>
+    /// <inheritdoc cref="IMeasurable.Measure"/>
+    /// <remarks>
+    /// Children are summed along <see cref="Direction"/> and maxed across it, including
+    /// their margins and this container's padding.
+    /// <para>
+    /// A flex child contributes nothing along the stacking axis: flex means "fill what is
+    /// left over", which is not a content size. So an <c>Auto</c> container whose children
+    /// are all flex measures to zero along that axis — give it a <see cref="SizeConstraint.Fixed"/>
+    /// or <see cref="SizeConstraint.Flex"/> size instead. Across the axis a flex child does
+    /// take the full width on offer, since that is what it will fill.
+    /// </para>
+    /// </remarks>
+    public Size Measure(int availableWidth, int availableHeight)
+    {
+        int padH = Style.HasPadding ? Style.PaddingLeft + Style.PaddingRight  : 0;
+        int padV = Style.HasPadding ? Style.PaddingTop  + Style.PaddingBottom : 0;
+
+        int innerW = Math.Max(0, availableWidth  - padH);
+        int innerH = Math.Max(0, availableHeight - padV);
+
+        bool horizontal = Direction == Axis.Horizontal;
+        int alongAvail  = horizontal ? innerW : innerH;
+        int crossAvail  = horizontal ? innerH : innerW;
+
+        int along = 0, cross = 0;
+        for (var i = 0; i < Children.Count; i++)
+        {
+            var child = Children[i];
+            var st    = child.Style;
+
+            int mAlong = 0, mCross = 0;
+            if (st.HasMargin)
+            {
+                mAlong = horizontal ? st.MarginLeft + st.MarginRight  : st.MarginTop  + st.MarginBottom;
+                mCross = horizontal ? st.MarginTop  + st.MarginBottom : st.MarginLeft + st.MarginRight;
+            }
+
+            int alongLeft = Math.Max(0, alongAvail - along - mAlong);
+            int crossRoom = Math.Max(0, crossAvail - mCross);
+
+            var desired = LayoutSolver.DesiredSize(
+                child,
+                availableWidth:  horizontal ? alongLeft : crossRoom,
+                availableHeight: horizontal ? crossRoom : alongLeft,
+                flexWidth:       horizontal ? 0 : crossRoom,
+                flexHeight:      horizontal ? crossRoom : 0);
+
+            along += (horizontal ? desired.Width  : desired.Height) + mAlong;
+            cross  = Math.Max(cross, (horizontal ? desired.Height : desired.Width) + mCross);
+        }
+
+        return new Size(
+            Math.Min(availableWidth,  (horizontal ? along : cross) + padH),
+            Math.Min(availableHeight, (horizontal ? cross : along) + padV));
+    }
+
     public void Render(IRenderContext ctx)
     {
         var region = ctx.Region;
@@ -108,6 +164,7 @@ public sealed record Container : IWidget, IContainer
                 // that cannot fit at all.
                 LayoutSolver.ResolveSizes(
                     Children, Direction, availO,
+                    crossAvailable: isHO ? region.Height : region.Width,
                     includeMargins: false, clampOverflow: false, resO);
 
                 int curO = isHO ? region.Col : region.Row;
@@ -149,6 +206,7 @@ public sealed record Container : IWidget, IContainer
         var resolved = new int[Children.Count];
         LayoutSolver.ResolveSizes(
             Children, Direction, avail,
+            crossAvailable: isH ? lH : lW,
             includeMargins: true, clampOverflow: false, resolved);
 
         int cur = isH ? lCol : lRow, cross = isH ? lH : lW, crossO = isH ? lRow : lCol;

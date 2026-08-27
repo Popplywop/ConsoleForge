@@ -214,6 +214,79 @@ public static class TextUtils
         return result;
     }
 
+    /// <summary>
+    /// How many lines <see cref="WrapToWidth"/> would produce, and how wide the widest of
+    /// them would be, without building any of them.
+    /// </summary>
+    /// <remarks>
+    /// This exists for <c>IMeasurable.Measure</c>, which runs during layout on every frame
+    /// and only needs the shape of the wrap, not its text. Materialising the lines there
+    /// cost 320 bytes per <c>TextBlock</c> per frame for strings that were discarded and
+    /// rebuilt by <c>Render</c> moments later.
+    /// <para>
+    /// It must stay in agreement with <see cref="WrapToWidth"/>; the two are pinned
+    /// together by tests over a corpus of strings and widths.
+    /// </para>
+    /// </remarks>
+    /// <param name="text">The text that would be wrapped.</param>
+    /// <param name="width">Column budget per line.</param>
+    /// <param name="widestLine">Receives the visual width of the widest wrapped line.</param>
+    /// <returns>The number of wrapped lines.</returns>
+    public static int MeasureWrapped(string text, int width, out int widestLine)
+    {
+        widestLine = 0;
+        if (width <= 0) return 0;
+
+        int lines = 0;
+        var remaining = text.AsSpan();
+
+        while (true)
+        {
+            int newline = remaining.IndexOf('\n');
+            var rawLine = newline < 0 ? remaining : remaining[..newline];
+
+            if (rawLine.Length == 0)
+            {
+                // An empty source line still occupies a row.
+                lines++;
+            }
+            else if (System.Text.Ascii.IsValid(rawLine))
+            {
+                // ASCII is one column per char, so the chunk count is arithmetic:
+                // WrapToWidth emits a chunk per full width, then the remainder.
+                lines += ((rawLine.Length - 1) / width) + 1;
+                widestLine = Math.Max(widestLine, Math.Min(rawLine.Length, width));
+            }
+            else
+            {
+                int col = 0, pending = 0;
+                var walker = new WidthWalker();
+                foreach (var rune in rawLine.EnumerateRunes())
+                {
+                    int runeWidth = walker.Next(rune);
+                    if (col + runeWidth > width)
+                    {
+                        lines++;
+                        widestLine = Math.Max(widestLine, col);
+                        col = 0;
+                    }
+                    col     += runeWidth;
+                    pending += 1;
+                }
+                if (pending > 0 || col == 0)
+                {
+                    lines++;
+                    widestLine = Math.Max(widestLine, col);
+                }
+            }
+
+            if (newline < 0) break;
+            remaining = remaining[(newline + 1)..];
+        }
+
+        return lines;
+    }
+
     // ── Rune width ────────────────────────────────────────────────────────────
 
     /// <summary>

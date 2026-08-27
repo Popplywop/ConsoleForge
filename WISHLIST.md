@@ -13,28 +13,11 @@ top of ConsoleForge, ordered roughly by impact:
 `bubbles` parity. Several items below cite `bubbles` as prior art; take the
 ergonomic goal from it, never the stateful-component mechanism. Where the two
 conflict, Elm wins and the gap closes with a pure helper. Item 5 is the worked
-example, and is why items 5 and 6 rank above the `bubbles`-shaped items 3 and 7.
+example, and is why items 4 and 5 rank above the `bubbles`-shaped items 2 and 6.
 
 ## Open
 
-### 1. `Auto` size constraint doesn't measure content
-
-`LayoutEngine.ResolveFixed` treats `AutoConstraint` as flex weight 1
-(`LayoutEngine.cs`, "Auto = flex weight 1"). Consequence: flex-spacer centering
-silently becomes equal-thirds splitting — devo had to hand-compute
-`Fixed(label.Length + 2)` widths to center a spinner.
-
-The README and XML docs used to promise "shrink to content"; both now state the real
-behaviour and point here, so the gap is documented rather than misleading — but
-`Auto` still does not measure.
-
-**Proposal:** real measure pass. Widgets expose a desired size
-(`TextBlock` = text width/line count, `Spinner` = frame + label,
-containers = sum/max of children along/across axis); `Auto` resolves to it
-during pass 1. Fallback: fix the docs to say `Auto` ≡ `Flex(1)` — but
-content-sizing is what every layout consumer actually wants.
-
-### 2. Component-level subscriptions
+### 1. Component-level subscriptions
 
 `IHasSubscriptions` is only consulted on the **root** model
 (`App.ReconcileSubscriptions`). Pages/components can't declare recurring
@@ -49,7 +32,7 @@ flag helped, but the fragility is structural).
 similar). Spinner animation then becomes declarative:
 `("spinner", Sub.Interval(120ms, _ => TickMsg))` active only while loading.
 
-### 3. `KeyBinding` with help metadata + `HelpBar` widget
+### 2. `KeyBinding` with help metadata + `HelpBar` widget
 
 `KeyMap` handles dispatch but carries no help text, so applications maintain
 a second hand-synced list for the help bar — the two inevitably drift apart
@@ -66,7 +49,7 @@ flag (disabled = skipped by `Handle`, hidden from help), a
 `q quit · esc back · ? help` from `IReadOnlyList<KeyBinding>` in the theme's
 muted style.
 
-### 4. Layout-independent character matching (`KeyPattern.OfChar`)
+### 3. Layout-independent character matching (`KeyPattern.OfChar`)
 
 `KeyPattern` matches `ConsoleKey` + modifiers only. Symbol keys therefore
 assume a US keyboard layout: devo binds `?` as `WithShift(Oem2)` and `/` as
@@ -77,7 +60,7 @@ assume a US keyboard layout: devo binds `?` as `WithShift(Oem2)` and `/` as
 preferred for printable bindings (`?`, `/`, case-sensitive letters like
 `n` vs `N`).
 
-### 5. `TextInputState` — pure editing reducer *(landed for TextInput)*
+### 4. `TextInputState` — pure editing reducer *(landed for TextInput)*
 
 Text-editing logic (cursor movement, backspace/delete, word jumps, paste,
 unicode handling) currently lives nowhere reusable: the `TextInput` widget is
@@ -109,7 +92,7 @@ for paste. `TextInput.Update` now delegates to it, so the widget and the reducer
 cannot drift — and the widget picked up all of the above for free. Still open:
 `TextAreaState` and `ListState`.
 
-### 6. Consolidate input handling into one model *(partly done)*
+### 5. Consolidate input handling into one model *(partly done)*
 
 Three input mechanisms coexist: model `Update` + `KeyMap` (Elm style), widget
 `OnKeyEvent(KeyMsg, Action<IMsg>)` + `HasFocus`/FocusManager (imperative
@@ -125,7 +108,7 @@ lives outside the model.
 and `IFocusable.HasFocus { get; set; }`, a mutable setter that keeps focus state
 outside the model. Under the design target that setter is the next thing to go.
 
-### 7. `Modal` backdrop semantics *(documented, dim not implemented)*
+### 6. `Modal` backdrop semantics *(documented, dim not implemented)*
 
 `showBackdrop: true` paints over everything beneath it, which reads as "the
 application disappeared" when composed with `ZStack` (devo's PR list vanished
@@ -136,7 +119,7 @@ lower layers show through — good — but nothing dims them.
 `BackdropStyle`-driven dim (restyle the underlying cells faint/desaturated
 rather than blanking them) for a proper modal feel.
 
-### 8. `Cmd.Debounce` / `Cmd.Throttle` can't debounce from `Update`
+### 7. `Cmd.Debounce` / `Cmd.Throttle` can't debounce from `Update`
 
 Both hold their state in the closure the factory returns, so they only work if
 the *same cmd instance* is re-dispatched — as their XML docs say. But `Update`
@@ -170,4 +153,5 @@ What each gap turned out to be, and what shipped.
 | 0.4.0 | `Container` called `RegisterWidget` for a widget `TryReuseWidget` had already registered, so every cache hit took two slots in the frame's widget map. |
 | 0.4.0 | `ImageWidget` rebuilt its Kitty payload every render, hashing and base64-encoding the whole image each frame to produce a value the diff then used to decide nothing had changed. The encoding is now cached against the byte array's identity, held weakly. |
 | 0.4.0 | The widget render cache switched itself off after the first composite of each frame: `RegisterWidget` lazily allocated its buffer by *stealing* `_prevWidgets` and nulling it, and `TryReuseWidget` bails when that is null — so every widget after the first missed and re-rendered. The two maps now ping-pong in `Reset`, which keeps the previous frame readable all frame and still allocates nothing in steady state. A frame where nothing changed went from 192.8 µs / 131 KB to 22.4 µs / 6.5 KB. Invisible in output — a re-render produces identical cells — so it needed benchmarks and cache-level tests to see at all. |
+| 0.4.0 | `SizeConstraint.Auto` resolved as flex weight 1 — an Auto child took an equal share of free space instead of shrinking to fit, so `TextBlock` and `Spinner`, which default to Auto on both axes, filled their container. Widgets now report a content size through the new `IMeasurable`, implemented by `TextBlock`, `Spinner`, `Container`, `BorderBox` and `ZStack`; anything not implementing it keeps the old behaviour, so no third-party layout moved. Min/Max fold over the measurement (`Max(10, Auto)` is content capped at 10). Prerequisite: `LayoutEngine` and `Container.Render` carried separate copies of the constraint arithmetic and would have disagreed about where Auto children go, so both now share `LayoutSolver`. Overflow of *measured* children clamps rather than throwing — running out of room for text is ordinary; an impossible all-`Fixed` layout still throws. |
 | 0.4.0 | Documentation drift: README called the entry point `Program.Run` (it is `App.Run`), typed `Subscriptions()` as `IEnumerable` where the interface requires `IReadOnlyList`, omitted `KeyPattern.WithShift`, and never mentioned `ImageWidget` or Kitty graphics. `SizeConstraint.Auto` claimed to shrink to content in both README and XML docs while resolving as flex weight 1; both now state the real behaviour and point at item 1. `TextArea` carried a `<see cref="OnKeyEvent"/>` to a member deleted in this version, which Doxygen published. `TextInputChangedMsg` and `CheckboxToggledMsg` documented a dispatch that no longer happens; both are now `[Obsolete]`. |

@@ -21,6 +21,7 @@ Built for developers who want the predictability of [Bubble Tea](https://github.
 - **Virtualized scrolling** — List and Table render only visible rows. 1,000 items costs the same as 20.
 - **Double-buffered renderer** — Cell-level diff with per-widget dirty tracking. Only changed cells hit the terminal.
 - **Margin & padding** — `Style.Padding(1)` and `Style.Margin(1)` enforced by the layout engine.
+- **Content-aware layout** — `SizeConstraint.Auto` sizes to content through `IMeasurable`; `Fixed` and `Flex` cover the rest.
 - **Pure editing reducer** — `TextInputState`: cursor movement, word jumps, and grapheme-aware deletion as a value in your model, not a stateful sub-widget.
 - **Async commands** — `Cmd.Run`, `Cmd.Batch`, `Cmd.Sequence`, `Cmd.Tick`, `Cmd.Debounce`, `Cmd.Throttle`.
 - **Subscriptions** — `Sub.Interval`, `Sub.FromAsyncEnumerable`, `Sub.FromObservable` for continuous data streams.
@@ -124,15 +125,30 @@ Children declare `Width` and `Height` as `SizeConstraint`:
 ```csharp
 SizeConstraint.Fixed(24)        // exact columns/rows
 SizeConstraint.Flex(1)          // proportional share of free space
-SizeConstraint.Auto             // currently equivalent to Flex(1) — see note below
+SizeConstraint.Auto             // shrink to content
 SizeConstraint.Min(10, inner)   // minimum bound
 SizeConstraint.Max(40, inner)   // maximum bound
 ```
 
-> **`Auto` does not measure content yet.** `LayoutEngine` resolves it as flex weight 1,
-> so an `Auto` child takes an equal share of free space rather than shrinking to fit.
-> Use `Fixed(n)` where you need content-sized children. Tracked as item 1 in
-> [`WISHLIST.md`](WISHLIST.md).
+`Auto` asks the widget how much room its content wants, via `IMeasurable`:
+
+```csharp
+public interface IMeasurable : IWidget
+{
+    Size Measure(int availableWidth, int availableHeight);
+}
+```
+
+`TextBlock`, `Spinner`, `Container`, `BorderBox`, and `ZStack` implement it — a one-line
+`TextBlock` is one row, a `Container` sums its children along its axis. Implement it on your
+own widgets to make `Auto` work for them; a widget that doesn't gets flex weight 1, the older
+behaviour. `Measure` runs during layout, so it must be pure and cheap, and must never ask for
+more than it was offered.
+
+Two edges worth knowing: a flex child contributes nothing along the stacking axis (flex fills
+leftovers, which is not a content size), so an `Auto` container of only flex children collapses
+— give that container a `Fixed` or `Flex` size. And `Min`/`Max` fold over the measurement, so
+`Max(10, Auto)` is a content size capped at 10.
 
 `Container` runs a two-pass layout: fixed children first, then flex children share the remainder. Supports padding and margin:
 

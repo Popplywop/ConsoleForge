@@ -14,11 +14,13 @@ public abstract record SizeConstraint
     public static SizeConstraint Flex(int weight = 1) => new FlexConstraint(weight);
 
     /// <summary>
-    /// Intended to size to content (longest line / child count).
-    /// <para><b>Not implemented:</b> <c>LayoutEngine</c> currently resolves this as
-    /// <see cref="Flex(int)"/> weight 1, so an <c>Auto</c> child takes an equal share of
-    /// free space instead of shrinking to fit. Widgets expose no measure API yet.
-    /// Use <see cref="Fixed(int)"/> where a content-sized child matters.</para>
+    /// Size to content: the widget is asked how much room it wants via
+    /// <see cref="IMeasurable"/>.
+    /// <para>
+    /// A widget that does not implement <see cref="IMeasurable"/> cannot answer, and falls
+    /// back to <see cref="Flex(int)"/> weight 1. <c>Min</c> and <c>Max</c> fold over the
+    /// measurement, so <c>Max(10, Auto)</c> is a content size capped at 10 columns.
+    /// </para>
     /// </summary>
     public static SizeConstraint Auto { get; } = new AutoConstraint();
 
@@ -34,8 +36,8 @@ public abstract record SizeConstraint
     public sealed record FixedConstraint(int Size) : SizeConstraint;
     /// <summary>Constraint that takes a proportional share of remaining space, weighted by <see cref="Weight"/>.</summary>
     public sealed record FlexConstraint(int Weight) : SizeConstraint;
-    /// <summary>Constraint intended to size the widget to its natural content size.
-    /// Resolved as flex weight 1 until a measure pass exists — see <see cref="Auto"/>.</summary>
+    /// <summary>Constraint that sizes the widget to its natural content size, measured via
+    /// <see cref="IMeasurable"/> — see <see cref="Auto"/>.</summary>
     public sealed record AutoConstraint : SizeConstraint;
     /// <summary>Applies a minimum bound of <see cref="MinSize"/> to the resolved value of <see cref="Inner"/>.</summary>
     public sealed record MinConstraint(int MinSize, SizeConstraint Inner) : SizeConstraint;

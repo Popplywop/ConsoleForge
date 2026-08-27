@@ -70,6 +70,7 @@ public static class LayoutEngine
                 {
                     LayoutSolver.ResolveSizes(
                         children, container.Direction, available,
+                        crossAvailable: isHorizontal ? region.Height : region.Width,
                         includeMargins: false, clampOverflow: true,
                         resolved.AsSpan(0, children.Count));
 
@@ -107,6 +108,7 @@ public static class LayoutEngine
         {
             LayoutSolver.ResolveSizes(
                 children, container.Direction, avail2,
+                crossAvailable: isHorizontal ? layout.Height : layout.Width,
                 includeMargins: true, clampOverflow: true,
                 resolved2.AsSpan(0, children.Count));
 

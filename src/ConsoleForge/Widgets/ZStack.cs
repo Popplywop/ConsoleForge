@@ -20,7 +20,7 @@ namespace ConsoleForge.Widgets;
 /// <see cref="Core.FocusManager"/> traverses all layers for focus collection,
 /// so interactive widgets in any layer participate in Tab-order traversal.
 /// </remarks>
-public sealed record ZStack : IWidget, ILayeredContainer
+public sealed record ZStack : IWidget, ILayeredContainer, IMeasurable
 {
     // ── IWidget ─────────────────────────────────────────────────────────────
     public SizeConstraint Width  { get; init; } = SizeConstraint.Flex(1);
@@ -38,6 +38,22 @@ public sealed record ZStack : IWidget, ILayeredContainer
     /// <summary>Positional constructor for inline usage.</summary>
     /// <param name="layers">Layers in back-to-front render order.</param>
     public ZStack(IReadOnlyList<IWidget> layers) => Layers = layers;
+
+    /// <inheritdoc/>
+    /// <remarks>Large enough for every layer: the maximum desired size across them.</remarks>
+    public Size Measure(int availableWidth, int availableHeight)
+    {
+        int width = 0, height = 0;
+        for (var i = 0; i < Layers.Count; i++)
+        {
+            var desired = LayoutSolver.DesiredSize(
+                Layers[i], availableWidth, availableHeight,
+                flexWidth: availableWidth, flexHeight: availableHeight);
+            width  = Math.Max(width,  desired.Width);
+            height = Math.Max(height, desired.Height);
+        }
+        return new Size(Math.Min(availableWidth, width), Math.Min(availableHeight, height));
+    }
 
     // ── Render ───────────────────────────────────────────────────────────────
 

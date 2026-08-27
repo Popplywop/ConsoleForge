@@ -8,7 +8,7 @@ namespace ConsoleForge.Widgets;
 /// Default border style is <see cref="Borders.Normal"/> unless overridden by the widget
 /// style or theme.
 /// </summary>
-public sealed record BorderBox : IWidget, ISingleBodyWidget
+public sealed record BorderBox : IWidget, ISingleBodyWidget, IMeasurable
 {
     /// <summary>Positional/named constructor for inline usage.</summary>
     public BorderBox(string title = "", IWidget? body = null, Style? style = null)
@@ -28,6 +28,38 @@ public sealed record BorderBox : IWidget, ISingleBodyWidget
     public SizeConstraint Height { get; init; } = SizeConstraint.Flex(1);
 
     /// <inheritdoc/>
+    /// <inheritdoc/>
+    /// <remarks>
+    /// The body's desired size plus whatever <see cref="ISingleBodyWidget.ComputeBodyRegion"/>
+    /// insets — border and padding — with a floor of the width the title needs between the
+    /// corners, so an <c>Auto</c> box never clips its own title.
+    /// </remarks>
+    public Size Measure(int availableWidth, int availableHeight)
+    {
+        // ComputeBodyRegion is a default interface method, so it needs the interface here.
+        var inner  = ((ISingleBodyWidget)this).ComputeBodyRegion(
+            new Region(0, 0, availableWidth, availableHeight));
+        int insetW = availableWidth  - inner.Width;
+        int insetH = availableHeight - inner.Height;
+
+        int bodyW = 0, bodyH = 0;
+        if (Body is not null)
+        {
+            var desired = LayoutSolver.DesiredSize(
+                Body, inner.Width, inner.Height,
+                flexWidth: inner.Width, flexHeight: inner.Height);
+            bodyW = desired.Width;
+            bodyH = desired.Height;
+        }
+
+        // RenderTitle needs Width - 4: two corners and a space either side.
+        int titleWidth = Title.Length > 0 ? TextUtils.VisualWidth(Title) + 4 : 0;
+
+        return new Size(
+            Math.Min(availableWidth,  Math.Max(bodyW + insetW, titleWidth)),
+            Math.Min(availableHeight, bodyH + insetH));
+    }
+
     public void Render(IRenderContext ctx)
     {
         var effectiveStyle = Style.Inherit(ctx.Theme.BorderStyle);

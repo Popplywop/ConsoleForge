@@ -12,7 +12,7 @@ namespace ConsoleForge.Widgets;
 /// <c>Frame % Frames.Length</c>. Advance <see cref="Frame"/> in your model's
 /// Update handler to produce motion.
 /// </remarks>
-public sealed record Spinner : IWidget
+public sealed record Spinner : IWidget, IMeasurable
 {
     /// <summary>Default braille dot spinner frames.</summary>
     public static readonly IReadOnlyList<string> BrailleFrames =
@@ -60,6 +60,19 @@ public sealed record Spinner : IWidget
         Label = label;
         if (frames is not null) Frames = frames;
         if (style is not null) Style = style.Value;
+    }
+
+    /// <inheritdoc/>
+    /// <remarks>One row, as wide as the current frame plus the label and its separating space.</remarks>
+    public Size Measure(int availableWidth, int availableHeight)
+    {
+        if (Frames.Count == 0) return new Size(0, 0);
+
+        var frameText = Frames[((Frame % Frames.Count) + Frames.Count) % Frames.Count];
+        int width = TextUtils.VisualWidth(frameText);
+        if (Label is not null) width += 1 + TextUtils.VisualWidth(Label);
+
+        return new Size(Math.Min(availableWidth, width), Math.Min(availableHeight, 1));
     }
 
     // ── Render ───────────────────────────────────────────────────────────────
