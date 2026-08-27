@@ -15,11 +15,19 @@ namespace ConsoleForge.Layout;
 public interface IRawEscapePayload
 {
     /// <summary>
-    /// Stable hash derived from this payload's visual content.
-    /// The framework skips re-emitting sequences when this value matches the previous
-    /// frame's value for the same <see cref="Region"/>. Change the hash whenever the
-    /// image data changes so the framework re-emits on the next frame.
+    /// Stable identity for this payload's visual content — equal hashes mean the terminal
+    /// already holds this content and does not need it transmitted again.
     /// </summary>
+    /// <remarks>
+    /// The framework tracks payloads across frames by this value, not by region. A payload
+    /// whose hash was present last frame is re-placed via <see cref="Refresh"/> instead of
+    /// re-encoded, wherever it has moved to; one whose hash is new is sent through
+    /// <see cref="Encode"/>. This is what lets a payload move every frame — a scrolling row
+    /// of images — without re-uploading it.
+    /// <para>
+    /// Change the hash whenever the content changes, so the next frame re-encodes.
+    /// </para>
+    /// </remarks>
     int ContentHash { get; }
 
     /// <summary>

@@ -420,12 +420,16 @@ public sealed class RenderContext : IRenderContext
         }
 
         // ── Raw escape regions ─────────────────────────────────────────────────────
-        // 1. Emit cleanup for regions present last frame but absent this frame.
+        // 1. Emit cleanup for payloads that are gone this frame, and for those that moved.
+        //    A move needs one too: graphics protocols place an image *in addition to* its
+        //    existing placements rather than replacing them, so leaving the old position
+        //    alone strands a copy of the image there. All cleanups go out before any
+        //    placement below, so a delete cannot land on top of a placement just made.
         if (_prevRawRegions is not null)
         {
             foreach (var prev in _prevRawRegions)
             {
-                if (!IsRawRegionInCurrentFrame(prev.Region))
+                if (!IsRawPayloadStillAtSameRegion(prev))
                 {
                     var cleanup = prev.Payload.Cleanup(prev.Region);
                     if (cleanup is not null) sb.Append(cleanup);
@@ -434,13 +438,16 @@ public sealed class RenderContext : IRenderContext
         }
 
         // 2. Emit current raw regions.
-        //    - Hash miss  → full Encode() (upload + place).
-        //    - Hash hit   → Refresh() only (cheap re-placement, no re-upload).
+        //    - Payload not present last frame → full Encode() (upload + place).
+        //    - Payload was present            → Refresh() only (re-place, no re-upload),
+        //      whether or not it moved. Matching on payload identity rather than on region
+        //      is what makes motion affordable: a scrolling row changes every region every
+        //      frame, and re-uploading each image per frame costs the whole payload again.
         if (_rawRegions is not null)
         {
             foreach (var entry in _rawRegions)
             {
-                bool skip = ShouldSkipRawEmit(entry);
+                bool alreadyUploaded = WasRawPayloadPresentLastFrame(entry);
 
                 // Cursor-move to region top-left (used by both paths below).
                 // For DCS-passthrough payloads (Kitty/tmux) the payload
@@ -455,7 +462,7 @@ public sealed class RenderContext : IRenderContext
                     sb.Append('H');
                 }
 
-                if (!skip)
+                if (!alreadyUploaded)
                 {
                     EmitCursorMove();
                     foreach (var seq in entry.Payload.Encode(entry.Region, ColorProfile))
@@ -525,27 +532,27 @@ public sealed class RenderContext : IRenderContext
     }
 
     /// <summary>
-    /// Returns true if <paramref name="region"/> is registered in the current frame's
-    /// raw region list. Used during cleanup detection in <see cref="ToAnsiFrame"/>.
+    /// Returns true if <paramref name="prev"/>'s payload is still on screen this frame at
+    /// exactly the same region — the one case needing neither a delete nor a re-place.
+    /// Anything else (gone, or moved) is cleaned up first.
     /// </summary>
-    private bool IsRawRegionInCurrentFrame(Region region)
+    private bool IsRawPayloadStillAtSameRegion(RawEntry prev)
     {
         if (_rawRegions is null) return false;
         foreach (var cur in _rawRegions)
-            if (cur.Region == region) return true;
+            if (cur.Hash == prev.Hash && cur.Region == prev.Region) return true;
         return false;
     }
 
     /// <summary>
-    /// Returns true if the previous frame contains a <see cref="RawEntry"/> for the same
-    /// region with the same content hash — meaning the payload is unchanged and can be
-    /// skipped this frame.
+    /// Returns true if this payload was on screen last frame, anywhere. The terminal still
+    /// holds its data, so it can be re-placed instead of re-transmitted.
     /// </summary>
-    private bool ShouldSkipRawEmit(RawEntry entry)
+    private bool WasRawPayloadPresentLastFrame(RawEntry entry)
     {
         if (_prevRawRegions is null) return false;
         foreach (var prev in _prevRawRegions)
-            if (prev.Region == entry.Region && prev.Hash == entry.Hash) return true;
+            if (prev.Hash == entry.Hash) return true;
         return false;
     }
 }
