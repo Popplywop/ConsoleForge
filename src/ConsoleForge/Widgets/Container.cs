@@ -159,13 +159,14 @@ public sealed record Container : IWidget, IContainer, IMeasurable
                 bool isHO = Direction == Axis.Horizontal;
                 int availO = isHO ? region.Width : region.Height;
                 var resO = new int[Children.Count];
-                // clampOverflow stays false here: the render path clips overflow rather
-                // than scaling it back, and LayoutEngine has already thrown on a layout
-                // that cannot fit at all.
+                // Same clamping as LayoutEngine, so the regions children render into match
+                // the ones focus and hit-testing were given. Only the throw differs: the
+                // layout pass has already raised it, and doing so again here would turn a
+                // frame that could still be drawn into a crash.
                 LayoutSolver.ResolveSizes(
                     Children, Direction, availO,
                     crossAvailable: isHO ? region.Height : region.Width,
-                    includeMargins: false, clampOverflow: false, resO);
+                    includeMargins: false, throwWhenImpossible: false, resO);
 
                 int curO = isHO ? region.Col : region.Row;
                 for (var i = 0; i < Children.Count; i++)
@@ -207,7 +208,7 @@ public sealed record Container : IWidget, IContainer, IMeasurable
         LayoutSolver.ResolveSizes(
             Children, Direction, avail,
             crossAvailable: isH ? lH : lW,
-            includeMargins: true, clampOverflow: false, resolved);
+            includeMargins: true, throwWhenImpossible: false, resolved);
 
         int cur = isH ? lCol : lRow, cross = isH ? lH : lW, crossO = isH ? lRow : lCol;
         for (var i = 0; i < Children.Count; i++)

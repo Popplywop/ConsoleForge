@@ -136,6 +136,19 @@ public sealed class KittyPayload : IRawEscapePayload
     /// <inheritdoc/>
     public int ContentHash => (int)_imageId;
 
+    /// <summary>
+    /// Identifies one placement of this image, derived from where it sits.
+    /// </summary>
+    /// <remarks>
+    /// Kitty's place command <em>adds</em> a placement unless it is given an id that
+    /// already exists, in which case it replaces it. Without one, renewing a placement
+    /// every frame stacks a new copy each time and the terminal recomposites the pile —
+    /// which is what a screen full of artwork shows as flicker. Deriving the id from the
+    /// region also lets one image appear twice on screen and be deleted independently.
+    /// </remarks>
+    private static uint PlacementId(Region region) =>
+        (uint)(((region.Row + 1) * 4096) + region.Col + 1);
+
     /// <inheritdoc/>
     /// <remarks>
     /// When inside tmux the first chunk includes an embedded cursor-move so that the
@@ -178,29 +191,46 @@ public sealed class KittyPayload : IRawEscapePayload
         // correct position even when tmux render cycles move the outer cursor
         // between upload chunks. For non-tmux the cursor-move was already emitted
         // by RenderContext.ToAnsiFrame immediately before this call.
-        string placeApc = $"\x1b_Ga=p,i={_imageId},q=2,c={region.Width},r={region.Height}\x1b\\";
+        string placeApc = $"\x1b_Ga=p,i={_imageId},p={PlacementId(region)},q=2," +
+                          $"c={region.Width},r={region.Height}\x1b\\";
         yield return _insideTmux ? BuildTmuxSequence(region, placeApc) : placeApc;
     }
 
     /// <inheritdoc/>
     /// <remarks>
-    /// Emits a cheap <c>a=p</c> command that re-places the already-uploaded
-    /// image at the current cursor position. Called every frame when
-    /// <see cref="Encode"/> is hash-skipped. Fixes positioning drift caused
-    /// by tmux re-render cycles moving WezTerm's cursor between frames.
+    /// <para>
+    /// Re-places the already-uploaded image with a cheap <c>a=p</c>. This exists for tmux:
+    /// its re-render cycles move the outer terminal's cursor between frames, so a placement
+    /// that is not renewed drifts out of position.
+    /// </para>
+    /// <para>
+    /// Outside tmux it returns null, deliberately. Nothing moves an already-placed image,
+    /// and <c>a=p</c> creates an <em>additional</em> placement rather than updating the
+    /// existing one — so renewing every frame made the terminal redraw every visible image
+    /// at the frame rate, which reads as flicker on a screen full of artwork.
+    /// </para>
     /// </remarks>
     public IEnumerable<string>? Refresh(Region region, ColorProfile profile)
     {
-        string apc = $"\x1b_Ga=p,i={_imageId},q=2,c={region.Width},r={region.Height}\x1b\\";
-        if (_insideTmux)
-            return Enumerable.Repeat(BuildTmuxSequence(region, apc), 1);
-        return Enumerable.Repeat(apc, 1);
+        if (!_insideTmux) return null;
+
+        // Same placement id as the original place, so this replaces it rather than
+        // stacking another copy on top.
+        string apc = $"\x1b_Ga=p,i={_imageId},p={PlacementId(region)},q=2," +
+                     $"c={region.Width},r={region.Height}\x1b\\";
+        return Enumerable.Repeat(BuildTmuxSequence(region, apc), 1);
     }
 
     /// <inheritdoc/>
+    /// <remarks>
+    /// Deletes the one placement at <paramref name="region"/>, not every placement of the
+    /// image: the same artwork can legitimately be on screen twice — a show appearing in
+    /// two shelves — and removing one must not blank the other. The image data itself stays
+    /// in the terminal, so putting it back costs a placement rather than an upload.
+    /// </remarks>
     public string? Cleanup(Region region)
     {
-        string apc = $"\x1b_Ga=d,d=i,i={_imageId}\x1b\\";
+        string apc = $"\x1b_Ga=d,d=i,i={_imageId},p={PlacementId(region)}\x1b\\";
         return _insideTmux ? WrapForTmux(apc) : apc;
     }
 }

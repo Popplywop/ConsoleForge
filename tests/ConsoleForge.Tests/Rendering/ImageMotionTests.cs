@@ -84,14 +84,49 @@ public class ImageMotionTests
     // ── Still images: the case that already works ─────────────────────────────
 
     [Fact]
-    public void StationaryImage_IsUploadedOnce_ThenOnlyRePlaced()
+    public void StationaryImage_IsUploadedOnce()
     {
         var png = Png(1);
         var (first, second) = TwoFrames(Row([png], 0), Row([png], 0));
 
         Assert.Equal(1, Uploads(first));
-        Assert.Equal(0, Uploads(second));   // hash+region hit → Refresh only
-        Assert.Equal(1, Placements(second));
+        Assert.Equal(0, Uploads(second));
+    }
+
+    [Fact]
+    public void StationaryImage_IsNotRePlacedRepeatedly()
+    {
+        // An image that has not moved needs nothing emitted. Inside tmux one refresh is
+        // allowed, because tmux's re-render cycles drift the placement out of position;
+        // it carries a placement id so it replaces rather than stacks. Either way a
+        // second frame must never cost more than one command per image.
+        var png = Png(1);
+        var (_, second) = TwoFrames(Row([png], 0), Row([png], 0));
+
+        Assert.True(Placements(second) <= 1,
+            $"an unchanged image emitted {Placements(second)} placements; stacking them is " +
+            "what makes a screen of artwork flicker");
+    }
+
+    [Fact]
+    public void EveryPlacementCarriesAPlacementId()
+    {
+        // Without p= each place adds a placement instead of replacing one.
+        var (first, _) = TwoFrames(Row([Png(1)], 0), Row([Png(1)], 0));
+
+        Assert.Contains("\x1b_Ga=p,", first);
+        Assert.Matches(@"\x1b_Ga=p,i=\d+,p=\d+,", first);
+    }
+
+    [Fact]
+    public void DeleteTargetsOnePlacement_NotEveryCopyOfTheImage()
+    {
+        // The same artwork can be on screen twice — one show in two shelves. Removing one
+        // copy must not blank the other, so the delete names the placement.
+        byte[] a = Png(1), b = Png(2);
+        var (_, second) = TwoFrames(Row([a, b], 0), Row([b], 0));
+
+        Assert.Matches(@"\x1b_Ga=d,d=i,i=\d+,p=\d+", second);
     }
 
     // ── Motion: the shelf case ────────────────────────────────────────────────

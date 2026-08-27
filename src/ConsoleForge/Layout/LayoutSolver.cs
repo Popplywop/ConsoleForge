@@ -35,11 +35,11 @@ internal static class LayoutSolver
     /// When true each child's slot includes its along-axis margins, and the caller is
     /// expected to subtract them again when building the child's region.
     /// </param>
-    /// <param name="clampOverflow">
-    /// When true, children that collectively exceed <paramref name="available"/> are scaled
-    /// back to fit, and a set of fixed children that cannot fit with no flex child to absorb
-    /// the difference throws. When false the overflow is left in place for the caller to clip
-    /// — which is what the render path does.
+    /// <param name="throwWhenImpossible">
+    /// Whether an unsatisfiable layout — fixed children that cannot fit, with no flex child
+    /// to give up space and nothing measured — is an error. The layout pass says yes; the
+    /// render pass says no, because by then the exception has already been raised and
+    /// throwing again would only turn a drawable frame into a crash.
     /// </param>
     /// <param name="sizes">Destination, at least <c>children.Count</c> long.</param>
     /// <exception cref="LayoutConstraintException">
@@ -51,7 +51,7 @@ internal static class LayoutSolver
         int available,
         int crossAvailable,
         bool includeMargins,
-        bool clampOverflow,
+        bool throwWhenImpossible,
         Span<int> sizes)
     {
         bool horizontal = axis == Axis.Horizontal;
@@ -117,8 +117,6 @@ internal static class LayoutSolver
         }
         if (lastFlex >= 0) sizes[lastFlex] += freeSpace - distributed;
 
-        if (!clampOverflow) return;
-
         int total = 0;
         for (int i = 0; i < children.Count; i++) total += Math.Max(0, sizes[i]);
         if (total <= available || total == 0) return;
@@ -126,7 +124,7 @@ internal static class LayoutSolver
         // Only an impossible *explicit* layout is an error. A container holding more
         // measured content than fits is ordinary — more text than rows, say — and must
         // scale back rather than throw.
-        if (totalFlexWeight == 0 && !anyMeasured)
+        if (throwWhenImpossible && totalFlexWeight == 0 && !anyMeasured)
             throw new LayoutConstraintException(
                 $"Fixed children ({total}px) collectively exceed available space ({available}px) " +
                 $"in a {axis} container with no flex children.");
