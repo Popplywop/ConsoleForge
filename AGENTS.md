@@ -93,37 +93,71 @@ dotnet run --project samples/ConsoleForge.Gallery
 
 ---
 
-## Benchmarks
+## Performance
 
-Project: `tests/ConsoleForge.Benchmarks/`. Uses BenchmarkDotNet. All benchmark classes have `[MemoryDiagnoser]`.
+Three tiers. Pick by the question you are answering, not by habit. Most performance
+questions in this codebase have an exact answer, and reaching for a stopwatch to answer
+one costs ten minutes and returns a number you then have to hedge.
 
-Benchmark files:
-- `RenderBenchmarks.cs` — widget render pipeline
-- `CmdDispatchBenchmarks.cs` — `CmdDispatcher` channel roundtrip
-- `CmdAdvancedBenchmarks.cs` — advanced cmd scenarios
-- `NewWidgetRenderBenchmarks.cs` — new widget render paths
+### Tier 1 — assertions (milliseconds, runs in CI)
 
-**Rule: run benchmarks before AND after any change that touches:**
-- `Renderer`, `RenderContext`, `LayoutEngine`, `CmdDispatcher`
-- Any `IWidget.Render` implementation
-- `SizeConstraint` resolution logic
-- Hot paths in `Update` loops
+For anything countable: bytes allocated, cache hits, frames drawn, cells emitted.
+
+- `tests/ConsoleForge.Tests/Performance/` holds the allocation budgets.
+- `GC.GetAllocatedBytesForCurrentThread()` around the operation; assert a **ceiling**, not
+  equality, so JIT tiering cannot flake it. Warm up first, then average over iterations.
+- Better still, assert the work itself. `WidgetCacheTests` calls `TryReuseWidget` directly
+  and proved a whole-tree re-render in 79ms — the benchmark that found the same bug took
+  ten minutes.
+
+**A perf fix lands with a Tier 1 test whenever the defect has a countable signature.** The
+widget render cache served exactly one widget per frame across two releases because nothing
+counted the hits, and it produced identical pixels, so no other test could see it.
+
+### Tier 2 — quick benchmark (under a minute)
+
+For iterating, when a rough number is enough:
 
 ```bash
-# Run all benchmarks (Release required — never run in Debug)
-dotnet run --project tests/ConsoleForge.Benchmarks -c Release -- --filter "*"
-
-# Run a specific class
-dotnet run --project tests/ConsoleForge.Benchmarks -c Release -- --filter "*RenderBenchmarks*"
+./bench.sh -f '*WidgetCache*'
 ```
 
-**Perf rules:**
-- No regression in mean time or allocated bytes vs baseline.
-- If a change increases allocations, justify it explicitly before committing.
-- Never benchmark in Debug config — results invalid.
-- Save baseline output before making changes; diff after.
+Short job, in-process. Wide error bars by design: this answers "4x faster" or "about the
+same". It cannot answer "3% faster" — do not quote it as if it could.
 
----
+**Allocation numbers here are exact.** `MemoryDiagnoser` counts bytes, it does not sample
+them, so a short job reports the same allocations as a full one — measured: identical to
+the byte, with means within 4% and the error bar 50x wider. Since allocations are the
+number worth trusting anyway, Tier 2 settles most questions on its own, and Tier 3 is for
+when the timing itself is the claim.
+
+### Tier 3 — full benchmark (minutes)
+
+Required before committing a change to `Renderer`, `RenderContext`, `LayoutEngine`,
+`LayoutSolver`, `CmdDispatcher`, `SizeConstraint` resolution, or any `IWidget.Render`.
+
+```bash
+./bench.sh --full -f '*RenderBenchmarks*'
+```
+
+- Release only. Debug numbers are meaningless.
+- Run before and after **sequentially, with nothing else running.** A concurrent build or
+  test run moves unrelated benchmarks by more than 10%.
+- Prefer one run to two. Where both implementations can coexist, put them in the same class
+  with `[Benchmark(Baseline = true)]` and let BenchmarkDotNet compute the ratio against
+  identical machine state. Cross-run comparison is where the noise lives, and it is why a
+  two-run diff needs so much interpretation.
+
+### Reading results
+
+- **Allocated bytes are the trustworthy number.** Byte-identical allocations across a
+  refactor is strong evidence that nothing structural changed. A regression here needs an
+  explicit justification in the commit message.
+- **Treat a mean-time delta under ~10% as noise** unless it reproduces *and* the change can
+  reach that code path. Check reachability first: a `Container` change cannot affect
+  `RenderSingleTextBlock_Cold`, which contains no container.
+- `--filter '*RenderBenchmarks*'` also matches `NewWidgetRenderBenchmarks`. Narrow the
+  filter to what the change can actually touch.
 
 ## What NOT to do
 
