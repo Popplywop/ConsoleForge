@@ -223,6 +223,17 @@ public sealed class App
             StopAllSubscriptions();
             if (_terminal is not null)
             {
+                // Remove any pixel graphics before the terminal goes away. They are not
+                // cells, so exiting the alternate screen need not take them with it, and
+                // under tmux they were passed through to the outer terminal, which tmux
+                // will never repaint over. Left behind, they outlive the process.
+                var rawCleanup = _renderer.BuildRawCleanup();
+                if (rawCleanup is not null)
+                {
+                    try { _terminal.Write(rawCleanup); _terminal.Flush(); }
+                    catch { /* teardown is best-effort; never mask the original failure */ }
+                }
+
                 if (_enableMouse) _terminal.DisableMouse();
                 _terminal.SetCursorVisible(true); // Restore cursor before exiting
             }

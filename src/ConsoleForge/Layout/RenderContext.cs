@@ -532,6 +532,31 @@ public sealed class RenderContext : IRenderContext
     }
 
     /// <summary>
+    /// Sequences that remove every raw-escape payload currently on screen, for use when
+    /// tearing the application down.
+    /// </summary>
+    /// <remarks>
+    /// Pixel graphics live outside the cell buffer, so leaving the alternate screen does
+    /// not necessarily take them with it. Under tmux especially: the payloads were passed
+    /// through to the outer terminal, whose screen tmux does not model, so nothing else
+    /// will ever clean them up and they outlive the process that drew them.
+    /// </remarks>
+    public string? BuildRawCleanup()
+    {
+        // After the final frame the current list holds it; before any Reset, so does prev.
+        var entries = _rawRegions ?? _prevRawRegions;
+        if (entries is null || entries.Count == 0) return null;
+
+        var sb = new StringBuilder();
+        foreach (var entry in entries)
+        {
+            var cleanup = entry.Payload.Cleanup(entry.Region);
+            if (cleanup is not null) sb.Append(cleanup);
+        }
+        return sb.Length == 0 ? null : sb.ToString();
+    }
+
+    /// <summary>
     /// Returns true if <paramref name="prev"/>'s payload is still on screen this frame at
     /// exactly the same region — the one case needing neither a delete nor a re-place.
     /// Anything else (gone, or moved) is cleaned up first.

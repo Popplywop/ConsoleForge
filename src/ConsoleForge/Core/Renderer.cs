@@ -36,6 +36,13 @@ internal sealed class Renderer
     public void MarkDirty() => _isDirty = true;
 
     /// <summary>
+    /// Sequences that remove any pixel graphics still on screen, or null if there are none.
+    /// Written during teardown — see <see cref="RenderContext.BuildRawCleanup"/> for why
+    /// leaving the alternate screen is not enough.
+    /// </summary>
+    public string? BuildRawCleanup() => _ctx?.BuildRawCleanup();
+
+    /// <summary>
     /// Render only if dirty. Returns true if a frame was produced and flushed.
     /// If clean (model/theme/size unchanged), skips View()+Render() entirely — zero alloc.
     /// </summary>
