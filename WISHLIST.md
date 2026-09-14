@@ -3,8 +3,6 @@
 Gaps and improvement ideas found while building real Elm-loop applications on
 top of ConsoleForge, ordered roughly by impact:
 
-- [devo](https://github.com/Popplywop/azboard) (a C# port of azboard) —
-  API-backed pages, a modal picker, tables, spinners, keybound navigation.
 - PlexTui — a Plex client with drill-down navigation, long scrolling lists and
   poster artwork, which is what surfaced the renderer and event-loop entries in
   the 0.4.0 rows below.
