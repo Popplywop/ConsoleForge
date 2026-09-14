@@ -23,8 +23,10 @@ public class WidgetCacheBenchmarks
     private IWidget _rows = null!;
     private IWidget _oneRowChanges = null!;
 
-    private RenderContext _ctxRows = null!;
-    private RenderContext _ctxOneRowChanges = null!;
+    // Driven through Renderer, the path an application runs. One per benchmark: a
+    // renderer shared between two trees would treat every frame as a full redraw.
+    private Renderer _rendererRows = null!;
+    private Renderer _rendererOneRowChanges = null!;
 
     private const int RowCount = 12;
 
@@ -34,8 +36,8 @@ public class WidgetCacheBenchmarks
         _rows           = BuildRows(changedRow: -1);
         _oneRowChanges  = BuildRows(changedRow: -1);
 
-        _ctxRows          = PrimeContext(_rows, 80, 24);
-        _ctxOneRowChanges = PrimeContext(_oneRowChanges, 80, 24);
+        _rendererRows          = PrimeRenderer(_rows, 80, 24);
+        _rendererOneRowChanges = PrimeRenderer(_oneRowChanges, 80, 24);
     }
 
     private static IWidget BuildRows(int changedRow)
@@ -51,14 +53,11 @@ public class WidgetCacheBenchmarks
         return new Container(Axis.Vertical, rows);
     }
 
-    private static RenderContext PrimeContext(IWidget root, int width, int height)
+    private static Renderer PrimeRenderer(IWidget root, int width, int height)
     {
-        var layout = LayoutEngine.Resolve(root, width, height);
-        var region = layout.GetRegion(root) ?? new Region(0, 0, width, height);
-        var ctx    = new RenderContext(region, Theme.Default, ColorProfile.TrueColor, layout);
-        root.Render(ctx);
-        ctx.ToAnsiFrame();
-        return ctx;
+        var renderer = new Renderer();
+        renderer.Render(root, width, height, Theme.Default, ColorProfile.TrueColor);
+        return renderer;
     }
 
     /// <summary>
@@ -67,7 +66,7 @@ public class WidgetCacheBenchmarks
     /// </summary>
     [Benchmark(Baseline = true)]
     public string AllRowsReusable()
-        => ViewDescriptor.From(_rows, existingCtx: _ctxRows, width: 80, height: 24).Content;
+        => _rendererRows.Render(_rows, 80, 24, Theme.Default, ColorProfile.TrueColor).Content;
 
     /// <summary>
     /// One row is rebuilt per frame — the shape of a selection moving through a list.
@@ -89,8 +88,8 @@ public class WidgetCacheBenchmarks
                 : children[i];
 
         _oneRowChanges = new Container(Axis.Vertical, next);
-        return ViewDescriptor.From(_oneRowChanges, existingCtx: _ctxOneRowChanges,
-                                   width: 80, height: 24).Content;
+        return _rendererOneRowChanges
+            .Render(_oneRowChanges, 80, 24, Theme.Default, ColorProfile.TrueColor).Content;
     }
 
     private int _tick;
