@@ -286,13 +286,13 @@ public sealed class App
         // Handle Tab for focus traversal, then fall through to model.Update
         if (msg is KeyMsg { Key: ConsoleKey.Tab } tabKey)
         {
-            HandleTabFocus(model, tabKey.Shift);
+            HandleTabFocus(tabKey.Shift);
         }
 
         // Click-to-focus: left-click press moves focus to the clicked widget
         if (msg is MouseMsg { Button: MouseButton.Left, Action: MouseAction.Press } click)
         {
-            HandleMouseFocus(model, click);
+            HandleMouseFocus(click);
         }
 
         var prevModel = model;
@@ -325,10 +325,17 @@ public sealed class App
         }
     }
 
-    private void HandleTabFocus(IModel model, bool reverse)
+    private void HandleTabFocus(bool reverse)
     {
-        var rootWidget = model.View();
-        var focusable = FocusManager.CollectFocusable(rootWidget);
+        IReadOnlyList<IFocusable> focusable;
+        lock (_renderLock)
+        {
+            // Traverse the frame on screen rather than rebuilding the tree: View() is the
+            // single most expensive thing a keystroke can trigger, and the renderer has
+            // already produced exactly the tree the user is looking at.
+            if (!_renderer.TryGetLastFrame(out var rootWidget, out _)) return;
+            focusable = FocusManager.CollectFocusable(rootWidget);
+        }
         if (focusable.Count == 0) return;
 
         if (reverse)
@@ -339,16 +346,24 @@ public sealed class App
         _channel.Writer.TryWrite(new FocusIndexChangedMsg(_focusIndex));
     }
 
-    private void HandleMouseFocus(IModel model, MouseMsg click)
+    private void HandleMouseFocus(MouseMsg click)
     {
-        var rootWidget = model.View();
-        var layout     = Layout.LayoutEngine.Resolve(
-            rootWidget, _terminal!.Width, _terminal.Height);
+        IFocusable? hit;
+        IReadOnlyList<IFocusable> focusable;
 
-        var hit = FocusManager.FindFocusableAt(rootWidget, layout, click.Col, click.Row);
-        if (hit is null) return;
+        // Held for both reads: the layout belongs to a renderer buffer that the next
+        // frame reclaims, so releasing between the hit test and the index lookup would
+        // let a frame boundary swap the regions mid-decision.
+        lock (_renderLock)
+        {
+            if (!_renderer.TryGetLastFrame(out var rootWidget, out var layout)) return;
 
-        var focusable = FocusManager.CollectFocusable(rootWidget);
+            hit = FocusManager.FindFocusableAt(rootWidget, layout, click.Col, click.Row);
+            if (hit is null) return;
+
+            focusable = FocusManager.CollectFocusable(rootWidget);
+        }
+
         var idx = -1;
         for (var i = 0; i < focusable.Count; i++)
             if (ReferenceEquals(focusable[i], hit)) { idx = i; break; }

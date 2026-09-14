@@ -175,4 +175,21 @@ public class AllocationBudgetTests
             $"changing one row of twenty emitted {oneRowChanged.Length} characters " +
             $"against {fullRepaint.Length} for a full repaint");
     }
+
+    // ── Layout reuse ──────────────────────────────────────────────────────────
+
+    [Fact]
+    public void ResolveInto_AReusedLayout_DoesNotAllocate()
+    {
+        // Resolving allocated a fresh Dictionary every frame — 2,616 bytes on this tree,
+        // 16% of a changed frame. Allocate() itself allocates nothing (AllocateContainer
+        // rents its int arrays), so clearing and refilling costs nothing once the
+        // dictionary has reached its steady-state capacity.
+        var root = TwentyTextBlocks();
+        var buf  = new ResolvedLayout();
+
+        long perCall = AllocatedPerCall(() => LayoutEngine.ResolveInto(buf, root, 80, 24));
+
+        AssertUnder(256, perCall, "resolving into a reused layout");
+    }
 }

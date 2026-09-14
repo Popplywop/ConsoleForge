@@ -77,7 +77,7 @@ public class OverflowAgreementTests
         // Render must not throw a second time: a frame that can still be drawn should be.
         var region = new Region(0, 0, Width, Height);
         var ctx    = new RenderContext(region, Theme.Dark, ColorProfile.TrueColor,
-                                       new ResolvedLayout(new Dictionary<IWidget, Region>()));
+                                       new ResolvedLayout());
         Assert.Null(Record.Exception(() => root.Render(ctx)));
     }
 }

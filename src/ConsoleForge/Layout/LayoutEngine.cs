@@ -1,6 +1,4 @@
 using System.Buffers;
-using System.Runtime.CompilerServices;
-using ConsoleForge.Styling;
 
 namespace ConsoleForge.Layout;
 
@@ -19,12 +17,14 @@ public static class LayoutEngine
     /// Resolve <paramref name="root"/> into a <see cref="ResolvedLayout"/>
     /// filling the given terminal dimensions.
     /// </summary>
-    public static ResolvedLayout Resolve(IWidget root, int terminalWidth, int terminalHeight)
+    public static ResolvedLayout Resolve(IWidget root, int w, int h)
+        => ResolveInto(new ResolvedLayout(), root, w, h);
+
+    public static ResolvedLayout ResolveInto(ResolvedLayout target, IWidget root, int w, int h)
     {
-        var allocations = new Dictionary<IWidget, Region>(WidgetIdentity.Instance);
-        var rootRegion = new Region(0, 0, terminalWidth, terminalHeight);
-        Allocate(root, rootRegion, allocations);
-        return new ResolvedLayout(allocations);
+        target.Reset();
+        Allocate(root, new Region(0, 0, w, h), target.Allocations);
+        return target;
     }
 
     private static void Allocate(IWidget widget, Region region, Dictionary<IWidget, Region> allocations)
@@ -66,7 +66,7 @@ public static class LayoutEngine
             {
                 // ── ORIGINAL TIGHT LOOP ─────────────────────────────────────
                 int available = isHorizontal ? region.Width : region.Height;
-                var resolved  = ArrayPool<int>.Shared.Rent(children.Count);
+                var resolved = ArrayPool<int>.Shared.Rent(children.Count);
                 try
                 {
                     LayoutSolver.ResolveSizes(
@@ -95,12 +95,12 @@ public static class LayoutEngine
         int cPadT = 0, cPadR = 0, cPadB = 0, cPadL = 0;
         if (hasPad && container is IWidget cw)
         {
-            cPadT = cw.Style.PaddingTop;    cPadR = cw.Style.PaddingRight;
+            cPadT = cw.Style.PaddingTop; cPadR = cw.Style.PaddingRight;
             cPadB = cw.Style.PaddingBottom; cPadL = cw.Style.PaddingLeft;
         }
         var layout = new Region(
             region.Col + cPadL, region.Row + cPadT,
-            Math.Max(0, region.Width  - cPadL - cPadR),
+            Math.Max(0, region.Width - cPadL - cPadR),
             Math.Max(0, region.Height - cPadT - cPadB));
 
         int avail2 = isHorizontal ? layout.Width : layout.Height;
@@ -114,15 +114,15 @@ public static class LayoutEngine
                 resolved2.AsSpan(0, children.Count));
 
             int cursor2 = isHorizontal ? layout.Col : layout.Row;
-            int cross2   = isHorizontal ? layout.Height : layout.Width;
+            int cross2 = isHorizontal ? layout.Height : layout.Width;
             for (var i = 0; i < children.Count; i++)
             {
                 int ts = Math.Max(0, resolved2[i]);
                 var cs = children[i].Style;
-                int mS = isHorizontal ? (cs.HasMargin ? cs.MarginLeft   : 0) : (cs.HasMargin ? cs.MarginTop    : 0);
-                int mE = isHorizontal ? (cs.HasMargin ? cs.MarginRight  : 0) : (cs.HasMargin ? cs.MarginBottom : 0);
-                int cS = isHorizontal ? (cs.HasMargin ? cs.MarginTop    : 0) : (cs.HasMargin ? cs.MarginLeft   : 0);
-                int cE = isHorizontal ? (cs.HasMargin ? cs.MarginBottom : 0) : (cs.HasMargin ? cs.MarginRight  : 0);
+                int mS = isHorizontal ? (cs.HasMargin ? cs.MarginLeft : 0) : (cs.HasMargin ? cs.MarginTop : 0);
+                int mE = isHorizontal ? (cs.HasMargin ? cs.MarginRight : 0) : (cs.HasMargin ? cs.MarginBottom : 0);
+                int cS = isHorizontal ? (cs.HasMargin ? cs.MarginTop : 0) : (cs.HasMargin ? cs.MarginLeft : 0);
+                int cE = isHorizontal ? (cs.HasMargin ? cs.MarginBottom : 0) : (cs.HasMargin ? cs.MarginRight : 0);
                 int cm = Math.Max(0, ts - mS - mE), cc = Math.Max(0, cross2 - cS - cE);
                 int xS = (isHorizontal ? layout.Row : layout.Col) + cS;
                 Region childRegion = isHorizontal
@@ -133,25 +133,5 @@ public static class LayoutEngine
             }
         }
         finally { ArrayPool<int>.Shared.Return(resolved2); }
-    }
-
-    /// <summary>
-    /// Keys allocations by widget identity rather than value.
-    /// <para>
-    /// Widgets are records, so two structurally identical widgets in the same tree are
-    /// equal and hash alike. Under the default comparer they collapse into one entry and
-    /// the later one's region overwrites the earlier one's, leaving the first widget
-    /// reporting a region it does not occupy. Rendering does not notice — containers
-    /// re-solve their own children through <see cref="LayoutSolver"/> — but everything
-    /// that looks a widget up by region does, starting with hit-testing.
-    /// </para>
-    /// </summary>
-    private sealed class WidgetIdentity : IEqualityComparer<IWidget>
-    {
-        public static readonly WidgetIdentity Instance = new();
-
-        public bool Equals(IWidget? x, IWidget? y) => ReferenceEquals(x, y);
-
-        public int GetHashCode(IWidget obj) => RuntimeHelpers.GetHashCode(obj);
     }
 }

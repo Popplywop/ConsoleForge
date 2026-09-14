@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using ConsoleForge.Layout;
 using ConsoleForge.Styling;
 using ConsoleForge.Terminal;
@@ -32,6 +33,45 @@ internal sealed class Renderer
     private int _lastHeight;
     private Theme _lastTheme = Theme.Default;
 
+    // Two layout buffers, ping-ponged. Reuse alone would be enough to stop allocating,
+    // but hit-testing reads the layout of the frame on screen, and a single buffer is
+    // cleared and refilled by the next frame while that read is still the caller's only
+    // source of regions — handing it the next frame's positions with no error. The same
+    // hazard RenderContext ping-pongs _prevWidgets/_prevRegions to avoid.
+    private readonly ResolvedLayout _layoutA = new();
+    private readonly ResolvedLayout _layoutB = new();
+
+    /// <summary>Buffer describing the frame on screen. Null before the first frame.</summary>
+    private ResolvedLayout? _lastLayout;
+
+    /// <summary>The buffer not currently holding the on-screen frame.</summary>
+    private ResolvedLayout NextLayoutBuffer()
+        => ReferenceEquals(_lastLayout, _layoutA) ? _layoutB : _layoutA;
+
+    /// <summary>
+    /// The widget tree and resolved layout of the frame currently on screen; false before
+    /// the first frame has been drawn.
+    /// <para>
+    /// Hit-testing uses this instead of calling <c>View()</c> and resolving again. The
+    /// frame on screen is the one the user actually clicked, so testing against it is more
+    /// correct than testing against a tree they have not been shown — and it is already
+    /// resolved, so a click costs no tree rebuild and no layout pass.
+    /// </para>
+    /// <para>
+    /// Callers must hold the render lock for as long as they read the returned layout: the
+    /// next frame reclaims the other buffer, and a frame boundary crossed mid-read swaps
+    /// the regions underneath them.
+    /// </para>
+    /// </summary>
+    public bool TryGetLastFrame(
+        [NotNullWhen(true)] out IWidget? root,
+        [NotNullWhen(true)] out ResolvedLayout? layout)
+    {
+        root   = _lastView.RootWidget;
+        layout = _lastLayout;
+        return root is not null && layout is not null;
+    }
+
     /// <summary>Mark dirty: next <see cref="RenderIfDirty"/> will re-render.</summary>
     public void MarkDirty() => _isDirty = true;
 
@@ -65,7 +105,7 @@ internal sealed class Renderer
         _lastTheme  = theme;
 
         var root   = model.View();
-        var layout = LayoutEngine.Resolve(root, width, height);
+        var layout = LayoutEngine.ResolveInto(NextLayoutBuffer(), root, width, height);
         var rootRegion = layout.GetRegion(root) ?? new Region(0, 0, width, height);
 
         if (_ctx is null)
@@ -75,12 +115,13 @@ internal sealed class Renderer
 
         root.Render(_ctx);
 
-        _lastView = new ViewDescriptor
+        _lastView   = new ViewDescriptor
         {
             Content    = _ctx.ToAnsiFrame(),
             Cursor     = _ctx.Cursor ?? new(Visible: false),
             RootWidget = root
         };
+        _lastLayout = layout;
 
         Flush(terminal);
         return true;
@@ -101,7 +142,7 @@ internal sealed class Renderer
         _lastTheme  = theme;
         _isDirty    = false;
 
-        var layout     = LayoutEngine.Resolve(root, width, height);
+        var layout     = LayoutEngine.ResolveInto(NextLayoutBuffer(), root, width, height);
         var rootRegion = layout.GetRegion(root) ?? new Region(0, 0, width, height);
 
         if (_ctx is null)
@@ -117,7 +158,8 @@ internal sealed class Renderer
             Cursor     = _ctx.Cursor ?? new(Visible: false),
             RootWidget = root
         };
-        _lastView = view;
+        _lastView   = view;
+        _lastLayout = layout;
         return view;
     }
 
@@ -149,6 +191,7 @@ internal sealed class Renderer
     public void Invalidate()
     {
         _ctx = null;
+        _lastLayout = null;
         _isDirty = true;
     }
 }
