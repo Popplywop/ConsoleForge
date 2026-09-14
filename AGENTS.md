@@ -159,6 +159,30 @@ Required before committing a change to `Renderer`, `RenderContext`, `LayoutEngin
 - `--filter '*RenderBenchmarks*'` also matches `NewWidgetRenderBenchmarks`. Narrow the
   filter to what the change can actually touch.
 
+## Definition of Done
+
+A change is finished when every line below is true, not when the code works. The
+boxes exist because each one has been skipped here at least once, and the cost
+showed up later rather than never.
+
+- [ ] `dotnet build ConsoleForge.slnx` is clean.
+- [ ] `dotnet test ConsoleForge.slnx` is green.
+- [ ] A Tier 1 assertion exists if the defect had a countable signature — bytes,
+      cache hits, cells emitted. See Performance above.
+- [ ] Tier 3 was run if the change touched `Renderer`, `RenderContext`,
+      `LayoutEngine`, `LayoutSolver`, `CmdDispatcher`, `SizeConstraint`
+      resolution, or any `IWidget.Render`. Confirm the run actually happened:
+      `bench.sh` exits 0 when BenchmarkDotNet rejects its arguments, so a bad
+      invocation prints help, leaves the previous results in place, and reads as
+      a successful run.
+- [ ] The benchmark exercises the path the change is on. Tier 3 render
+      benchmarks drove `ViewDescriptor.From` for three releases while the
+      framework ran `Renderer`, so a change to the real frame path moved nothing.
+- [ ] `WISHLIST.md` is updated — moved to Fixed, or marked partly landed.
+- [ ] `CHANGELOG.md` has an entry under Unreleased.
+- [ ] It is one coherent commit. A working tree holding three unrelated
+      accomplishments is three commits that have not been written yet.
+
 ## What NOT to do
 
 - Don't add NuGet packages without asking first.
