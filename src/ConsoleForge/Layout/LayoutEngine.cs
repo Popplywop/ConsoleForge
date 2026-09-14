@@ -1,4 +1,5 @@
 using System.Buffers;
+using System.Runtime.CompilerServices;
 using ConsoleForge.Styling;
 
 namespace ConsoleForge.Layout;
@@ -20,7 +21,7 @@ public static class LayoutEngine
     /// </summary>
     public static ResolvedLayout Resolve(IWidget root, int terminalWidth, int terminalHeight)
     {
-        var allocations = new Dictionary<IWidget, Region>();
+        var allocations = new Dictionary<IWidget, Region>(WidgetIdentity.Instance);
         var rootRegion = new Region(0, 0, terminalWidth, terminalHeight);
         Allocate(root, rootRegion, allocations);
         return new ResolvedLayout(allocations);
@@ -134,4 +135,23 @@ public static class LayoutEngine
         finally { ArrayPool<int>.Shared.Return(resolved2); }
     }
 
+    /// <summary>
+    /// Keys allocations by widget identity rather than value.
+    /// <para>
+    /// Widgets are records, so two structurally identical widgets in the same tree are
+    /// equal and hash alike. Under the default comparer they collapse into one entry and
+    /// the later one's region overwrites the earlier one's, leaving the first widget
+    /// reporting a region it does not occupy. Rendering does not notice — containers
+    /// re-solve their own children through <see cref="LayoutSolver"/> — but everything
+    /// that looks a widget up by region does, starting with hit-testing.
+    /// </para>
+    /// </summary>
+    private sealed class WidgetIdentity : IEqualityComparer<IWidget>
+    {
+        public static readonly WidgetIdentity Instance = new();
+
+        public bool Equals(IWidget? x, IWidget? y) => ReferenceEquals(x, y);
+
+        public int GetHashCode(IWidget obj) => RuntimeHelpers.GetHashCode(obj);
+    }
 }

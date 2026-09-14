@@ -149,6 +149,24 @@ public class MouseTests
         Assert.Same(bottom, FocusManager.FindFocusableAt(root, layout, col: 5, row: 1));
     }
 
+    [Fact]
+    public void FindFocusableAt_IdenticalStackedWidgets_HitsTheOneUnderTheCursor()
+    {
+        // Same text, so the two inputs are record-equal. Hit-testing reads regions out
+        // of the resolved layout, and would report the lower one for both rows if the
+        // layout collapsed them into a single allocation.
+        var top    = new TextInput("same");
+        var bottom = new TextInput("same");
+        var root   = new Container(Axis.Vertical,
+            [top, bottom],
+            height: SizeConstraint.Fixed(2));
+
+        var layout = LayoutEngine.Resolve(root, 40, 2);
+
+        Assert.Same(top,    FocusManager.FindFocusableAt(root, layout, col: 5, row: 0));
+        Assert.Same(bottom, FocusManager.FindFocusableAt(root, layout, col: 5, row: 1));
+    }
+
     // ── Scroll wheel helpers ──────────────────────────────────────────────────
 
     [Fact]

@@ -246,4 +246,24 @@ public class LayoutEngineTests
         var layout = LayoutEngine.Resolve(root, 80, 24);
         Assert.Equal(1, layout.GetRegion(a)!.Value.Height);
     }
+
+    // ── Widget identity ───────────────────────────────────────────────────────
+
+    [Fact]
+    public void IdenticalSiblings_GetTheirOwnRegions()
+    {
+        // Widgets are records, so these two are equal and hash alike. Allocations are
+        // keyed by identity precisely so that the second does not evict the first.
+        var a = new TextBlock("same") { Height = SizeConstraint.Fixed(1) };
+        var b = new TextBlock("same") { Height = SizeConstraint.Fixed(1) };
+        Assert.Equal(a, b);
+
+        var root = new Container(Axis.Vertical, [a, b]);
+
+        var layout = LayoutEngine.Resolve(root, 40, 10);
+
+        Assert.Equal(3, layout.Allocations.Count);   // root + both children
+        Assert.Equal(0, layout.GetRegion(a)!.Value.Row);
+        Assert.Equal(1, layout.GetRegion(b)!.Value.Row);
+    }
 }
