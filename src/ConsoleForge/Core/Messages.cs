@@ -99,3 +99,18 @@ public sealed record MouseMsg(
     bool Shift = false,
     bool Alt = false,
     bool Ctrl = false) : IMsg;
+
+// ── Debounce / Throttle ────────────────────────────────────────────────────────────────
+internal enum RateLimitMode
+{
+    Debounce,
+    Throttle,
+}
+
+/// <summary>Carries a keyed <see cref="Cmd.Debounce"/>/<see cref="Cmd.Throttle"/>
+/// request to the event loop, which owns the per-key state.</summary>
+internal sealed record RateLimitDispatchMsg(
+    string Key,
+    TimeSpan Interval,
+    RateLimitMode Mode,
+    Func<DateTimeOffset, IMsg> Fn) : IMsg;

@@ -43,6 +43,16 @@ marked **Breaking**.
   than an `IFocusable`, so a model can drive Tab traversal from the key it already
   stores. They also step a plain key list, so widget-shaped concerns stay in
   `CollectFocusKeys`.
+- **Breaking:** `Cmd.Debounce` and `Cmd.Throttle` take a key: `Cmd.Debounce(key,
+  interval, fn)`. The window belongs to the key and is held by the running program,
+  so a command built fresh in `Update` — the only way the Elm loop builds one — now
+  rate-limits correctly. The previous overloads kept their state in the closure the
+  factory returned, so they worked only if one command instance was stored and
+  re-dispatched, and did nothing at all in normal use. Add a key to each call site;
+  a per-item closure is safe, since the latest invocation under a key wins.
+- **Breaking:** a suppressed `Debounce`/`Throttle` call now produces no message.
+  It previously resolved to a `RedrawMsg` sentinel, which models had to recognise
+  and discard, and which repainted the screen once per suppressed call.
 - **Breaking:** `BatchMsg`, `BatchDispatchMsg` and `SequenceMsg` are `internal`.
   They carry `Cmd.Batch` and `Cmd.Sequence` results to the event loop, which unfolds
   them before the model runs, so a model never received one. Matching on them in an
@@ -72,6 +82,11 @@ marked **Breaking**.
   region it did not occupy. Rendering never noticed; hit-testing did, and a
   duplicate widget could be entirely unclickable.
 - Child commands returned by nested components are dispatched correctly.
+- Debounce and throttle windows survive across command instances. Both factories
+  held their state in the returned closure, so the documented usage — deciding to
+  debounce inside `Update`, which builds a new command each call — silently never
+  debounced. Storing one instance was no way out either: the captured function
+  varies per item, and parking a mutable closure in the model breaks immutability.
 - Character width now follows the Unicode `East_Asian_Width` table, fixing
   wide-glyph column drift.
 - The widget render cache survives past the first composite. It had been serving

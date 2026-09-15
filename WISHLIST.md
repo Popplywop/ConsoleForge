@@ -22,28 +22,8 @@ rest. Every remaining breaking change lands here, so 0.5.0 can be purely additiv
 Item numbers are stable identifiers, not priorities or ordering — they never get
 reused or renumbered. Work the items in the order listed.
 
-**Done when:** the four items below are resolved, `CHANGELOG.md` has its
+**Done when:** the three items below are resolved, `CHANGELOG.md` has its
 `[Unreleased]` section promoted to `0.4.0`, and the tag is pushed.
-
-### 7. `Cmd.Debounce` / `Cmd.Throttle` can't debounce from `Update`
-
-Both hold their state in the closure the factory returns, so they only work if
-the *same cmd instance* is re-dispatched — as their XML docs say. But `Update`
-is where you decide to debounce, and it builds a fresh cmd each call, so the
-natural Elm usage silently never debounces. Storing one instance is not a way
-out either: the captured `fn` usually varies per item (PlexTui needed a
-different poster URL per row), and parking a mutable closure in the model
-violates the immutability rule the architecture is built on.
-
-**Proposal:** key the state outside the closure — `Cmd.Debounce(key, interval,
-fn)` with the pending-cancellation table owned by the dispatcher, so re-dispatch
-under the same key supersedes the previous one. PlexTui works around it with a
-generation counter plus `Cmd.Tick`, which is the pattern the framework should
-be providing.
-
-**0.4.0 scope:** all of it. This is the only open item that is a defect in
-shipped public API rather than a missing feature — the documented usage silently
-does nothing. Touches `CmdDispatcher`, so it is Tier 3 gated.
 
 ### 3. Layout-independent character matching (`KeyPattern.OfChar`)
 
@@ -150,3 +130,4 @@ What each gap turned out to be, and what shipped.
 | 0.4.0 | Images could not move. `RenderContext` paired raw-escape regions across frames by `Region`, so a scrolling row — every region changing every frame — never matched, and each visible image was deleted and re-transmitted in full every frame: measured at three full uploads per frame for a three-card row. The region-keyed cleanup also missed a payload whose slot was taken over by another, stranding a copy of it on screen, since a graphics protocol places an image *in addition to* its existing placements. Payloads are now tracked across frames by `ContentHash` identity: present last frame means re-place, new means upload, moved means delete the old position first. Found by de-risking the PlexTui poster shelf before building it. |
 | 0.4.0 | `SizeConstraint.Auto` resolved as flex weight 1 — an Auto child took an equal share of free space instead of shrinking to fit, so `TextBlock` and `Spinner`, which default to Auto on both axes, filled their container. Widgets now report a content size through the new `IMeasurable`, implemented by `TextBlock`, `Spinner`, `Container`, `BorderBox` and `ZStack`; anything not implementing it keeps the old behaviour, so no third-party layout moved. Min/Max fold over the measurement (`Max(10, Auto)` is content capped at 10). Prerequisite: `LayoutEngine` and `Container.Render` carried separate copies of the constraint arithmetic and would have disagreed about where Auto children go, so both now share `LayoutSolver`. Overflow of *measured* children clamps rather than throwing — running out of room for text is ordinary; an impossible all-`Fixed` layout still throws. |
 | 0.4.0 | Documentation drift: README called the entry point `Program.Run` (it is `App.Run`), typed `Subscriptions()` as `IEnumerable` where the interface requires `IReadOnlyList`, omitted `KeyPattern.WithShift`, and never mentioned `ImageWidget` or Kitty graphics. `SizeConstraint.Auto` claimed to shrink to content in both README and XML docs while resolving as flex weight 1; both now state the real behaviour and point at item 1. `TextArea` carried a `<see cref="OnKeyEvent"/>` to a member deleted in this version, which Doxygen published. `TextInputChangedMsg` and `CheckboxToggledMsg` documented a dispatch that no longer happens; both are now `[Obsolete]`. |
+| 0.4.0 | `Cmd.Debounce` and `Cmd.Throttle` held their state in the closure the factory returned, so they rate-limited only across re-dispatches of one stored instance — and `Update`, which is where you decide to debounce, builds a fresh command every call. The documented usage silently did nothing. Storing an instance was no way out: the captured `fn` varies per item (a different poster URL per row), and a mutable closure in the model breaks immutability. Both now take a key, and the window belongs to that key in the event loop, so re-dispatch supersedes the pending one however many instances were built. The latest `fn` wins, which is what makes a per-item closure safe. Suppressed calls now emit nothing: they used to resolve to a `RedrawMsg` sentinel the model had to discard, which repainted once per suppressed call. Windows are linked to the shutdown token, so none outlives the program. PlexTui's generation-counter-plus-`Cmd.Tick` workaround was the shape of the missing feature. |

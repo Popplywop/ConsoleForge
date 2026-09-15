@@ -171,49 +171,46 @@ public class CmdTests
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => cmd());
     }
 
-    // ── Cmd.Debounce ─────────────────────────────────────────────────────────
+    // ── Cmd.Debounce / Cmd.Throttle ──────────────────────────────────────────
+    //
+    // Both resolve to a request the event loop handles; the state that makes them
+    // rate-limit lives there, keyed, not in the returned closure. Behaviour is
+    // covered end-to-end in Core/RateLimitTests — these only pin the request shape.
 
     [Fact]
-    public async Task Cmd_Debounce_LastCallWins()
+    public async Task Cmd_Debounce_ResolvesToAKeyedRequest()
     {
-        // A debounce cmd with a 200ms window.
-        // Call it three times in quick succession; only the last should produce a non-RedrawMsg.
-        var debounced = Cmd.Debounce(TimeSpan.FromMilliseconds(200), _ => new TestMsg("fired"));
+        var window = TimeSpan.FromMilliseconds(200);
+        Func<DateTimeOffset, IMsg> fn = _ => new TestMsg("fired");
 
-        // First two calls — these should be cancelled by the third
-        var t1 = debounced();
-        var t2 = debounced();
-        var t3 = debounced();
+        var msg = await Cmd.Debounce("poster", window, fn)();
 
-        var results = await Task.WhenAll(t1, t2, t3);
-
-        // The last call must return the real message; prior calls return RedrawMsg (cancelled)
-        Assert.IsType<TestMsg>(results[2]);
-        Assert.Equal("fired", ((TestMsg)results[2]).Value);
-        // First two should be RedrawMsg (debounced away)
-        Assert.IsType<RedrawMsg>(results[0]);
-        Assert.IsType<RedrawMsg>(results[1]);
-    }
-
-    // ── Cmd.Throttle ─────────────────────────────────────────────────────────
-
-    [Fact]
-    public async Task Cmd_Throttle_FirstCallPassesThrough()
-    {
-        var throttled = Cmd.Throttle(TimeSpan.FromSeconds(10), _ => new TestMsg("pass"));
-        var msg = await throttled();
-        Assert.IsType<TestMsg>(msg);
-        Assert.Equal("pass", ((TestMsg)msg).Value);
+        var request = Assert.IsType<RateLimitDispatchMsg>(msg);
+        Assert.Equal("poster", request.Key);
+        Assert.Equal(window, request.Interval);
+        Assert.Equal(RateLimitMode.Debounce, request.Mode);
+        Assert.Same(fn, request.Fn);
     }
 
     [Fact]
-    public async Task Cmd_Throttle_SecondCallWithinWindowIsDropped()
+    public async Task Cmd_Throttle_ResolvesToAKeyedRequest()
     {
-        var throttled = Cmd.Throttle(TimeSpan.FromSeconds(10), _ => new TestMsg("pass"));
-        await throttled(); // first — passes through
+        var msg = await Cmd.Throttle("scroll", TimeSpan.FromSeconds(1), _ => new TestMsg("fired"))();
 
-        var msg = await throttled(); // second — within window, dropped
-        Assert.IsType<RedrawMsg>(msg);
+        var request = Assert.IsType<RateLimitDispatchMsg>(msg);
+        Assert.Equal("scroll", request.Key);
+        Assert.Equal(RateLimitMode.Throttle, request.Mode);
+    }
+
+    /// <summary>
+    /// Resolution is synchronous, so the request reaches the loop in the same drain
+    /// pass as the message that produced it rather than a frame later.
+    /// </summary>
+    [Fact]
+    public void Cmd_Debounce_ResolvesSynchronously()
+    {
+        var task = Cmd.Debounce("poster", TimeSpan.FromSeconds(1), _ => new TestMsg("fired"))();
+        Assert.True(task.IsCompletedSuccessfully);
     }
 
     // ── CmdDispatcher ─────────────────────────────────────────────────────────

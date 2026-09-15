@@ -26,6 +26,7 @@ public sealed class App
     private ITerminal? _terminal;
     private readonly Channel<IMsg> _channel = Channel.CreateUnbounded<IMsg>();
     private readonly Renderer _renderer = new();
+    private TimeProvider _time = TimeProvider.System;
 
     /// <summary>
     /// Run the application asynchronously. Returns when the model produces a <see cref="QuitMsg"/>.
@@ -42,13 +43,15 @@ public sealed class App
         ITerminal? terminal = null,
         Theme? theme = null,
         int targetFps = 30,
-        bool enableMouse = false)
+        bool enableMouse = false,
+        TimeProvider? timeProvider = null)
     {
         var program = new App
         {
             _theme = theme ?? Theme.Default,
             ColorProfile = DetectColorProfile(),
             _enableMouse = enableMouse,
+            _time = timeProvider ?? TimeProvider.System
         };
         return program.RunInternal(model, terminal, targetFps);
     }
@@ -72,6 +75,9 @@ public sealed class App
 
     /// <summary>Active subscriptions: key → linked CancellationTokenSource.</summary>
     private readonly Dictionary<string, CancellationTokenSource> _activeSubs = [];
+    private readonly Dictionary<string, DateTimeOffset> _throttleGates = [];
+    private readonly Dictionary<string, CancellationTokenSource> _pendingDebounces = [];
+    private readonly object _rateLimitLock = new();
 
     private async Task RunInternal(IModel model, ITerminal? terminal, int targetFps)
     {
@@ -146,45 +152,28 @@ public sealed class App
                     {
                         if (msg is QuitMsg) goto quit;
 
-                        if (msg is BatchDispatchMsg bd)
+                        if (!TryHandleLoopMsg(msg))
                         {
-                            // Fire each batched cmd independently — results stream
-                            // into the channel as they complete (no barrier), and
-                            // nested batches unfold the same way. Anything that
-                            // finishes synchronously lands in the queue the drain
-                            // below is still reading, so a batch costs one frame.
-                            foreach (var cmd in bd.Cmds)
-                                DispatchCmd(cmd);
-                        }
-                        else if (msg is BatchMsg bm)
-                        {
-                            foreach (var m in bm.Messages)
+                            var inner = msg switch
                             {
-                                if (m is QuitMsg) goto quit;
-                                if (m is BatchDispatchMsg nestedBatch)
-                                {
-                                    foreach (var cmd in nestedBatch.Cmds) DispatchCmd(cmd);
-                                    continue;
-                                }
-                                ProcessMsg(m, ref currentModel);
-                            }
-                        }
-                        else if (msg is SequenceMsg sm)
-                        {
-                            foreach (var m in sm.Messages)
+                                BatchMsg bm => bm.Messages,
+                                SequenceMsg sm => sm.Messages,
+                                _ => null
+                            };
+
+                            if (inner is null)
                             {
-                                if (m is QuitMsg) goto quit;
-                                if (m is BatchDispatchMsg nestedBatch)
-                                {
-                                    foreach (var cmd in nestedBatch.Cmds) DispatchCmd(cmd);
-                                    continue;
-                                }
-                                ProcessMsg(m, ref currentModel);
+                                ProcessMsg(msg, ref currentModel);
                             }
-                        }
-                        else
-                        {
-                            ProcessMsg(msg, ref currentModel);
+                            else
+                            {
+                                foreach (var m in inner)
+                                {
+                                    if (m is QuitMsg) goto quit;
+                                    if (TryHandleLoopMsg(m)) continue;
+                                    ProcessMsg(m, ref currentModel);
+                                }
+                            }
                         }
 
                         // Take whatever else is already waiting — including messages
@@ -216,6 +205,12 @@ public sealed class App
             _quitting = true;
             _cts.Cancel();
             StopAllSubscriptions();
+            lock (_rateLimitLock)
+            {
+                foreach (var pending in _pendingDebounces.Values) pending.Dispose();
+                _pendingDebounces.Clear();
+                _throttleGates.Clear();
+            }
             if (_terminal is not null)
             {
                 // Remove any pixel graphics before the terminal goes away. They are not
@@ -334,6 +329,16 @@ public sealed class App
         }
     }
 
+    private bool TryHandleLoopMsg(IMsg msg)
+    {
+        switch (msg)
+        {
+            case BatchDispatchMsg bd: foreach (var c in bd.Cmds) DispatchCmd(c); return true;
+            case RateLimitDispatchMsg rl: HandleRateLimit(rl); return true;
+            default: return false;
+        }
+    }
+
     private void DispatchCmd(ICmd? cmd)
     {
         if (cmd is null) return;
@@ -430,6 +435,68 @@ public sealed class App
             cts.Dispose();
         }
         _activeSubs.Clear();
+    }
+
+    private void HandleRateLimit(RateLimitDispatchMsg m)
+    {
+        if (m.Mode == RateLimitMode.Throttle)
+        {
+            var now = _time.GetUtcNow();
+            lock (_rateLimitLock)
+            {
+                if (_throttleGates.TryGetValue(m.Key, out var last) && now - last < m.Interval)
+                {
+                    return;
+                }
+                _throttleGates[m.Key] = now;
+            }
+            _channel.Writer.TryWrite(m.Fn(now));
+            return;
+        }
+
+        CancellationTokenSource cts;
+        lock (_rateLimitLock)
+        {
+            if (_pendingDebounces.TryGetValue(m.Key, out var prior))
+            {
+                prior.Cancel();
+                prior.Dispose();
+            }
+
+            cts = CancellationTokenSource.CreateLinkedTokenSource(_cts.Token);
+            _pendingDebounces[m.Key] = cts;
+        }
+
+        // Not Task.Run: an async method runs inline up to its first await, so the
+        // timer is registered against the clock before this returns. Off the loop
+        // thread the registration would race a caller that advances time.
+        _ = RunWindow();
+
+        async Task RunWindow()
+        {
+            try
+            {
+                await Task.Delay(m.Interval, _time, cts.Token);
+
+                lock (_rateLimitLock)
+                {
+                    if (!_pendingDebounces.TryGetValue(m.Key, out var current) || !ReferenceEquals(current, cts))
+                    {
+                        return;
+                    }
+
+                    _pendingDebounces.Remove(m.Key);
+                }
+
+                _channel.Writer.TryWrite(m.Fn(_time.GetUtcNow()));
+                cts.Dispose();
+            }
+            catch (OperationCanceledException)
+            {
+                // Superseded by a later dispatch, or the app is shutting down.
+                // Either way no message, and disposal belongs to whoever cancelled.
+            }
+        }
     }
 
     // ── Color profile detection ───────────────────────────────────────

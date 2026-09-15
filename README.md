@@ -23,7 +23,7 @@ Built for developers who want the predictability of [Bubble Tea](https://github.
 - **Margin & padding** — `Style.Padding(1)` and `Style.Margin(1)` enforced by the layout engine.
 - **Content-aware layout** — `SizeConstraint.Auto` sizes to content through `IMeasurable`; `Fixed` and `Flex` cover the rest.
 - **Pure editing reducer** — `TextInputState`: cursor movement, word jumps, and grapheme-aware deletion as a value in your model, not a stateful sub-widget.
-- **Async commands** — `Cmd.Run`, `Cmd.Batch`, `Cmd.Sequence`, `Cmd.Tick`, `Cmd.Debounce`, `Cmd.Throttle`.
+- **Async commands** — `Cmd.Run`, `Cmd.Batch`, `Cmd.Sequence`, `Cmd.Tick`, and `Cmd.Debounce` / `Cmd.Throttle`, which rate-limit by key so a cmd built fresh in `Update` still coalesces.
 - **Subscriptions** — `Sub.Interval`, `Sub.FromAsyncEnumerable`, `Sub.FromObservable` for continuous data streams.
 
 ## Quick Start
@@ -317,9 +317,29 @@ Cmd.Run(async ct => { ... return msg; })      // async work → message
 Cmd.Batch(cmd1, cmd2, cmd3)                   // run concurrently
 Cmd.Sequence(cmd1, cmd2, cmd3)                // run serially
 Cmd.Tick(TimeSpan, ts => new TickMsg(ts))     // delayed single fire
-Cmd.Debounce(TimeSpan, ts => msg)             // debounced (last wins)
-Cmd.Throttle(TimeSpan, ts => msg)             // throttled (first wins)
+Cmd.Debounce(key, TimeSpan, ts => msg)        // debounced by key (last wins)
+Cmd.Throttle(key, TimeSpan, ts => msg)        // throttled by key (first wins)
 ```
+
+`Debounce` and `Throttle` are keyed because `Update` builds a new command on every
+call. The rate-limit state belongs to the key, held by the running program, so
+re-dispatching under the same key supersedes the pending window no matter how many
+command instances were built along the way:
+
+```csharp
+public (IModel, ICmd?) Update(IMsg msg) => msg switch
+{
+    // One fetch after the selection settles, not one per keypress. The URL differs
+    // per row, so the closure differs per call — only the key is stable.
+    SelectionChangedMsg m => (this with { Index = m.Index },
+        Cmd.Debounce("poster", TimeSpan.FromMilliseconds(150),
+            _ => new LoadPosterMsg(Items[m.Index].PosterUrl))),
+    _ => (this, null),
+};
+```
+
+Keys are plain strings, namespaced by the application the same way subscription keys
+are (`"shelf/poster"`). A superseded or throttled call produces no message at all.
 
 ## Subscriptions
 
