@@ -334,8 +334,8 @@ public class TextAreaTests
         var descriptor = ViewDescriptor.From(ta, width: 20, height: 5);
         var plain = TestHelpers.StripAnsi(descriptor.Content);
 
-        Assert.Contains("line one",   plain);
-        Assert.Contains("line two",   plain);
+        Assert.Contains("line one", plain);
+        Assert.Contains("line two", plain);
         Assert.Contains("line three", plain);
     }
 
@@ -347,7 +347,7 @@ public class TextAreaTests
         var plain = TestHelpers.StripAnsi(descriptor.Content);
 
         Assert.DoesNotContain("alpha", plain);
-        Assert.Contains("beta",  plain);
+        Assert.Contains("beta", plain);
         Assert.Contains("gamma", plain);
     }
 
@@ -364,8 +364,10 @@ public class TextAreaTests
     [Fact]
     public void Render_Focused_DoesNotThrow()
     {
-        var ta = new TextArea(["hello"], cursorRow: 0, cursorCol: 2);
-        ta.HasFocus = true;
+        var ta = new TextArea(["hello"], cursorRow: 0, cursorCol: 2)
+        {
+            HasFocus = true
+        };
         var ex = Record.Exception(() => ViewDescriptor.From(ta, width: 20, height: 5));
         Assert.Null(ex);
     }

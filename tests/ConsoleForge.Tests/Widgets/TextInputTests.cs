@@ -77,13 +77,13 @@ public class TextInputTests
     public void Update_SharesEditingRulesWithTextInputState()
     {
         // The widget must not grow its own copy of the editing logic.
-        var key   = new KeyMsg(ConsoleKey.W, '\u0017', Ctrl: true);
+        var key = new KeyMsg(ConsoleKey.W, '\u0017', Ctrl: true);
         var state = new TextInputState("one two three").HandleKey(key);
 
         var (next, _) = new TextInput("one two three", cursorPosition: 13).Update(key);
         var typed = Assert.IsType<TextInput>(next);
 
-        Assert.Equal(state.Value,  typed.Value);
+        Assert.Equal(state.Value, typed.Value);
         Assert.Equal(state.Cursor, typed.CursorPosition);
     }
 
@@ -221,8 +221,10 @@ public class TextInputTests
     [Fact]
     public void Render_Focused_IncludesCursorHighlight()
     {
-        var input = new TextInput("hello", cursorPosition: 0);
-        input.HasFocus = true;
+        var input = new TextInput("hello", cursorPosition: 0)
+        {
+            HasFocus = true
+        };
         // Just verify render doesn't throw and produces output
         var descriptor = ViewDescriptor.From(input, width: 20, height: 1);
         Assert.NotEmpty(descriptor.Content);

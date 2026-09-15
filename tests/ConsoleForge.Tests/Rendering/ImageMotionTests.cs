@@ -31,7 +31,7 @@ public class ImageMotionTests
     private const int CardWidth = 8;
 
     /// <summary>A row of image cards starting at <paramref name="offset"/> columns from the left.</summary>
-    private static IWidget Row(byte[][] images, int offset)
+    private static Container Row(byte[][] images, int offset)
     {
         var cells = new List<IWidget>();
         if (offset > 0)
@@ -40,7 +40,7 @@ public class ImageMotionTests
         foreach (var png in images)
             cells.Add(new ImageWidget(png, Kitty)
             {
-                Width  = SizeConstraint.Fixed(CardWidth),
+                Width = SizeConstraint.Fixed(CardWidth),
                 Height = SizeConstraint.Fixed(Height),
             });
 
@@ -48,11 +48,11 @@ public class ImageMotionTests
     }
 
     /// <summary>Render two frames into one context and return the ANSI emitted for each.</summary>
-    private static (string First, string Second) TwoFrames(IWidget frame1, IWidget frame2)
+    private static (string First, string Second) TwoFrames(Container frame1, Container frame2)
     {
         var layout1 = LayoutEngine.Resolve(frame1, Width, Height);
-        var region  = new Region(0, 0, Width, Height);
-        var ctx     = new RenderContext(region, Theme.Dark, ColorProfile.TrueColor, layout1);
+        var region = new Region(0, 0, Width, Height);
+        var ctx = new RenderContext(region, Theme.Dark, ColorProfile.TrueColor, layout1);
 
         frame1.Render(ctx);
         string first = ctx.ToAnsiFrame();
@@ -77,9 +77,6 @@ public class ImageMotionTests
 
     /// <summary>Number of *placements* — cheap, positions an already-uploaded image.</summary>
     private static int Placements(string frame) => Count(frame, "\x1b_Ga=p,");
-
-    /// <summary>Number of *deletes*.</summary>
-    private static int Deletes(string frame) => Count(frame, "\x1b_Ga=d,");
 
     // ── Still images: the case that already works ─────────────────────────────
 
@@ -156,7 +153,7 @@ public class ImageMotionTests
         uint idA = KittyProtocol.ImageIdFromBytes(a);
 
         var before = Row([a, b], CardWidth);  // a at col 8,  b at col 16
-        var after  = Row([a, b], 0);          // a at col 0,  b at col 8 — b takes a's slot
+        var after = Row([a, b], 0);          // a at col 0,  b at col 8 — b takes a's slot
 
         var (_, second) = TwoFrames(before, after);
 
@@ -172,14 +169,14 @@ public class ImageMotionTests
         byte[] a = Png(1), b = Png(2), c = Png(3);
 
         var region = new Region(0, 0, Width, Height);
-        var ctx    = new RenderContext(
+        var ctx = new RenderContext(
             region, Theme.Dark, ColorProfile.TrueColor,
             LayoutEngine.Resolve(Row([a, b, c], 0), Width, Height));
 
         int uploadsAfterFirstFrame = 0;
         for (int offset = 0; offset < 6; offset++)
         {
-            var frame  = Row([a, b, c], offset);
+            var frame = Row([a, b, c], offset);
             var frameL = LayoutEngine.Resolve(frame, Width, Height);
             ctx.Reset(region, Theme.Dark, ColorProfile.TrueColor, frameL);
             frame.Render(ctx);

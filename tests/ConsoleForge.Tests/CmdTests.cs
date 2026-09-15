@@ -1,4 +1,5 @@
 using System.Threading.Channels;
+
 using ConsoleForge.Core;
 
 namespace ConsoleForge.Tests;
@@ -81,7 +82,7 @@ public class CmdTests
         var cmd = Cmd.Batch(a, b);
 
         Assert.NotNull(cmd);
-        var msg = await cmd!();
+        var msg = await cmd();
 
         var dispatch = Assert.IsType<BatchDispatchMsg>(msg);
         Assert.Equal(2, dispatch.Cmds.Count);
@@ -99,7 +100,7 @@ public class CmdTests
             () => never.Task,
             () => Task.FromResult<IMsg>(new TestMsg("fast")));
 
-        var resolved = await cmd!().WaitAsync(TimeSpan.FromSeconds(1));
+        var resolved = await cmd!().WaitAsync(TimeSpan.FromSeconds(1), TestContext.Current.CancellationToken);
         Assert.IsType<BatchDispatchMsg>(resolved);
     }
 
@@ -134,7 +135,7 @@ public class CmdTests
             async () => { order.Add(3); await Task.Yield(); return new TestMsg("3"); });
 
         Assert.NotNull(cmd);
-        var msg = await cmd!();
+        var msg = await cmd();
 
         var seqMsg = Assert.IsType<SequenceMsg>(msg);
         Assert.Equal(3, seqMsg.Messages.Length);
@@ -248,9 +249,9 @@ public class CmdTests
     {
         var ct = TestContext.Current.CancellationToken;
         var channel = Channel.CreateUnbounded<IMsg>();
-        ICmd throwingCmd = () => throw new InvalidOperationException("boom");
+        static Task<IMsg> ThrowingCmd() => throw new InvalidOperationException("boom");
 
-        CmdDispatcher.Dispatch(throwingCmd, channel.Writer, ct);
+        CmdDispatcher.Dispatch(ThrowingCmd, channel.Writer, ct);
 
         var msg = await channel.Reader.ReadAsync(ct);
         var errorMsg = Assert.IsType<CmdErrorMsg>(msg);
@@ -277,9 +278,9 @@ public class CmdTests
     {
         var ct = TestContext.Current.CancellationToken;
         var channel = Channel.CreateUnbounded<IMsg>();
-        ICmd boom = () => Task.FromException<IMsg>(new ArgumentException("bad"));
+        static Task<IMsg> Boom() => Task.FromException<IMsg>(new ArgumentException("bad"));
 
-        await CmdDispatcher.DispatchAndWait(boom, channel.Writer, ct);
+        await CmdDispatcher.DispatchAndWait(Boom, channel.Writer, ct);
 
         Assert.True(channel.Reader.TryRead(out var msg));
         var errorMsg = Assert.IsType<CmdErrorMsg>(msg);
@@ -294,13 +295,13 @@ public class CmdTests
         cts.Cancel();
 
         var channel = Channel.CreateUnbounded<IMsg>();
-        ICmd longRunning = async () =>
+        async Task<IMsg> LongRunning()
         {
             await Task.Delay(TimeSpan.FromSeconds(10), cts.Token);
             return new TestMsg("never");
-        };
+        }
 
-        CmdDispatcher.Dispatch(longRunning, channel.Writer, cts.Token);
+        CmdDispatcher.Dispatch(LongRunning, channel.Writer, cts.Token);
 
         await Task.Delay(100, TestContext.Current.CancellationToken);
         // Cancelled cmd must not write anything (no CmdErrorMsg for OperationCanceledException)

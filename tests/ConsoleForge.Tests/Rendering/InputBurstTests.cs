@@ -34,8 +34,8 @@ public class InputBurstTests
         public (IModel Model, ICmd? Cmd) Update(IMsg msg) => msg switch
         {
             KeyMsg { Key: ConsoleKey.DownArrow } => Move(1),
-            KeyMsg { Key: ConsoleKey.UpArrow }   => Move(-1),
-            KeyMsg { Key: ConsoleKey.Q }         => (this, Cmd.Quit()),
+            KeyMsg { Key: ConsoleKey.UpArrow } => Move(-1),
+            KeyMsg { Key: ConsoleKey.Q } => (this, Cmd.Quit()),
             _ => (this, null),
         };
 
@@ -46,7 +46,7 @@ public class InputBurstTests
             C.Index = next;
             return (this with
             {
-                Index  = next,
+                Index = next,
                 Scroll = List.ComputeScrollOffset(next, Viewport, Scroll),
             }, null);
         }
@@ -84,23 +84,23 @@ public class InputBurstTests
     [Fact]
     public async Task BurstOfKeys_IsFullyApplied()
     {
-        const int Keys = 300;
-        var c = await RunBurst(Keys);
+        const int keys = 300;
+        var c = await RunBurst(keys);
 
-        Assert.Equal(Keys, c.Updates);
-        Assert.Equal(Keys, c.Index);
+        Assert.Equal(keys, c.Updates);
+        Assert.Equal(keys, c.Index);
     }
 
     [Fact]
     public async Task BurstOfKeys_DoesNotDrawAFramePerKey()
     {
-        const int Keys = 300;
-        var c = await RunBurst(Keys);
+        const int keys = 300;
+        var c = await RunBurst(keys);
 
         // The burst arrives in well under a frame interval. Redrawing per event
         // throws away almost all of that work: only the last state is visible.
-        Assert.True(c.Views < Keys / 4,
-            $"drew {c.Views} frames for {Keys} keys — roughly one frame per key");
+        Assert.True(c.Views < keys / 4,
+            $"drew {c.Views} frames for {keys} keys — roughly one frame per key");
     }
 
     [Fact]
@@ -119,17 +119,17 @@ public class InputBurstTests
         var terminal = new VirtualTerminal(80, 24);
         var run = App.Run(new ListModel(counters), terminal, Theme.Dark, targetFps: 30);
 
-        await Task.Delay(100);
+        await Task.Delay(100, TestContext.Current.CancellationToken);
         var viewsBefore = counters.Views;
 
         terminal.EnqueueKey(new KeyMsg(ConsoleKey.DownArrow, null));
-        await Task.Delay(100); // three frame intervals at 30fps
+        await Task.Delay(100, TestContext.Current.CancellationToken); // three frame intervals at 30fps
 
         Assert.True(counters.Views > viewsBefore,
             "an isolated keypress produced no frame");
         Assert.Contains("Item 0001", terminal.ScreenContent);
 
         terminal.EnqueueKey(new KeyMsg(ConsoleKey.Q, 'q'));
-        await Task.WhenAny(run, Task.Delay(2000));
+        await Task.WhenAny(run, Task.Delay(2000, TestContext.Current.CancellationToken));
     }
 }

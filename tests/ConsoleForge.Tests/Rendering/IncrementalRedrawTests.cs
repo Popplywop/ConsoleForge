@@ -38,7 +38,7 @@ public class IncrementalRedrawTests
     private static void AssertNoArtifacts(IWidget first, IWidget second, int width = W, int height = H)
     {
         var incremental = RenderSequence([first, second], width, height);
-        var expected    = RenderFresh(second, width, height);
+        var expected = RenderFresh(second, width, height);
         Assert.Equal(expected, incremental);
     }
 
@@ -48,7 +48,7 @@ public class IncrementalRedrawTests
         // Guards the tests below: if the renderer ever fell back to repainting every
         // cell, they would pass trivially and stop detecting stale-cell bugs.
         var renderer = new Renderer();
-        var first  = renderer.Render(new TextBlock("hello"), W, H, Theme.Dark, ColorProfile.TrueColor);
+        var first = renderer.Render(new TextBlock("hello"), W, H, Theme.Dark, ColorProfile.TrueColor);
         var second = renderer.Render(new TextBlock("world"), W, H, Theme.Dark, ColorProfile.TrueColor);
 
         Assert.True(second.Content.Length < first.Content.Length / 4,
@@ -59,8 +59,8 @@ public class IncrementalRedrawTests
     // Panel titles carry emoji (2 columns wide). Navigating in and back out
     // swaps one wide-titled box for another.
 
-    private static IWidget PlexPage(string title, string[] items, IColor accent) =>
-        new Container(Axis.Vertical, [
+    private static Container PlexPage(string title, string[] items, IColor accent) =>
+        new(Axis.Vertical, [
             new Container(Axis.Horizontal, [
                 new BorderBox(title,
                     new List(items, 0,
@@ -129,7 +129,7 @@ public class IncrementalRedrawTests
         // Cells no widget writes to render as the theme's default cell. Switching
         // themes changes that cell, so every one of them must be repainted even
         // though the widget content did not change.
-        var view     = new TextBlock("hello");
+        var view = new TextBlock("hello");
         var renderer = new Renderer();
 
         renderer.Render(view, W, H, Theme.Dark, ColorProfile.TrueColor);
@@ -147,7 +147,7 @@ public class IncrementalRedrawTests
         // An equal-but-distinct Theme instance must not be mistaken for a change,
         // or every frame degenerates into a full repaint.
         var renderer = new Renderer();
-        var first  = renderer.Render(new TextBlock("hello"), W, H, new Theme { Name = "t" }, ColorProfile.TrueColor);
+        var first = renderer.Render(new TextBlock("hello"), W, H, new Theme { Name = "t" }, ColorProfile.TrueColor);
         var second = renderer.Render(new TextBlock("world"), W, H, new Theme { Name = "t" }, ColorProfile.TrueColor);
 
         Assert.True(second.Content.Length < first.Content.Length / 4,

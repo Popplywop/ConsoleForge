@@ -36,7 +36,7 @@ public class ImageTeardownTests
         public IWidget View() =>
             new ImageWidget(Data, new TerminalCapabilities { SupportsKittyGraphics = true })
             {
-                Width  = SizeConstraint.Fixed(10),
+                Width = SizeConstraint.Fixed(10),
                 Height = SizeConstraint.Fixed(5),
             };
     }
@@ -47,12 +47,12 @@ public class ImageTeardownTests
         var terminal = new VirtualTerminal(40, 12);
         var run = App.Run(new ImageModel(Png()), terminal, Theme.Dark, targetFps: 30);
 
-        await Task.Delay(150);                       // let a frame with the image go out
+        await Task.Delay(150, TestContext.Current.CancellationToken);                       // let a frame with the image go out
         terminal.EnqueueKey(new KeyMsg(ConsoleKey.Q, 'q'));
-        await Task.WhenAny(run, Task.Delay(2000));
+        await Task.WhenAny(run, Task.Delay(2000, TestContext.Current.CancellationToken));
 
         uint imageId = KittyProtocol.ImageIdFromBytes(Png());
-        var written  = string.Concat(terminal.WriteHistory);
+        var written = string.Concat(terminal.WriteHistory);
 
         Assert.Contains($"a=p,i={imageId}", written);
         Assert.Contains($"a=d,d=i,i={imageId}", written);
@@ -61,9 +61,9 @@ public class ImageTeardownTests
     [Fact]
     public void ARenderContextWithNoImagesHasNothingToClean()
     {
-        var root   = new TextBlock("no pictures here");
+        var root = new TextBlock("no pictures here");
         var layout = LayoutEngine.Resolve(root, 40, 5);
-        var ctx    = new RenderContext(new Region(0, 0, 40, 5), Theme.Dark,
+        var ctx = new RenderContext(new Region(0, 0, 40, 5), Theme.Dark,
                                        ColorProfile.TrueColor, layout);
         root.Render(ctx);
         ctx.ToAnsiFrame();
