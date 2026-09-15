@@ -21,6 +21,14 @@ public sealed class VirtualTerminal : ITerminal
     private bool _exitedCleanly;
     private bool _disposed;
 
+    // Frame signalling. Renderer.Flush ends every drawn frame with ITerminal.Flush, so a
+    // flush is the one observable "a frame reached the terminal" event a test can wait on
+    // without a clock. App.Run exposes no such signal itself, and sleeping instead makes
+    // a test that is slow when it passes and flaky when the machine is busy.
+    private readonly object _frameGate = new();
+    private readonly List<(int Threshold, TaskCompletionSource Signal)> _frameWaiters = [];
+    private int _framesFlushed;
+
     /// <summary>
     /// Initialises a virtual terminal with the given dimensions.
     /// The screen buffer is filled with spaces.
@@ -69,7 +77,21 @@ public sealed class VirtualTerminal : ITerminal
     public void Flush()
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
-        // No-op for virtual terminal — writes are captured immediately.
+        // Writes are captured immediately, so there is nothing to flush — but this is
+        // where a frame ends, so it is where waiters are released.
+        List<TaskCompletionSource>? ready = null;
+        lock (_frameGate)
+        {
+            _framesFlushed++;
+            for (var i = _frameWaiters.Count - 1; i >= 0; i--)
+            {
+                if (_frameWaiters[i].Threshold > _framesFlushed) continue;
+                (ready ??= []).Add(_frameWaiters[i].Signal);
+                _frameWaiters.RemoveAt(i);
+            }
+        }
+        if (ready is not null)
+            foreach (var signal in ready) signal.TrySetResult();
     }
 
     // ── ITerminal: Cursor ─────────────────────────────────────────────
@@ -192,6 +214,44 @@ public sealed class VirtualTerminal : ITerminal
 
     /// <summary>History of all Write() calls, in order.</summary>
     public IReadOnlyList<string> WriteHistory => _writeHistory.AsReadOnly();
+
+    // ── Frame signalling ──────────────────────────────────────────────
+
+    /// <summary>Frames flushed to this terminal since it was created.</summary>
+    public int FramesFlushed
+    {
+        get { lock (_frameGate) return _framesFlushed; }
+    }
+
+    /// <summary>
+    /// A task completing once at least <paramref name="count"/> frames have been flushed,
+    /// already complete if that many have. Await it instead of sleeping: a frame is drawn
+    /// only after the event loop has drained what it had, so a frame arriving after an
+    /// injected event means that event has been applied.
+    /// <para>
+    /// Take <see cref="FramesFlushed"/> as a baseline <em>before</em> injecting, then wait
+    /// for <c>baseline + 1</c>. Reading it afterwards races the frame you are waiting for.
+    /// </para>
+    /// <para>
+    /// A model whose <c>Update</c> returns the same instance does not mark the renderer
+    /// dirty, so it draws no frame and nothing will arrive. To observe a message that
+    /// changes nothing, inject a following event that does change the model and wait on
+    /// that frame — messages are processed in order, so the earlier one has been applied.
+    /// </para>
+    /// </summary>
+    public Task WaitForFrames(int count)
+    {
+        lock (_frameGate)
+        {
+            if (_framesFlushed >= count) return Task.CompletedTask;
+
+            // RunContinuationsAsynchronously: completion happens on the render path, and a
+            // waiter resuming inline there would run test code inside the loop.
+            var signal = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            _frameWaiters.Add((count, signal));
+            return signal.Task;
+        }
+    }
 
     // ── Test injection surface ────────────────────────────────────────
 

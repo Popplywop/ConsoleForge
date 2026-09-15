@@ -47,9 +47,9 @@ public class ImageTeardownTests
         var terminal = new VirtualTerminal(40, 12);
         var run = App.Run(new ImageModel(Png()), terminal, Theme.Dark, targetFps: 30);
 
-        await Task.Delay(150, TestContext.Current.CancellationToken);                       // let a frame with the image go out
+        await terminal.WaitForFrames(1); // a frame carrying the image has gone out
         terminal.EnqueueKey(new KeyMsg(ConsoleKey.Q, 'q'));
-        await Task.WhenAny(run, Task.Delay(2000, TestContext.Current.CancellationToken));
+        await run;                       // teardown runs before Run returns
 
         uint imageId = KittyProtocol.ImageIdFromBytes(Png());
         var written = string.Concat(terminal.WriteHistory);

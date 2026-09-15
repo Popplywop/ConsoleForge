@@ -68,15 +68,16 @@ public class InputBurstTests
         var terminal = new VirtualTerminal(80, 24);
         var run = App.Run(new ListModel(counters), terminal, Theme.Dark, targetFps: 30);
 
-        await Task.Delay(100); // let the loop come up
+        await terminal.WaitForFrames(1); // the loop is up once it has drawn
 
         for (int i = 0; i < keyCount; i++)
             terminal.EnqueueKey(new KeyMsg(ConsoleKey.DownArrow, null));
 
-        await Task.Delay(600); // let it drain
-
+        // Quit is queued behind the burst and messages are processed in order, so the
+        // loop exiting is proof every key was applied. Waiting a fixed 600ms instead
+        // asserted nothing — on a slow machine it simply under-counted.
         terminal.EnqueueKey(new KeyMsg(ConsoleKey.Q, 'q'));
-        await Task.WhenAny(run, Task.Delay(2000));
+        await run;
 
         return counters;
     }
@@ -119,17 +120,23 @@ public class InputBurstTests
         var terminal = new VirtualTerminal(80, 24);
         var run = App.Run(new ListModel(counters), terminal, Theme.Dark, targetFps: 30);
 
-        await Task.Delay(100, TestContext.Current.CancellationToken);
+        await terminal.WaitForFrames(1);
         var viewsBefore = counters.Views;
+        var baseline = terminal.FramesFlushed;
 
         terminal.EnqueueKey(new KeyMsg(ConsoleKey.DownArrow, null));
-        await Task.Delay(100, TestContext.Current.CancellationToken); // three frame intervals at 30fps
+
+        // The frame itself is the assertion. The timeout only keeps a regression failing
+        // instead of hanging — it is not the "one frame interval" bound the fixed delay
+        // pretended to check, which a loaded machine could miss either way.
+        await terminal.WaitForFrames(baseline + 1)
+            .WaitAsync(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
 
         Assert.True(counters.Views > viewsBefore,
             "an isolated keypress produced no frame");
         Assert.Contains("Item 0001", terminal.ScreenContent);
 
         terminal.EnqueueKey(new KeyMsg(ConsoleKey.Q, 'q'));
-        await Task.WhenAny(run, Task.Delay(2000, TestContext.Current.CancellationToken));
+        await run;
     }
 }
