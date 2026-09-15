@@ -18,6 +18,14 @@ marked **Breaking**.
   (flex weight 1), so existing layouts are unmoved.
 - `ConsoleForge.Core.TextInputState` — a pure editing reducer (`Value`, `Cursor`,
   and the edit operations) usable without a `TextInput` widget.
+- `IFocusable.FocusKey` — an optional, application-assigned identity for a focusable
+  widget. Null (the default) means the widget is not a click-focus target, so nothing
+  changes for applications that do not opt in.
+- `FocusRequestedMsg` — raised when a left-click lands on a widget carrying a
+  `FocusKey`. The framework hit-tests, because a model cannot; the model decides what,
+  if anything, focus means.
+- `FocusManager.CollectFocusKeys` — the focus keys in a tree, depth-first, skipping
+  widgets without one.
 - Pixel image rendering via the Kitty graphics protocol: `ImageWidget`,
   `RgbaImageData`, and `IRawEscapePayload` for escape sequences that bypass the
   cell buffer.
@@ -31,12 +39,26 @@ marked **Breaking**.
   participated in record equality. Every assignment in this repository was
   already an object initializer or a `with`, so call sites are unaffected unless
   they assigned after construction.
+- **Breaking:** `FocusManager.GetNext` and `GetPrev` take and return a focus key rather
+  than an `IFocusable`, so a model can drive Tab traversal from the key it already
+  stores. They also step a plain key list, so widget-shaped concerns stay in
+  `CollectFocusKeys`.
 - `LayoutEngine` and `Container.Render` now share one layout solver, so the
   regions a container renders into match the ones layout resolved.
 - Input is drawn one frame per batch rather than one frame per message. A burst
   of key auto-repeat now costs a single frame instead of one frame per keystroke.
 - The benchmark mandate became a tiered performance policy — see the Performance
   section of `AGENTS.md`.
+
+### Removed
+
+- **Breaking:** `FocusIndexChangedMsg`, and the framework's Tab traversal along with it.
+  `App` no longer intercepts Tab, tracks a focus index, or walks the tree on every Tab
+  press — Tab arrives at the model as an ordinary `KeyMsg`, which is where every
+  application was already handling it. The message had no consumers: the Gallery
+  explicitly discarded it, documenting that letting a flat depth-first index drive its
+  own two-pane focus "conflicts with ToggleFocusMsg and causes double-press issues."
+  Focus now lives in the model, which is where it already lived in practice.
 
 ### Fixed
 

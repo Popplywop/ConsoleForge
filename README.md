@@ -185,7 +185,9 @@ Styles inherit from the active theme when properties are unset — set only what
 await App.Run(model, theme: Theme.Dark, enableMouse: true);
 ```
 
-- **Click-to-focus** — left-click moves focus to the clicked widget (automatic)
+- **Click-to-focus** — give a widget a `FocusKey`, and a left-click on it sends
+  `FocusRequestedMsg(key)` to your model. The framework hit-tests; your model decides
+  what focus means. A widget without a key is not a click-focus target.
 - **Scroll wheel** — `MouseMsg` with `MouseButton.ScrollUp` / `ScrollDown`
 - **Button events** — press, release, motion tracking via `MouseMsg`
 
