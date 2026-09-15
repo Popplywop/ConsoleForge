@@ -11,6 +11,11 @@ marked **Breaking**.
 
 ### Added
 
+- `HorizontalShelf` — a paged, virtualised strip of cover art, sized for poster
+  rows that are wider than the terminal.
+- `SizeConstraint.Auto` now sizes to content for widgets that implement the new
+  `IMeasurable`. Widgets that do not implement it keep the previous meaning
+  (flex weight 1), so existing layouts are unmoved.
 - `TerminalCapabilities.InsideTmux` — whether the host is a tmux session, which decides
   DCS passthrough wrapping and per-frame placement renewal. `Detect()` fills it from
   `TMUX`/`TERM` as before; the point is that a caller can now state it. A payload built
@@ -18,11 +23,15 @@ marked **Breaking**.
 - `IRawEscapePayload.Place` — re-position content the terminal already holds, for a
   payload that moved between frames. Defaults to `Encode`, so existing implementations
   keep working; override it when the protocol can reposition without re-transmitting.
-- `HorizontalShelf` — a paged, virtualised strip of cover art, sized for poster
-  rows that are wider than the terminal.
-- `SizeConstraint.Auto` now sizes to content for widgets that implement the new
-  `IMeasurable`. Widgets that do not implement it keep the previous meaning
-  (flex weight 1), so existing layouts are unmoved.
+- `KeyPattern.OfChar(char)` — match a binding against the character the terminal
+  produced rather than a `ConsoleKey`, so printable bindings work on every keyboard
+  layout. `?` was `WithShift(ConsoleKey.Oem2)`, which is that glyph's position on a US
+  layout and nowhere else; it is now `OfChar('?')`. Case-sensitive letter bindings
+  (`n` vs `N`) fall out of the same comparison. Shift stays a wildcard — it has already
+  been consumed producing the glyph — while Ctrl and Alt must be absent, since
+  Ctrl+letter arrives as a control character and Alt+key is a separate binding.
+- `KeyMap.On(char, ...)` — bind a character directly, mirroring the `ConsoleKey`
+  overloads.
 - `ConsoleForge.Core.TextInputState` — a pure editing reducer (`Value`, `Cursor`,
   and the edit operations) usable without a `TextInput` widget.
 - `IFocusable.FocusKey` — an optional, application-assigned identity for a focusable
@@ -39,6 +48,12 @@ marked **Breaking**.
 
 ### Changed
 
+- **Breaking:** `KeyPattern.Key` is `ConsoleKey?`. Null is a wildcard, matching how the
+  modifier fields already behaved, which is what lets a pattern match on `Character`
+  alone. Constructing a pattern is unchanged, since `ConsoleKey` widens implicitly, but
+  code that reads or deconstructs `.Key` now gets a nullable. A consequence worth
+  knowing: a pattern with no field set — `default(KeyPattern)` — matches every key
+  event, which is a usable catch-all but will swallow all input if reached by accident.
 - **Breaking:** focusable widgets moved to the `Update` API. `IFocusable.OnKeyEvent`
   is gone; input flows through the Elm path instead.
 - **Breaking:** `IFocusable.HasFocus` is `init`-only. It was a mutable setter on

@@ -207,6 +207,7 @@ static readonly KeyMap SidebarKeys = new KeyMap()
     .On(ConsoleKey.DownArrow, () => new NavDownMsg())
     .On(ConsoleKey.Enter,     () => new SelectMsg())
     .On(ConsoleKey.Escape,    () => new QuitMsg())
+    .On('?',                  () => new ShowHelpMsg())
     .On(KeyPattern.WithCtrl(ConsoleKey.C), () => new QuitMsg())
     .OnScroll(m => m.Button == MouseButton.ScrollUp
         ? new NavUpMsg() : new NavDownMsg());
@@ -215,7 +216,16 @@ static readonly KeyMap SidebarKeys = new KeyMap()
 if (SidebarKeys.Handle(msg) is { } action) msg = action;
 ```
 
-`KeyPattern` supports modifier wildcards: `Of(key)` (any modifiers), `WithCtrl(key)`, `WithAlt(key)`, `WithShift(key)`, and `Plain(key)` (no modifiers). `WithShift` is what makes case-sensitive and symbol bindings work — `?` is `WithShift(ConsoleKey.Oem2)` on a US layout.
+`KeyPattern` matches a key two ways. `Of(key)`, `WithCtrl(key)`, `WithAlt(key)`, `WithShift(key)` and `Plain(key)` match a `ConsoleKey` with the named modifiers — the right choice for keys that produce no character, such as arrows, Enter, Tab and function keys.
+
+`OfChar(char)` matches the character the terminal produced, which is what printable bindings want, because it does not assume a keyboard layout. `?` sits on `Shift+Oem2` on a US layout and somewhere else entirely on a German or French one, but it is `'?'` on all of them:
+
+```csharp
+.On('?', () => new ShowHelpMsg())          // shorthand for KeyPattern.OfChar('?')
+.On(KeyPattern.OfChar('N'), () => ...)     // capital N only — case-sensitive
+```
+
+Shift stays a wildcard for a character pattern, since it has already been consumed producing the glyph; Ctrl and Alt must be absent, because `Ctrl+letter` arrives as a control character and `Alt+key` is a separate binding. Every `KeyPattern` field is optional and null means "don't care", so `default(KeyPattern)` matches every key — useful as a trailing catch-all, and worth avoiding by accident.
 
 Compose maps: `globalKeys.Merge(pageKeys)` — first map takes priority.
 

@@ -52,6 +52,53 @@ public class KeyMapTests
         Assert.False(p.Matches(new KeyMsg(ConsoleKey.X, 'x')));
     }
 
+    // ── KeyPattern character matching ─────────────────────────────────────────
+
+    [Fact]
+    public void KeyPattern_OfChar_IgnoresConsoleKey()
+    {
+        // '?' is Shift+Oem2 on a US layout and a different physical key elsewhere.
+        var p = KeyPattern.OfChar('?');
+        Assert.True(p.Matches(new KeyMsg(ConsoleKey.Oem2, '?', Shift: true)));
+        Assert.True(p.Matches(new KeyMsg(ConsoleKey.Oem7, '?')));
+        Assert.True(p.Matches(new KeyMsg(ConsoleKey.None, '?')));
+        Assert.False(p.Matches(new KeyMsg(ConsoleKey.Oem2, '/')));
+    }
+
+    [Fact]
+    public void KeyPattern_OfChar_IsCaseSensitive()
+    {
+        var upper = KeyPattern.OfChar('N');
+        Assert.True(upper.Matches(new KeyMsg(ConsoleKey.N, 'N', Shift: true)));
+        Assert.True(upper.Matches(new KeyMsg(ConsoleKey.N, 'N'))); // caps lock — Shift is a wildcard
+        Assert.False(upper.Matches(new KeyMsg(ConsoleKey.N, 'n')));
+        Assert.False(KeyPattern.OfChar('n').Matches(new KeyMsg(ConsoleKey.N, 'N', Shift: true)));
+    }
+
+    [Fact]
+    public void KeyPattern_OfChar_RejectsCtrlAndAlt()
+    {
+        var p = KeyPattern.OfChar('/');
+        Assert.True(p.Matches(new KeyMsg(ConsoleKey.Oem2, '/')));
+        Assert.False(p.Matches(new KeyMsg(ConsoleKey.Oem2, '/', Ctrl: true)));
+        Assert.False(p.Matches(new KeyMsg(ConsoleKey.Oem2, '/', Alt: true)));
+    }
+
+    [Fact]
+    public void KeyPattern_OfChar_DoesNotMatchKeyWithoutCharacter()
+    {
+        Assert.False(KeyPattern.OfChar('?').Matches(new KeyMsg(ConsoleKey.UpArrow, null)));
+    }
+
+    [Fact]
+    public void KeyPattern_Default_MatchesEveryKey()
+    {
+        // Every field null is a wildcard, so the default pattern is a catch-all.
+        var p = default(KeyPattern);
+        Assert.True(p.Matches(new KeyMsg(ConsoleKey.UpArrow, null)));
+        Assert.True(p.Matches(new KeyMsg(ConsoleKey.Q, 'q', Shift: true, Alt: true, Ctrl: true)));
+    }
+
     // ── KeyMap key handling ───────────────────────────────────────────────────
 
     [Fact]
@@ -248,5 +295,21 @@ public class KeyMapTests
     {
         var map = new KeyMap().OnClick(_ => new TestMsg("x")).OnScroll(_ => new TestMsg("y"));
         Assert.Equal(2, map.MouseBindingCount);
+    }
+
+    [Fact]
+    public void Handle_CharBinding_MatchesRegardlessOfConsoleKey()
+    {
+        var map = new KeyMap().On('?', () => new TestMsg("help"));
+        Assert.Equal(new TestMsg("help"), map.Handle(new KeyMsg(ConsoleKey.Oem2, '?', Shift: true)));
+        Assert.Equal(new TestMsg("help"), map.Handle(new KeyMsg(ConsoleKey.Oem4, '?')));
+        Assert.Null(map.Handle(new KeyMsg(ConsoleKey.Oem2, '/')));
+    }
+
+    [Fact]
+    public void Handle_CharBinding_ReceivesOriginalKeyMsg()
+    {
+        var map = new KeyMap().On('n', k => new TestMsg(k.Key.ToString()));
+        Assert.Equal(new TestMsg("N"), map.Handle(new KeyMsg(ConsoleKey.N, 'n')));
     }
 }
