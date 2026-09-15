@@ -1,19 +1,104 @@
 # ConsoleForge Wishlist
 
 Gaps and improvement ideas found while building real Elm-loop applications on
-top of ConsoleForge, ordered roughly by impact:
+top of ConsoleForge, grouped by the release they are scheduled for:
 
 - PlexTui — a Plex client with drill-down navigation, long scrolling lists and
   poster artwork, which is what surfaced the renderer and event-loop entries in
-  the 0.4.0 rows below.
+  the Fixed section below.
 
 **Design target: Elm-correct in C#, with helpers** — see `AGENTS.md`. Not
 `bubbles` parity. Several items below cite `bubbles` as prior art; take the
 ergonomic goal from it, never the stateful-component mechanism. Where the two
 conflict, Elm wins and the gap closes with a pure helper. Item 5 is the worked
-example, and is why items 4 and 5 rank above the `bubbles`-shaped items 2 and 6.
+example, and is why items 4 and 5 are scheduled ahead of the `bubbles`-shaped
+items 2 and 6.
 
-## Open
+## 0.4.0
+
+The release that finishes the Elm-purity migration. `OnKeyEvent` is already gone;
+these close the rest, and every remaining breaking change lands here so 0.5.0 can
+be purely additive.
+
+Item numbers are stable identifiers, not priorities or ordering — they never get
+reused or renumbered. Work the items in the order listed.
+
+**Done when:** the four items below are resolved, `CHANGELOG.md` has its
+`[Unreleased]` section promoted to `0.4.0`, and the tag is pushed.
+
+### 5. Consolidate input handling into one model *(partly done)*
+
+Three input mechanisms coexist: model `Update` + `KeyMap` (Elm style), widget
+`OnKeyEvent(KeyMsg, Action<IMsg>)` + `HasFocus`/FocusManager (imperative
+callbacks), and now reducers (item 4). The imperative widget path works against
+the Elm loop: messages are emitted through a side channel and focus state
+lives outside the model.
+
+**Proposal:** standardize on the Elm path plus reducers; deprecate
+`OnKeyEvent` before more code depends on it.
+
+**Landed:** `OnKeyEvent` is gone — `IFocusable` is now
+`(IFocusable Next, ICmd? Cmd) Update(KeyMsg key)`. Still open: the reducers (item 4),
+and `IFocusable.HasFocus { get; set; }`, a mutable setter that keeps focus state
+outside the model. Under the design target that setter is the next thing to go.
+
+**0.4.0 scope:** `IFocusable.HasFocus` becomes `init`. Every write in the
+repository is already an object initializer or a `with`, so the six declarations
+change one word each and no call site moves. Breaking for anyone assigning after
+construction, which is why it ships alongside the `OnKeyEvent` removal rather
+than after it. The reducers stay open.
+
+### 7. `Cmd.Debounce` / `Cmd.Throttle` can't debounce from `Update`
+
+Both hold their state in the closure the factory returns, so they only work if
+the *same cmd instance* is re-dispatched — as their XML docs say. But `Update`
+is where you decide to debounce, and it builds a fresh cmd each call, so the
+natural Elm usage silently never debounces. Storing one instance is not a way
+out either: the captured `fn` usually varies per item (PlexTui needed a
+different poster URL per row), and parking a mutable closure in the model
+violates the immutability rule the architecture is built on.
+
+**Proposal:** key the state outside the closure — `Cmd.Debounce(key, interval,
+fn)` with the pending-cancellation table owned by the dispatcher, so re-dispatch
+under the same key supersedes the previous one. PlexTui works around it with a
+generation counter plus `Cmd.Tick`, which is the pattern the framework should
+be providing.
+
+**0.4.0 scope:** all of it. This is the only open item that is a defect in
+shipped public API rather than a missing feature — the documented usage silently
+does nothing. Touches `CmdDispatcher`, so it is Tier 3 gated.
+
+### 3. Layout-independent character matching (`KeyPattern.OfChar`)
+
+`KeyPattern` matches `ConsoleKey` + modifiers only. Symbol keys therefore
+assume a US keyboard layout: devo binds `?` as `WithShift(Oem2)` and `/` as
+`Plain(Oem2)` — wrong on non-US layouts. `KeyMsg` already carries
+`Character`.
+
+**Proposal:** `KeyPattern.OfChar(char)` matching on `KeyMsg.Character`,
+preferred for printable bindings (`?`, `/`, case-sensitive letters like
+`n` vs `N`).
+
+**0.4.0 scope:** all of it. Additive, and symbol bindings are wrong on every
+non-US layout until it lands.
+
+### 6. `Modal` backdrop semantics *(documented, dim not implemented)*
+
+`showBackdrop: true` paints over everything beneath it, which reads as "the
+application disappeared" when composed with `ZStack` (devo's PR list vanished
+behind the repo picker until the backdrop was disabled). With it disabled,
+lower layers show through — good — but nothing dims them.
+
+**Proposal:** document the flag's actual behavior, and consider a
+`BackdropStyle`-driven dim (restyle the underlying cells faint/desaturated
+rather than blanking them) for a proper modal feel.
+
+**0.4.0 scope:** the documentation only — write down what `showBackdrop` actually
+does. The `BackdropStyle` dim is deferred; it is a feature, not a correction.
+
+## Later
+
+Additive, so deferring costs no one a migration.
 
 ### 1. Component-level subscriptions
 
@@ -43,20 +128,9 @@ KeyMap On(this KeyMap map, KeyBinding b, Func<IMsg> msg); // registers all patte
 
 **Proposal:** promote `KeyBinding` into `ConsoleForge.Core` with an `Enabled`
 flag (disabled = skipped by `Handle`, hidden from help), a
-`KeyMap.On(KeyBinding, ...)` overload, and a `HelpBar` widget (#14) rendering
+`KeyMap.On(KeyBinding, ...)` overload, and a `HelpBar` widget rendering
 `q quit · esc back · ? help` from `IReadOnlyList<KeyBinding>` in the theme's
 muted style.
-
-### 3. Layout-independent character matching (`KeyPattern.OfChar`)
-
-`KeyPattern` matches `ConsoleKey` + modifiers only. Symbol keys therefore
-assume a US keyboard layout: devo binds `?` as `WithShift(Oem2)` and `/` as
-`Plain(Oem2)` — wrong on non-US layouts. `KeyMsg` already carries
-`Character`.
-
-**Proposal:** `KeyPattern.OfChar(char)` matching on `KeyMsg.Character`,
-preferred for printable bindings (`?`, `/`, case-sensitive letters like
-`n` vs `N`).
 
 ### 4. `TextInputState` — pure editing reducer *(landed for TextInput)*
 
@@ -77,8 +151,8 @@ sealed record TextInputState(string Value = "", int Cursor = 0)
 ```
 
 Same pattern later for `TextAreaState` and `ListState` (selection + scroll
-clamping). Cursor blink: render-side, or a framework subscription once #2
-lands.
+clamping). Cursor blink: render-side, or a framework subscription once component-level
+subscriptions land.
 
 **Landed (0.4.0):** `ConsoleForge.Core.TextInputState` — `Value`, `Cursor`, and a
 pure `HandleKey(KeyMsg)`. Cursor movement and deletion work in grapheme clusters,
@@ -89,49 +163,6 @@ no copy can land mid-cluster. Adds word jumps (`Ctrl+←/→`, `Ctrl+W`), line j
 for paste. `TextInput.Update` now delegates to it, so the widget and the reducer
 cannot drift — and the widget picked up all of the above for free. Still open:
 `TextAreaState` and `ListState`.
-
-### 5. Consolidate input handling into one model *(partly done)*
-
-Three input mechanisms coexist: model `Update` + `KeyMap` (Elm style), widget
-`OnKeyEvent(KeyMsg, Action<IMsg>)` + `HasFocus`/FocusManager (imperative
-callbacks), and now reducers (#5). The imperative widget path works against
-the Elm loop: messages are emitted through a side channel and focus state
-lives outside the model.
-
-**Proposal:** standardize on the Elm path plus reducers; deprecate
-`OnKeyEvent` before more code depends on it.
-
-**Landed:** `OnKeyEvent` is gone — `IFocusable` is now
-`(IFocusable Next, ICmd? Cmd) Update(KeyMsg key)`. Still open: the reducers (#5),
-and `IFocusable.HasFocus { get; set; }`, a mutable setter that keeps focus state
-outside the model. Under the design target that setter is the next thing to go.
-
-### 6. `Modal` backdrop semantics *(documented, dim not implemented)*
-
-`showBackdrop: true` paints over everything beneath it, which reads as "the
-application disappeared" when composed with `ZStack` (devo's PR list vanished
-behind the repo picker until the backdrop was disabled). With it disabled,
-lower layers show through — good — but nothing dims them.
-
-**Proposal:** document the flag's actual behavior, and consider a
-`BackdropStyle`-driven dim (restyle the underlying cells faint/desaturated
-rather than blanking them) for a proper modal feel.
-
-### 7. `Cmd.Debounce` / `Cmd.Throttle` can't debounce from `Update`
-
-Both hold their state in the closure the factory returns, so they only work if
-the *same cmd instance* is re-dispatched — as their XML docs say. But `Update`
-is where you decide to debounce, and it builds a fresh cmd each call, so the
-natural Elm usage silently never debounces. Storing one instance is not a way
-out either: the captured `fn` usually varies per item (PlexTui needed a
-different poster URL per row), and parking a mutable closure in the model
-violates the immutability rule the architecture is built on.
-
-**Proposal:** key the state outside the closure — `Cmd.Debounce(key, interval,
-fn)` with the pending-cancellation table owned by the dispatcher, so re-dispatch
-under the same key supersedes the previous one. PlexTui works around it with a
-generation counter plus `Cmd.Tick`, which is the pattern the framework should
-be providing.
 
 ## Fixed (for the record)
 
