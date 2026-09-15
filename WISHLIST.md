@@ -15,15 +15,36 @@ worked example — see the 0.4.0 rows in Fixed — and item 8 carries the rest.
 
 ## 0.4.0
 
-The release that finishes the Elm-purity migration. `OnKeyEvent` is already gone;
-these close the rest, and every remaining breaking change lands here so 0.5.0 can
-be purely additive.
+The release that finishes the Elm-purity migration. `OnKeyEvent` is already gone
+and `HasFocus` is immutable; these close the rest. Every remaining breaking change
+lands here — item 9 included, which is why it is in the release rather than after
+it — so 0.5.0 can be purely additive.
 
 Item numbers are stable identifiers, not priorities or ordering — they never get
 reused or renumbered. Work the items in the order listed.
 
-**Done when:** the three items below are resolved, `CHANGELOG.md` has its
+**Done when:** the five items below are resolved, `CHANGELOG.md` has its
 `[Unreleased]` section promoted to `0.4.0`, and the tag is pushed.
+
+### 9. Focus ownership — move focus into the model
+
+`App._focusIndex` is the source of truth for which widget has focus. The framework
+walks the tree depth-first, computes the index, and pushes it in as
+`FocusIndexChangedMsg`; the model then rebuilds its widgets with `HasFocus` set.
+Making `HasFocus` `init`-only (0.4.0) removed the mutation but not the split —
+focus is still framework state that the model mirrors.
+
+The index is also positional. `HandleTabFocus` re-collects focusables from the
+tree and advances an integer into that list, so a tree whose shape changes between
+frames silently re-points it at a different widget: a modal opening, or a list
+finishing its load, is enough.
+
+**Proposal:** focus lives in the model, identified by something stable rather than
+by position in a depth-first walk. The framework reads it instead of owning it.
+
+This is the largest item in the release and the only one whose shape is not yet
+settled, which is why it is listed first — finding out it is bigger than expected
+should happen while the release still has room.
 
 ### 7. `Cmd.Debounce` / `Cmd.Throttle` can't debounce from `Update`
 
@@ -73,6 +94,20 @@ rather than blanking them) for a proper modal feel.
 **0.4.0 scope:** the documentation only — write down what `showBackdrop` actually
 does. The `BackdropStyle` dim is deferred; it is a feature, not a correction.
 
+### 8. `TextAreaState` and `ListState` reducers
+
+`TextInputState` landed and `TextInput` delegates to it, so the two cannot drift.
+`TextArea` and `List` have no equivalent: `TextArea` re-implements cursor movement
+and editing in its own `Update`, and `List` clamps selection and scroll itself.
+Anyone wanting a filter box or a selectable list without taking the widget
+re-implements both — the situation `TextInputState` was written to end.
+
+**Proposal:** `TextAreaState` (multi-line editing, reusing `TextInputState`'s
+grapheme-cluster handling) and `ListState` (selection plus scroll clamping against
+a viewport height). Both widgets delegate, as `TextInput` does.
+
+Additive, and the lowest-risk item in the release — take it last.
+
 ## Later
 
 Additive, so deferring costs no one a migration.
@@ -109,35 +144,6 @@ flag (disabled = skipped by `Handle`, hidden from help), a
 `q quit · esc back · ? help` from `IReadOnlyList<KeyBinding>` in the theme's
 muted style.
 
-### 8. Finish the input consolidation: reducers and focus ownership
-
-What the `TextInputState` and `OnKeyEvent` work did not close — see the 0.4.0 rows
-in Fixed. Both halves are the same gap: input state the framework owns that the
-model should.
-
-**Reducers.** `TextInputState` landed and `TextInput` delegates to it, so the two
-cannot drift. `TextArea` and `List` have no equivalent: `TextArea` re-implements
-cursor movement and editing in its own `Update`, and `List` clamps selection and
-scroll itself. Anyone wanting a filter box or a selectable list without taking the
-widget re-implements both, which is the situation `TextInputState` was written to
-end.
-
-**Proposal:** `TextAreaState` (multi-line editing, reusing `TextInputState`'s
-grapheme-cluster handling) and `ListState` (selection plus scroll clamping against
-a viewport height). Both widgets delegate, as `TextInput` does.
-
-**Focus ownership.** `App._focusIndex` is the source of truth for which widget has
-focus. The framework walks the tree depth-first, computes the index, and pushes it
-in as `FocusIndexChangedMsg`; the model then rebuilds its widgets with `HasFocus`
-set. Making `HasFocus` `init`-only removed the mutation but not the split — focus
-is still framework state the model mirrors. The index is also positional, so a
-tree whose shape changes between frames silently re-points it at a different
-widget: a modal opening or a list finishing its load is enough.
-
-**Proposal:** focus belongs in the model, identified by something stable rather
-than by position in a depth-first walk. This is the larger half, and it is the
-last thing standing between `IFocusable` and the design target.
-
 ## Fixed (for the record)
 
 What each gap turned out to be, and what shipped.
@@ -150,7 +156,7 @@ What each gap turned out to be, and what shipped.
 | 0.3.2 | `Cmd.Batch` was a `Task.WhenAll` barrier (spinner ticks waited on fetches) and **nested batches were silently dropped** by the event loop. Batch now resolves to `BatchDispatchMsg`; the loop dispatches children independently — messages stream in as they complete, and nesting unfolds correctly. |
 | 0.3.2 | `DispatchCmd` executed every async command **twice** (the synchronous fast-path check invoked it, then the slow path re-invoked it via `CmdDispatcher`). The slow path now awaits the already-started task. |
 | 0.4.0 | Text editing lived nowhere reusable: `TextInput` was render-only, so every consumer re-implemented append/backspace in its own `Update`. `bubbles` solves this with a nested component owning its own update loop, which the Elm architecture has no room for; the Elm-native answer is a pure reducer. `ConsoleForge.Core.TextInputState` is that — `Value`, `Cursor`, and `HandleKey(KeyMsg)`. Movement and deletion work in grapheme clusters, so an emoji or combining mark moves as one unit rather than leaving half a surrogate pair, and the cursor re-normalises on every `with`, so no copy lands mid-cluster. Adds word jumps (`Ctrl+←/→`, `Ctrl+W`), line jumps (`Home`/`End`, `Ctrl+A`/`Ctrl+E`), kill-to-edge (`Ctrl+U`/`Ctrl+K`) and `Insert`. `TextInput.Update` delegates to it, so widget and reducer cannot drift — and the widget picked up all of the above for free. `TextAreaState` and `ListState` carry on as item 8. |
-| 0.4.0 | Three input mechanisms coexisted: model `Update` + `KeyMap`, imperative `OnKeyEvent(KeyMsg, Action<IMsg>)` callbacks with framework-held focus, and reducers. The imperative path worked against the Elm loop — messages left through a side channel and focus state sat outside the model. `OnKeyEvent` is gone; `IFocusable` is now `(IFocusable Next, ICmd? Cmd) Update(KeyMsg key)`. `IFocusable.HasFocus` is `init`-only across the interface and all five focusable widgets, so a widget's focus can no longer be mutated after construction — it was a settable property on records, where the mutation also participated in equality. Every assignment in the repository was already an object initializer or a `with`, so only two test sites moved. Focus *ownership* is a separate gap and carries on as item 8. |
+| 0.4.0 | Three input mechanisms coexisted: model `Update` + `KeyMap`, imperative `OnKeyEvent(KeyMsg, Action<IMsg>)` callbacks with framework-held focus, and reducers. The imperative path worked against the Elm loop — messages left through a side channel and focus state sat outside the model. `OnKeyEvent` is gone; `IFocusable` is now `(IFocusable Next, ICmd? Cmd) Update(KeyMsg key)`. `IFocusable.HasFocus` is `init`-only across the interface and all five focusable widgets, so a widget's focus can no longer be mutated after construction — it was a settable property on records, where the mutation also participated in equality. Every assignment in the repository was already an object initializer or a `with`, so only two test sites moved. Focus *ownership* is a separate gap and carries on as item 9. |
 | 0.4.0 | Character widths came from hand-written ranges that called the whole `U+1F300`–`U+1FAFF` block 2 columns wide. Many pictographs there have default *text* presentation and East_Asian_Width `N`, so terminals draw them in one column (`U+1F39E` FILM FRAMES among them), and combining marks / ZWJ / variation selectors were counted as 1 rather than 0. Every glyph after one drifted a column, and since the frame diff trusts its own model of the screen it never repaired it. Table is now generated from the UCD; `WidthWalker` applies the `U+FE0F` promotion that a single rune can't express. |
 | 0.4.0 | The frame diff skipped its comparison entirely for cells holding `null` — i.e. every cell no widget wrote, which is most of the screen — and re-emitted them each frame. A 300-key burst emitted 27403 characters against 27435 for a full repaint, so "only changed cells are emitted" was close to false. `null` now compares as the themed default cell, and a cell whose previous content was a sentinel always repaints, because what the terminal shows there isn't derivable from the buffer. |
 | 0.4.0 | Fixing the above made a theme switch skip untouched cells and strand the old background on screen. `Reset` now drops the previous buffer when the theme or colour profile changes, comparing themes by value so an equal-but-distinct instance per frame doesn't force a full repaint. |
