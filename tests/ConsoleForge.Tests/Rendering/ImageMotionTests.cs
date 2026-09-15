@@ -25,20 +25,29 @@ public class ImageMotionTests
         0x08, 0x06, 0x00, 0x00, 0x00, tag,
     ];
 
-    private static readonly TerminalCapabilities Kitty = new() { SupportsKittyGraphics = true };
+    // Both modes are stated, never inherited from the terminal running the suite. tmux is
+    // the interesting axis here: it is the only case where a *stationary* placement is
+    // renewed each frame, which used to mask the fact that a *moved* one was not re-placed
+    // at all. A test that read the ambient TMUX variable passed or failed according to
+    // where the developer ran it.
+    private static readonly TerminalCapabilities Kitty =
+        new() { SupportsKittyGraphics = true, InsideTmux = false };
+
+    private static readonly TerminalCapabilities KittyInTmux =
+        new() { SupportsKittyGraphics = true, InsideTmux = true };
 
     private const int Width = 40, Height = 10;
     private const int CardWidth = 8;
 
     /// <summary>A row of image cards starting at <paramref name="offset"/> columns from the left.</summary>
-    private static Container Row(byte[][] images, int offset)
+    private static Container Row(byte[][] images, int offset, TerminalCapabilities? caps = null)
     {
         var cells = new List<IWidget>();
         if (offset > 0)
             cells.Add(new TextBlock("") { Width = SizeConstraint.Fixed(offset) });
 
         foreach (var png in images)
-            cells.Add(new ImageWidget(png, Kitty)
+            cells.Add(new ImageWidget(png, caps ?? Kitty)
             {
                 Width = SizeConstraint.Fixed(CardWidth),
                 Height = SizeConstraint.Fixed(Height),
@@ -137,6 +146,19 @@ public class ImageMotionTests
         // without re-sending it.
         var png = Png(1);
         var (_, second) = TwoFrames(Row([png], 2), Row([png], 1));
+
+        Assert.Equal(0, Uploads(second));
+        Assert.Equal(1, Placements(second));
+    }
+
+    [Fact]
+    public void MovedImage_IsRePlaced_InTmuxToo()
+    {
+        // The same guarantee under tmux. Re-placing a moved image is not the tmux renewal
+        // and must not depend on it: outside tmux the renewal is deliberately skipped, and
+        // for a while that left a moved image deleted from its old slot and placed nowhere.
+        var png = Png(1);
+        var (_, second) = TwoFrames(Row([png], 2, KittyInTmux), Row([png], 1, KittyInTmux));
 
         Assert.Equal(0, Uploads(second));
         Assert.Equal(1, Placements(second));

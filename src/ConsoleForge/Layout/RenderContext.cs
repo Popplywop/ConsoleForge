@@ -437,12 +437,15 @@ public sealed class RenderContext : IRenderContext
             }
         }
 
-        // 2. Emit current raw regions.
-        //    - Payload not present last frame → full Encode() (upload + place).
-        //    - Payload was present            → Refresh() only (re-place, no re-upload),
-        //      whether or not it moved. Matching on payload identity rather than on region
-        //      is what makes motion affordable: a scrolling row changes every region every
-        //      frame, and re-uploading each image per frame costs the whole payload again.
+        // 2. Emit current raw regions. Matching on payload identity rather than on region
+        //    is what makes motion affordable: a scrolling row changes every region every
+        //    frame, and re-uploading each image per frame costs the whole payload again.
+        //    - Not present last frame    → full Encode() (upload + place).
+        //    - Present, at a new region  → Place(): step 1 already deleted the placement at
+        //      the old region, so this one is mandatory — skipping it leaves nothing on
+        //      screen — but it must not re-upload.
+        //    - Present, same region      → Refresh(), which is optional and usually null;
+        //      a payload that stayed put generally needs nothing at all.
         if (_rawRegions is not null)
         {
             foreach (var entry in _rawRegions)
@@ -466,6 +469,12 @@ public sealed class RenderContext : IRenderContext
                 {
                     EmitCursorMove();
                     foreach (var seq in entry.Payload.Encode(entry.Region, ColorProfile))
+                        sb.Append(seq);
+                }
+                else if (!WasRawPayloadAtSameRegionLastFrame(entry))
+                {
+                    EmitCursorMove();
+                    foreach (var seq in entry.Payload.Place(entry.Region, ColorProfile))
                         sb.Append(seq);
                 }
                 else
@@ -578,6 +587,20 @@ public sealed class RenderContext : IRenderContext
         if (_prevRawRegions is null) return false;
         foreach (var prev in _prevRawRegions)
             if (prev.Hash == entry.Hash) return true;
+        return false;
+    }
+
+    /// <summary>
+    /// True when this payload occupied this same region last frame, i.e. it did not move.
+    /// The inverse of the test in <see cref="IsRawPayloadStillAtSameRegion"/>, read from the
+    /// current frame's side: that one decides whether a vacated region needs a delete, this
+    /// one whether the payload needs re-placing where it now sits.
+    /// </summary>
+    private bool WasRawPayloadAtSameRegionLastFrame(RawEntry entry)
+    {
+        if (_prevRawRegions is null) return false;
+        foreach (var prev in _prevRawRegions)
+            if (prev.Hash == entry.Hash && prev.Region == entry.Region) return true;
         return false;
     }
 }

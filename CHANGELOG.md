@@ -11,6 +11,13 @@ marked **Breaking**.
 
 ### Added
 
+- `TerminalCapabilities.InsideTmux` — whether the host is a tmux session, which decides
+  DCS passthrough wrapping and per-frame placement renewal. `Detect()` fills it from
+  `TMUX`/`TERM` as before; the point is that a caller can now state it. A payload built
+  without capabilities still probes the environment, so nothing changes for one.
+- `IRawEscapePayload.Place` — re-position content the terminal already holds, for a
+  payload that moved between frames. Defaults to `Encode`, so existing implementations
+  keep working; override it when the protocol can reposition without re-transmitting.
 - `HorizontalShelf` — a paged, virtualised strip of cover art, sized for poster
   rows that are wider than the terminal.
 - `SizeConstraint.Auto` now sizes to content for widgets that implement the new
@@ -76,6 +83,16 @@ marked **Breaking**.
 
 ### Fixed
 
+- An image that moved vanished outside tmux. A payload present in the previous frame
+  was re-placed through `Refresh`, which returns null when not inside tmux — correctly,
+  because a payload that stayed put needs nothing and renewing one every frame is what
+  made artwork flicker. But the frame builder had already emitted the delete for the
+  region the payload just left, so outside tmux a scrolling shelf deleted each image and
+  placed nothing. Motion and renewal are now separate: `IRawEscapePayload.Place` re-places
+  a payload that moved (mandatory, and cheap — Kitty sends one `a=p`, never a re-upload),
+  while `Refresh` keeps its narrower job of renewing a *stationary* placement against
+  tmux's cursor drift. The behaviour was invisible to anyone running the test suite
+  inside tmux, where the renewal happened to cover the moved case.
 - Layout allocations are keyed by widget **identity**, not value. Widgets are
   records, so two structurally identical widgets in one tree collided in the
   allocation map and the second evicted the first, leaving the first reporting a

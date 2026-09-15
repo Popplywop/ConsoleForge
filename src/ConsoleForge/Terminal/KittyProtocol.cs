@@ -101,14 +101,18 @@ public sealed class KittyPayload : IRawEscapePayload
         var encoded    = KittyProtocol.GetEncoded(pngBytes);
         _imageId       = encoded.ImageId;
         _base64        = encoded.Base64;
-        _insideTmux    = DetectTmux();
+        // Declared capabilities win when supplied, so a caller states the mode rather than
+        // inheriting whatever terminal the process happens to be running in. Only the
+        // no-capabilities path falls back to probing the environment.
+        _insideTmux    = capabilities?.InsideTmux ?? DetectTmux();
         _paneRowOffset = capabilities?.TmuxPaneRowOffset ?? 0;
         _paneColOffset = capabilities?.TmuxPaneColOffset ?? 0;
     }
 
     /// <summary>
-    /// True when running inside a tmux session — triggers DCS passthrough wrapping.
-    /// Detected once at construction; environment variables don't change mid-session.
+    /// Last-resort tmux probe for a payload built without <see cref="TerminalCapabilities"/>.
+    /// Prefer <see cref="TerminalCapabilities.InsideTmux"/>, which <c>Detect()</c> fills from
+    /// the same variables but lets a caller — a test especially — override it.
     /// </summary>
     private static bool DetectTmux() =>
         Environment.GetEnvironmentVariable("TMUX") is not null ||
@@ -191,35 +195,48 @@ public sealed class KittyPayload : IRawEscapePayload
         // correct position even when tmux render cycles move the outer cursor
         // between upload chunks. For non-tmux the cursor-move was already emitted
         // by RenderContext.ToAnsiFrame immediately before this call.
-        string placeApc = $"\x1b_Ga=p,i={_imageId},p={PlacementId(region)},q=2," +
-                          $"c={region.Width},r={region.Height}\x1b\\";
-        yield return _insideTmux ? BuildTmuxSequence(region, placeApc) : placeApc;
+        yield return PlaceSequence(region);
+    }
+
+    /// <summary>
+    /// The <c>a=p</c> command that displays the already-uploaded image at
+    /// <paramref name="region"/>, carrying the region-derived placement id so it replaces
+    /// any placement already there rather than stacking another copy on it.
+    /// </summary>
+    private string PlaceSequence(Region region)
+    {
+        string apc = $"\x1b_Ga=p,i={_imageId},p={PlacementId(region)},q=2," +
+                     $"c={region.Width},r={region.Height}\x1b\\";
+        return _insideTmux ? BuildTmuxSequence(region, apc) : apc;
     }
 
     /// <inheritdoc/>
     /// <remarks>
+    /// Moving an image costs one <c>a=p</c>, not a re-upload: Kitty separates transmit
+    /// (<c>a=t</c>) from place (<c>a=p</c>) precisely so already-held image data can be
+    /// repositioned. The framework has already deleted the placement at the old region,
+    /// and the placement id here is derived from the new one.
+    /// </remarks>
+    public IEnumerable<string> Place(Region region, ColorProfile profile)
+        => Enumerable.Repeat(PlaceSequence(region), 1);
+
+    /// <inheritdoc/>
+    /// <remarks>
     /// <para>
-    /// Re-places the already-uploaded image with a cheap <c>a=p</c>. This exists for tmux:
-    /// its re-render cycles move the outer terminal's cursor between frames, so a placement
-    /// that is not renewed drifts out of position.
+    /// Renews a <em>stationary</em> placement with a cheap <c>a=p</c>. This exists for
+    /// tmux: its re-render cycles move the outer terminal's cursor between frames, so a
+    /// placement that is not renewed drifts out of position.
     /// </para>
     /// <para>
-    /// Outside tmux it returns null, deliberately. Nothing moves an already-placed image,
+    /// Outside tmux it returns null, deliberately. Nothing moves an image that stayed put,
     /// and <c>a=p</c> creates an <em>additional</em> placement rather than updating the
     /// existing one — so renewing every frame made the terminal redraw every visible image
-    /// at the frame rate, which reads as flicker on a screen full of artwork.
+    /// at the frame rate, which reads as flicker on a screen full of artwork. An image that
+    /// actually moved goes through <see cref="Place"/> instead, in or out of tmux.
     /// </para>
     /// </remarks>
     public IEnumerable<string>? Refresh(Region region, ColorProfile profile)
-    {
-        if (!_insideTmux) return null;
-
-        // Same placement id as the original place, so this replaces it rather than
-        // stacking another copy on top.
-        string apc = $"\x1b_Ga=p,i={_imageId},p={PlacementId(region)},q=2," +
-                     $"c={region.Width},r={region.Height}\x1b\\";
-        return Enumerable.Repeat(BuildTmuxSequence(region, apc), 1);
-    }
+        => _insideTmux ? Enumerable.Repeat(PlaceSequence(region), 1) : null;
 
     /// <inheritdoc/>
     /// <remarks>

@@ -21,6 +21,19 @@ public sealed class TerminalCapabilities
     public bool SupportsKittyGraphics { get; init; }
 
     /// <summary>
+    /// True when running inside a tmux session, which means Kitty graphics sequences must
+    /// be wrapped in DCS passthrough blocks and stationary placements renewed each frame
+    /// against tmux's re-render cursor drift.
+    /// <para>
+    /// <see cref="Detect"/> sets this from <c>TMUX</c> and <c>TERM</c>. Set it explicitly
+    /// to state the mode rather than inherit it from the ambient environment — which is
+    /// what tests should do, so a suite does not pass or fail according to whether the
+    /// developer happens to be running inside tmux.
+    /// </para>
+    /// </summary>
+    public bool InsideTmux { get; init; }
+
+    /// <summary>
     /// When running inside tmux, the number of terminal rows above the active pane
     /// (i.e. the height of status bars positioned at the top of the window).
     /// 0 when not in tmux or when the status bar is at the bottom.
@@ -101,6 +114,7 @@ public sealed class TerminalCapabilities
         return new TerminalCapabilities
         {
             SupportsKittyGraphics = kitty,
+            InsideTmux            = insideTmux,
             TmuxPaneRowOffset     = rowOffset,
             TmuxPaneColOffset     = colOffset,
         };
