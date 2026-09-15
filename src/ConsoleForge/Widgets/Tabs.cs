@@ -28,6 +28,9 @@ public sealed record Tabs : IFocusable
     /// <inheritdoc/>
     public bool HasFocus { get; init; }
 
+    /// <inheritdoc/>
+    public string? FocusKey { get; init; }
+
     // ── IWidget ─────────────────────────────────────────────────────────────
     public SizeConstraint Width { get; init; } = SizeConstraint.Flex(1);
     public SizeConstraint Height { get; init; } = SizeConstraint.Flex(1);

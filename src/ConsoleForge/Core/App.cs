@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Threading.Channels;
+
 using ConsoleForge.Layout;
 using ConsoleForge.Styling;
 using ConsoleForge.Terminal;
@@ -27,12 +28,6 @@ public sealed class App
     private readonly Renderer _renderer = new();
 
     /// <summary>
-    /// Zero-based index into the depth-first focusable list. -1 = no focus.
-    /// Updated by HandleTabFocus; dispatched to the model as FocusIndexChangedMsg.
-    /// </summary>
-    private int _focusIndex = -1;
-
-    /// <summary>
     /// Run the application asynchronously. Returns when the model produces a <see cref="QuitMsg"/>.
     /// </summary>
     /// <param name="model">Initial model. <c>Init()</c> is called before the loop starts.</param>
@@ -51,9 +46,9 @@ public sealed class App
     {
         var program = new App
         {
-            _theme      = theme ?? Theme.Default,
+            _theme = theme ?? Theme.Default,
             ColorProfile = DetectColorProfile(),
-            _enableMouse  = enableMouse,
+            _enableMouse = enableMouse,
         };
         return program.RunInternal(model, terminal, targetFps);
     }
@@ -283,12 +278,6 @@ public sealed class App
         if (msg is ThemeChangedMsg themeChange)
             SetTheme(themeChange.NewTheme);
 
-        // Handle Tab for focus traversal, then fall through to model.Update
-        if (msg is KeyMsg { Key: ConsoleKey.Tab } tabKey)
-        {
-            HandleTabFocus(tabKey.Shift);
-        }
-
         // Click-to-focus: left-click press moves focus to the clicked widget
         if (msg is MouseMsg { Button: MouseButton.Left, Action: MouseAction.Press } click)
         {
@@ -325,52 +314,23 @@ public sealed class App
         }
     }
 
-    private void HandleTabFocus(bool reverse)
-    {
-        IReadOnlyList<IFocusable> focusable;
-        lock (_renderLock)
-        {
-            // Traverse the frame on screen rather than rebuilding the tree: View() is the
-            // single most expensive thing a keystroke can trigger, and the renderer has
-            // already produced exactly the tree the user is looking at.
-            if (!_renderer.TryGetLastFrame(out var rootWidget, out _)) return;
-            focusable = FocusManager.CollectFocusable(rootWidget);
-        }
-        if (focusable.Count == 0) return;
-
-        if (reverse)
-            _focusIndex = _focusIndex <= 0 ? focusable.Count - 1 : _focusIndex - 1;
-        else
-            _focusIndex = (_focusIndex + 1) % focusable.Count;
-
-        _channel.Writer.TryWrite(new FocusIndexChangedMsg(_focusIndex));
-    }
-
     private void HandleMouseFocus(MouseMsg click)
     {
         IFocusable? hit;
-        IReadOnlyList<IFocusable> focusable;
 
-        // Held for both reads: the layout belongs to a renderer buffer that the next
-        // frame reclaims, so releasing between the hit test and the index lookup would
-        // let a frame boundary swap the regions mid-decision.
+        // Held across the hit test: the layout belongs to a renderer buffer that the
+        // next frame reclaims, so releasing it mid-test would let a frame boundary swap
+        // the regions underneath the lookup.
         lock (_renderLock)
         {
             if (!_renderer.TryGetLastFrame(out var rootWidget, out var layout)) return;
 
             hit = FocusManager.FindFocusableAt(rootWidget, layout, click.Col, click.Row);
-            if (hit is null) return;
-
-            focusable = FocusManager.CollectFocusable(rootWidget);
+            if (hit?.FocusKey is string key)
+            {
+                _channel.Writer.TryWrite(new FocusRequestedMsg(key));
+            }
         }
-
-        var idx = -1;
-        for (var i = 0; i < focusable.Count; i++)
-            if (ReferenceEquals(focusable[i], hit)) { idx = i; break; }
-
-        if (idx < 0 || idx == _focusIndex) return;
-        _focusIndex = idx;
-        _channel.Writer.TryWrite(new FocusIndexChangedMsg(_focusIndex));
     }
 
     private void DispatchCmd(ICmd? cmd)
@@ -486,12 +446,8 @@ public sealed class App
             return ColorProfile.TrueColor;
 
         var term = Environment.GetEnvironmentVariable("TERM") ?? "";
-        if (term.Contains("256color", StringComparison.OrdinalIgnoreCase))
-            return ColorProfile.Ansi256;
-
-        if (term.Length > 0 && !term.Equals("dumb", StringComparison.OrdinalIgnoreCase))
-            return ColorProfile.Ansi;
-
-        return ColorProfile.NoColor;
+        return term.Contains("256color", StringComparison.OrdinalIgnoreCase)
+            ? ColorProfile.Ansi256
+            : term.Length > 0 && !term.Equals("dumb", StringComparison.OrdinalIgnoreCase) ? ColorProfile.Ansi : ColorProfile.NoColor;
     }
 }

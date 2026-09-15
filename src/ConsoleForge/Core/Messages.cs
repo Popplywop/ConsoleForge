@@ -19,11 +19,8 @@ public sealed record WindowResizeMsg(int Width, int Height) : IMsg;
 /// <summary>Focus moved from one widget to another.</summary>
 public sealed record FocusChangedMsg(IWidget? Previous, IWidget? Next) : IMsg;
 
-/// <summary>
-/// Focus moved to the widget at <see cref="Index"/> in the depth-first focusable list.
-/// Models use this to set <c>HasFocus = true</c> on the correct widget instance.
-/// </summary>
-public sealed record FocusIndexChangedMsg(int Index) : IMsg;
+/// <summary>Focus was requested for a given widget by a mouse click event. </summary>
+public sealed record FocusRequestedMsg(string Key) : IMsg;
 
 /// <summary>Internal: aggregates results from Cmd.Batch concurrent execution.</summary>
 public sealed record BatchMsg(IMsg[] Messages) : IMsg;
@@ -100,5 +97,5 @@ public sealed record MouseMsg(
     int Col,
     int Row,
     bool Shift = false,
-    bool Alt   = false,
-    bool Ctrl  = false) : IMsg;
+    bool Alt = false,
+    bool Ctrl = false) : IMsg;
