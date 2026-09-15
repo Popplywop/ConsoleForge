@@ -26,6 +26,8 @@ reused or renumbered. Work the items in the order listed.
 **Done when:** the four items below are resolved, `CHANGELOG.md` has its
 `[Unreleased]` section promoted to `0.4.0`, and the tag is pushed.
 
+Remaining: items 7, 3, 6. Item 5's scope landed.
+
 ### 5. Consolidate input handling into one model *(partly done)*
 
 Three input mechanisms coexist: model `Update` + `KeyMap` (Elm style), widget
@@ -38,15 +40,22 @@ lives outside the model.
 `OnKeyEvent` before more code depends on it.
 
 **Landed:** `OnKeyEvent` is gone — `IFocusable` is now
-`(IFocusable Next, ICmd? Cmd) Update(KeyMsg key)`. Still open: the reducers (item 4),
-and `IFocusable.HasFocus { get; set; }`, a mutable setter that keeps focus state
-outside the model. Under the design target that setter is the next thing to go.
+`(IFocusable Next, ICmd? Cmd) Update(KeyMsg key)`.
 
-**0.4.0 scope:** `IFocusable.HasFocus` becomes `init`. Every write in the
-repository is already an object initializer or a `with`, so the six declarations
-change one word each and no call site moves. Breaking for anyone assigning after
-construction, which is why it ships alongside the `OnKeyEvent` removal rather
-than after it. The reducers stay open.
+**Landed (0.4.0):** `IFocusable.HasFocus` is `init`-only, across the interface and
+all five focusable widgets. Every assignment in the repository was already an
+object initializer or a `with`, so only two test sites moved.
+
+Still open: the reducers (item 4), and focus *ownership*. `init` removed the
+mutability, but `App._focusIndex` is still the source of truth, pushed into the
+model as `FocusIndexChangedMsg` — focus state lives beside the model rather than
+in it. Under the design target that is the next thing to go, and it is a larger
+change than the setter was.
+
+**0.4.0 scope: done.** `IFocusable.HasFocus` became `init` — six declarations,
+one word each, shipped alongside the `OnKeyEvent` removal so both breaking changes
+land in the same release. The reducers and focus ownership stay open, and are not
+0.4.0 work.
 
 ### 7. `Cmd.Debounce` / `Cmd.Throttle` can't debounce from `Update`
 

@@ -26,6 +26,11 @@ marked **Breaking**.
 
 - **Breaking:** focusable widgets moved to the `Update` API. `IFocusable.OnKeyEvent`
   is gone; input flows through the Elm path instead.
+- **Breaking:** `IFocusable.HasFocus` is `init`-only. It was a mutable setter on
+  record widgets, so focus could be changed after construction and the change
+  participated in record equality. Every assignment in this repository was
+  already an object initializer or a `with`, so call sites are unaffected unless
+  they assigned after construction.
 - `LayoutEngine` and `Container.Render` now share one layout solver, so the
   regions a container renders into match the ones layout resolved.
 - Input is drawn one frame per batch rather than one frame per message. A burst
