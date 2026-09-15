@@ -1,6 +1,5 @@
 using ConsoleForge.Core;
 using ConsoleForge.Layout;
-using ConsoleForge.Styling;
 using ConsoleForge.Widgets;
 
 namespace ConsoleForge.Tests.Core;
@@ -48,14 +47,14 @@ public class FocusManagerTests
     {
         var label = new TextBlock("label");
         var input = new TextInput("value");
-        var list  = new List(["a", "b"]);
-        var root  = new Container(Axis.Vertical, [label, input, list]);
+        var list = new List(["a", "b"]);
+        var root = new Container(Axis.Vertical, [label, input, list]);
 
         var result = FocusManager.CollectFocusable(root);
 
         Assert.Equal(2, result.Count);
         Assert.Same(input, result[0]);
-        Assert.Same(list,  result[1]);
+        Assert.Same(list, result[1]);
     }
 
     [Fact]
@@ -66,7 +65,7 @@ public class FocusManagerTests
         var c = new TextInput("c");
 
         var inner = new Container(Axis.Vertical, [b, c]);
-        var root  = new Container(Axis.Horizontal, [a, inner]);
+        var root = new Container(Axis.Horizontal, [a, inner]);
 
         var result = FocusManager.CollectFocusable(root);
 
@@ -81,7 +80,7 @@ public class FocusManagerTests
     public void CollectFocusable_BorderBoxWithFocusableBody_IncludesBody()
     {
         var input = new TextInput("inside");
-        var box   = new BorderBox(body: input);
+        var box = new BorderBox(body: input);
 
         var result = FocusManager.CollectFocusable(box);
 
@@ -115,38 +114,32 @@ public class FocusManagerTests
     [Fact]
     public void GetNext_NullCurrent_ReturnsFirst()
     {
-        var a = new TextInput("a");
-        var b = new TextInput("b");
-        var result = FocusManager.GetNext(null, [a, b]);
-        Assert.Same(a, result);
+        var result = FocusManager.GetNext(null, ["a", "b"]);
+        Assert.Equal("a", result);
     }
 
     [Fact]
     public void GetNext_FromFirst_ReturnsSecond()
     {
-        var a = new TextInput("a");
-        var b = new TextInput("b");
-        var result = FocusManager.GetNext(a, [a, b]);
-        Assert.Same(b, result);
+        var result = FocusManager.GetNext("a", ["a", "b"]);
+        Assert.Equal("b", result);
     }
 
     [Fact]
     public void GetNext_FromLast_WrapsToFirst()
     {
-        var a = new TextInput("a");
-        var b = new TextInput("b");
-        var result = FocusManager.GetNext(b, [a, b]);
-        Assert.Same(a, result);
+        var result = FocusManager.GetNext("b", ["a", "b"]);
+        Assert.Equal("a", result);
     }
 
     [Fact]
     public void GetNext_UnknownCurrent_ReturnsFirst()
     {
-        var a = new TextInput("a");
-        var b = new TextInput("b");
-        var unknown = new TextInput("x");
-        var result = FocusManager.GetNext(unknown, [a, b]);
-        Assert.Same(a, result);
+        // The not-found branch: IndexOf misses, Step falls back to the first key.
+        // A broken IndexOf sends every lookup down this path, so it has to be
+        // distinguishable from the found case.
+        var result = FocusManager.GetNext("zzz", ["a", "b"]);
+        Assert.Equal("a", result);
     }
 
     // ── GetPrev ───────────────────────────────────────────────────────────────
@@ -161,38 +154,29 @@ public class FocusManagerTests
     [Fact]
     public void GetPrev_NullCurrent_ReturnsLast()
     {
-        var a = new TextInput("a");
-        var b = new TextInput("b");
-        var result = FocusManager.GetPrev(null, [a, b]);
-        Assert.Same(b, result);
+        var result = FocusManager.GetPrev(null, ["a", "b"]);
+        Assert.Equal("b", result);
     }
 
     [Fact]
     public void GetPrev_FromFirst_WrapsToLast()
     {
-        var a = new TextInput("a");
-        var b = new TextInput("b");
-        var result = FocusManager.GetPrev(a, [a, b]);
-        Assert.Same(b, result);
+        var result = FocusManager.GetPrev("a", ["a", "b"]);
+        Assert.Equal("b", result);
     }
 
     [Fact]
     public void GetPrev_FromLast_ReturnsPrev()
     {
-        var a = new TextInput("a");
-        var b = new TextInput("b");
-        var result = FocusManager.GetPrev(b, [a, b]);
-        Assert.Same(a, result);
+        var result = FocusManager.GetPrev("b", ["a", "b"]);
+        Assert.Equal("a", result);
     }
 
     [Fact]
     public void GetPrev_UnknownCurrent_ReturnsLast()
     {
-        var a = new TextInput("a");
-        var b = new TextInput("b");
-        var unknown = new TextInput("x");
-        var result = FocusManager.GetPrev(unknown, [a, b]);
-        Assert.Same(b, result);
+        var result = FocusManager.GetPrev("zzz", ["a", "b"]);
+        Assert.Equal("b", result);
     }
 
     // ── Single-element list ───────────────────────────────────────────────────
@@ -200,16 +184,39 @@ public class FocusManagerTests
     [Fact]
     public void GetNext_SingleItem_ReturnsSelf()
     {
-        var a = new TextInput("a");
-        var result = FocusManager.GetNext(a, [a]);
-        Assert.Same(a, result);
+        var result = FocusManager.GetNext("a", ["a"]);
+        Assert.Equal("a", result);
     }
 
     [Fact]
     public void GetPrev_SingleItem_ReturnsSelf()
     {
-        var a = new TextInput("a");
-        var result = FocusManager.GetPrev(a, [a]);
-        Assert.Same(a, result);
+        var result = FocusManager.GetPrev("a", ["a"]);
+        Assert.Equal("a", result);
+    }
+
+    // ── CollectFocusKeys ──────────────────────────────────────────────────────
+
+    [Fact]
+    public void CollectFocusKeys_SkipWidgetsWithoutAKey()
+    {
+        var label = new TextBlock("label");
+        var keyed = new TextInput("value") { FocusKey = "input" };
+        var unkeyed = new List(["a", "b"]);          // focusable, deliberately no key
+        var root = new Container(Axis.Vertical, [label, keyed, unkeyed]);
+
+        Assert.Equal<string>(["input"], FocusManager.CollectFocusKeys(root));
+    }
+
+    [Fact]
+    public void CollectFocusKeys_ReturnsKeysInDepthFirstOrder()
+    {
+        var inner = new Container(Axis.Vertical, [
+            new TextInput("b") { FocusKey = "b" },
+            new TextInput("c") { FocusKey = "c" }]);
+        var root = new Container(Axis.Vertical, [
+            new TextInput("a") { FocusKey = "a" }, inner]);
+
+        Assert.Equal<string>(["a", "b", "c"], FocusManager.CollectFocusKeys(root));
     }
 }
