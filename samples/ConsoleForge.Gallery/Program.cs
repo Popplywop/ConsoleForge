@@ -37,19 +37,19 @@ record GalleryModel(
     TextInput Input1,
     TextInput Input2,
     // Page components — each owns its own state and KeyMap
-    ListPageComponent    ListPage,
+    ListPageComponent ListPage,
     ProgressBarComponent ProgressPage,
-    CheckboxComponent    CheckboxPage,
-    TextAreaComponent    TextAreaPage,
+    CheckboxComponent CheckboxPage,
+    TextAreaComponent TextAreaPage,
     // Remaining pages (low state complexity — kept as fields)
-    int    SpinnerFrame,
-    int    TableSelected,
-    int    TickCount,
-    int    TabsActiveIndex,
-    bool   ModalOpen,
-    int    ModalChoice,
+    int SpinnerFrame,
+    int TableSelected,
+    int TickCount,
+    int TabsActiveIndex,
+    bool ModalOpen,
+    int ModalChoice,
     // Theme cycling
-    int    ThemeIndex) : IModel
+    int ThemeIndex) : IModel
 {
     private static readonly string[] PageNames =
         [.. Enum.GetValues<Page>().Select(p => p.ToString())];
@@ -65,9 +65,9 @@ record GalleryModel(
     private Theme T => AllThemes[ThemeIndex];
 
     /// <summary>Accent / heading style — theme’s primary colour, bold.</summary>
-    private Style Heading  => T.AccentStyle().Bold(true);
+    private Style Heading => T.AccentStyle().Bold(true);
     /// <summary>Description / hint text — theme muted colour.</summary>
-    private Style Muted    => T.MutedStyle();
+    private Style Muted => T.MutedStyle();
     /// <summary>Secondary / supporting text — slightly dimmer than muted.</summary>
     private Style Secondary => T.SecondaryStyle();
     /// <summary>Outer page border — no explicit colour, inherits from theme at render time.</summary>
@@ -78,22 +78,22 @@ record GalleryModel(
     private static Style UnfocusedBorder => Style.Default.Border(Borders.Rounded).Faint(true);
 
     public static GalleryModel Initial() => new(
-        ActivePage:   Page.TextBlock,
-        NavList:      new List(PageNames, selectedIndex: 0) { HasFocus = true },
-        FocusIndex:   0,
-        Input1:       new TextInput(value: "", placeholder: "Type something…"),
-        Input2:       new TextInput(value: "pre-filled text", placeholder: ""),
-        ListPage:     new ListPageComponent(),
+        ActivePage: Page.TextBlock,
+        NavList: new List(PageNames, selectedIndex: 0) { HasFocus = true },
+        FocusIndex: 0,
+        Input1: new TextInput(value: "", placeholder: "Type something…"),
+        Input2: new TextInput(value: "pre-filled text", placeholder: ""),
+        ListPage: new ListPageComponent(),
         ProgressPage: new ProgressBarComponent(),
         CheckboxPage: new CheckboxComponent() { States = [false, true, false] },
         TextAreaPage: new TextAreaComponent(),
         SpinnerFrame: 0,
-        TableSelected:   0,
-        TickCount:       0,
+        TableSelected: 0,
+        TickCount: 0,
         TabsActiveIndex: 0,
-        ModalOpen:    false,
-        ModalChoice:  -1,
-        ThemeIndex:   0
+        ModalOpen: false,
+        ModalChoice: -1,
+        ThemeIndex: 0
     );
 
     public ICmd? Init() => Cmd.Tick(TimeSpan.FromMilliseconds(120), at => new TickMsg(at));
@@ -107,33 +107,33 @@ record GalleryModel(
             ? new NavUpMsg() : new NavDownMsg());
 
     static readonly KeyMap SidebarKeys = new KeyMap()
-        .On(ConsoleKey.UpArrow,   () => new NavUpMsg())
+        .On(ConsoleKey.UpArrow, () => new NavUpMsg())
         .On(ConsoleKey.DownArrow, () => new NavDownMsg())
-        .On(ConsoleKey.Enter,     () => new NavSelectMsg())
+        .On(ConsoleKey.Enter, () => new NavSelectMsg())
         .On(KeyPattern.Plain(ConsoleKey.Q), () => new QuitMsg())
-        .On(ConsoleKey.Escape,    () => new QuitMsg());
+        .On(ConsoleKey.Escape, () => new QuitMsg());
 
     static readonly KeyMap ListKeys = new KeyMap()
-        .On(ConsoleKey.UpArrow,   () => new NavUpMsg())
+        .On(ConsoleKey.UpArrow, () => new NavUpMsg())
         .On(ConsoleKey.DownArrow, () => new NavDownMsg())
-        .On(ConsoleKey.Enter,     () => new NavSelectMsg());
+        .On(ConsoleKey.Enter, () => new NavSelectMsg());
 
     static readonly KeyMap TableKeys = new KeyMap()
-        .On(ConsoleKey.UpArrow,   () => new NavUpMsg())
+        .On(ConsoleKey.UpArrow, () => new NavUpMsg())
         .On(ConsoleKey.DownArrow, () => new NavDownMsg());
 
     static readonly KeyMap ProgressBarKeys = new KeyMap()
-        .On(ConsoleKey.LeftArrow,  () => new AdjustLeftMsg())
+        .On(ConsoleKey.LeftArrow, () => new AdjustLeftMsg())
         .On(ConsoleKey.RightArrow, () => new AdjustRightMsg());
 
     static readonly KeyMap CheckboxKeys = new KeyMap()
-        .On(ConsoleKey.UpArrow,   () => new NavUpMsg())
+        .On(ConsoleKey.UpArrow, () => new NavUpMsg())
         .On(ConsoleKey.DownArrow, () => new NavDownMsg())
-        .On(ConsoleKey.Spacebar,  () => new ToggleCheckboxMsg())
-        .On(ConsoleKey.Enter,     () => new ToggleCheckboxMsg());
+        .On(ConsoleKey.Spacebar, () => new ToggleCheckboxMsg())
+        .On(ConsoleKey.Enter, () => new ToggleCheckboxMsg());
 
     static readonly KeyMap TabsKeys = new KeyMap()
-        .On(ConsoleKey.LeftArrow,  () => new NavUpMsg())
+        .On(ConsoleKey.LeftArrow, () => new NavUpMsg())
         .On(ConsoleKey.RightArrow, () => new NavDownMsg());
 
     static readonly KeyMap ModalClosedKeys = new KeyMap()
@@ -155,13 +155,13 @@ record GalleryModel(
             {
                 // These pages have their own KeyMaps inside their component
                 // — GlobalKeys.Merge handles Tab/T/scroll; the component handles the rest
-                Page.List        => new KeyMap(), // ListPageComponent has Keys
+                Page.List => new KeyMap(), // ListPageComponent has Keys
                 Page.ProgressBar => new KeyMap(), // ProgressBarComponent has Keys
-                Page.Checkbox    => new KeyMap(), // CheckboxComponent has Keys
-                Page.Table       => TableKeys,
-                Page.Tabs        => TabsKeys,
-                Page.Modal       => ModalClosedKeys,
-                _                => new KeyMap(),
+                Page.Checkbox => new KeyMap(), // CheckboxComponent has Keys
+                Page.Table => TableKeys,
+                Page.Tabs => TabsKeys,
+                Page.Modal => ModalClosedKeys,
+                _ => new KeyMap(),
             };
 
         return GlobalKeys.Merge(contextMap);
@@ -183,7 +183,7 @@ record GalleryModel(
         // 3. Theme cycling (suppressed on text-entry pages)
         if (msg is CycleThemeMsg)
         {
-            var newIdx   = (ThemeIndex + 1) % AllThemes.Length;
+            var newIdx = (ThemeIndex + 1) % AllThemes.Length;
             var newTheme = AllThemes[newIdx];
             // Return ThemeChangedMsg synchronously via Cmd so ProcessMsg intercepts
             // it in the same event-loop tick — no async gap where a render could
@@ -203,36 +203,42 @@ record GalleryModel(
                 return (this with { ModalOpen = false }, null);
 
             case ToggleFocusMsg:
-            {
-                var newFocus = FocusIndex == 0 ? 1 : 0;
-                var newNav = new List(
-                    NavList.Items, NavList.SelectedIndex) { HasFocus = newFocus == 0 };
-                return (this with { FocusIndex = newFocus, NavList = newNav }, null);
-            }
+                {
+                    var newFocus = FocusIndex == 0 ? 1 : 0;
+                    var newNav = new List(
+                        NavList.Items, NavList.SelectedIndex)
+                    { HasFocus = newFocus == 0 };
+                    return (this with { FocusIndex = newFocus, NavList = newNav }, null);
+                }
 
             // ── Sidebar navigation ────────────────────────────────────────
             case NavUpMsg when FocusIndex == 0:
-            {
-                var newIdx = Math.Max(0, NavList.SelectedIndex - 1);
-                return (this with {
-                    NavList = new List(NavList.Items, newIdx) { HasFocus = true },
-                    ActivePage = (Page)newIdx, FocusIndex = 0
-                }, null);
-            }
+                {
+                    var newIdx = Math.Max(0, NavList.SelectedIndex - 1);
+                    return (this with
+                    {
+                        NavList = new List(NavList.Items, newIdx) { HasFocus = true },
+                        ActivePage = (Page)newIdx,
+                        FocusIndex = 0
+                    }, null);
+                }
             case NavDownMsg when FocusIndex == 0:
-            {
-                var newIdx = Math.Min(PageNames.Length - 1, NavList.SelectedIndex + 1);
-                return (this with {
-                    NavList = new List(NavList.Items, newIdx) { HasFocus = true },
-                    ActivePage = (Page)newIdx, FocusIndex = 0
-                }, null);
-            }
+                {
+                    var newIdx = Math.Min(PageNames.Length - 1, NavList.SelectedIndex + 1);
+                    return (this with
+                    {
+                        NavList = new List(NavList.Items, newIdx) { HasFocus = true },
+                        ActivePage = (Page)newIdx,
+                        FocusIndex = 0
+                    }, null);
+                }
             case NavSelectMsg when FocusIndex == 0:
-            {
-                var newNav = new List(
-                    NavList.Items, NavList.SelectedIndex) { HasFocus = false };
-                return (this with { NavList = newNav, FocusIndex = 1 }, null);
-            }
+                {
+                    var newNav = new List(
+                        NavList.Items, NavList.SelectedIndex)
+                    { HasFocus = false };
+                    return (this with { NavList = newNav, FocusIndex = 1 }, null);
+                }
 
             // List / ProgressBar cases now handled by component delegation (default branch)
 
@@ -263,15 +269,15 @@ record GalleryModel(
 
             // ── Content: TextInput (raw key routing) ──────────────────────
             case KeyMsg keyMsg when FocusIndex == 1 && ActivePage == Page.TextInput && keyMsg.Key != ConsoleKey.Tab:
-            {
-                var (next1, _) = Input1.Update(keyMsg);
-                var (next2, _) = Input2.Update(keyMsg);
-                var r1 = (TextInput)next1;
-                var r2 = (TextInput)next2;
-                var m1 = ReferenceEquals(Input1, next1) ? this : this with { Input1 = r1 with { HasFocus = true } };
-                var m2 = ReferenceEquals(Input2, next2) ? m1  : m1  with { Input2 = r2 with { HasFocus = true } };
-                return (m2, null);
-            }
+                {
+                    var (next1, _) = Input1.Update(keyMsg);
+                    var (next2, _) = Input2.Update(keyMsg);
+                    var r1 = (TextInput)next1;
+                    var r2 = (TextInput)next2;
+                    var m1 = ReferenceEquals(Input1, next1) ? this : this with { Input1 = r1 with { HasFocus = true } };
+                    var m2 = ReferenceEquals(Input2, next2) ? m1 : m1 with { Input2 = r2 with { HasFocus = true } };
+                    return (m2, null);
+                }
 
             // ── Theme key (T) — only reaches here from pages that don't use KeyMap ──
             case KeyMsg { Key: ConsoleKey.T, Ctrl: false }
@@ -281,28 +287,23 @@ record GalleryModel(
             // ── ListSelectionChangedMsg from sidebar List widget ───────────
             case ListSelectionChangedMsg { Source: var src, NewIndex: var newIdx }
                 when ReferenceEquals(src, NavList):
-            {
-                var page = (Page)newIdx;
-                return (this with {
-                    NavList = new List(
-                        NavList.Items, newIdx) { HasFocus = NavList.HasFocus },
-                    ActivePage = page
-                }, null);
-            }
-
-            // ── Focus sync (click-to-focus from Program) ──────────────────
-            // FocusIndexChangedMsg is intentionally ignored here: the Gallery manages
-            // its own two-pane focus via ToggleFocusMsg (Tab key). Letting the
-            // framework's flat focusable index drive FocusIndex conflicts with
-            // ToggleFocusMsg and causes double-press issues.
-            case FocusIndexChangedMsg:
-                return (this, null);
+                {
+                    var page = (Page)newIdx;
+                    return (this with
+                    {
+                        NavList = new List(
+                            NavList.Items, newIdx)
+                        { HasFocus = NavList.HasFocus },
+                        ActivePage = page
+                    }, null);
+                }
 
             // ── Tick ──────────────────────────────────────────────────────
             case TickMsg:
-                return (this with {
+                return (this with
+                {
                     SpinnerFrame = SpinnerFrame + 1,
-                    TickCount    = TickCount + 1
+                    TickCount = TickCount + 1
                 }, Cmd.Tick(TimeSpan.FromMilliseconds(120), at => new TickMsg(at)));
 
             // ── Component delegation ─────────────────────────────────────────────
@@ -313,29 +314,29 @@ record GalleryModel(
                     switch (ActivePage)
                     {
                         case Page.List:
-                        {
-                            var (next, cmd) = Component.Delegate(ListPage, msg);
-                            if (next is { } n) return (this with { ListPage = n }, cmd);
-                            break;
-                        }
+                            {
+                                var (next, cmd) = Component.Delegate(ListPage, msg);
+                                if (next is { } n) return (this with { ListPage = n }, cmd);
+                                break;
+                            }
                         case Page.ProgressBar:
-                        {
-                            var (next, cmd) = Component.Delegate(ProgressPage, msg);
-                            if (next is { } n) return (this with { ProgressPage = n }, cmd);
-                            break;
-                        }
+                            {
+                                var (next, cmd) = Component.Delegate(ProgressPage, msg);
+                                if (next is { } n) return (this with { ProgressPage = n }, cmd);
+                                break;
+                            }
                         case Page.Checkbox:
-                        {
-                            var (next, cmd) = Component.Delegate(CheckboxPage, msg);
-                            if (next is { } n) return (this with { CheckboxPage = n }, cmd);
-                            break;
-                        }
+                            {
+                                var (next, cmd) = Component.Delegate(CheckboxPage, msg);
+                                if (next is { } n) return (this with { CheckboxPage = n }, cmd);
+                                break;
+                            }
                         case Page.TextArea:
-                        {
-                            var (next, cmd) = Component.Delegate(TextAreaPage, msg);
-                            if (next is { } n) return (this with { TextAreaPage = n }, cmd);
-                            break;
-                        }
+                            {
+                                var (next, cmd) = Component.Delegate(TextAreaPage, msg);
+                                if (next is { } n) return (this with { TextAreaPage = n }, cmd);
+                                break;
+                            }
                     }
                 }
                 return (this, null);
@@ -344,9 +345,9 @@ record GalleryModel(
 
     public IWidget View()
     {
-        var sidebar    = BuildSidebar();
-        var content    = BuildPageContent();
-        var statusBar  = BuildStatusBar;
+        var sidebar = BuildSidebar();
+        var content = BuildPageContent();
+        var statusBar = BuildStatusBar;
 
         var body = new Container(Axis.Horizontal, [sidebar, content]);
         return new Container(Axis.Vertical, [body, statusBar]);
@@ -409,20 +410,20 @@ record GalleryModel(
 
     private IWidget BuildPageContent() => ActivePage switch
     {
-        Page.TextBlock   => PageTextBlock,
-        Page.Borders     => PageBorders,
-        Page.Layout      => PageLayout,
-        Page.List        => PageList,
-        Page.TextInput   => PageTextInput,
-        Page.Styles      => PageStyles,
+        Page.TextBlock => PageTextBlock,
+        Page.Borders => PageBorders,
+        Page.Layout => PageLayout,
+        Page.List => PageList,
+        Page.TextInput => PageTextInput,
+        Page.Styles => PageStyles,
         Page.ProgressBar => PageProgressBar,
-        Page.Spinner     => PageSpinner,
-        Page.Table       => PageTable,
-        Page.Checkbox    => PageCheckbox,
-        Page.Tabs        => PageTabs,
-        Page.TextArea    => PageTextArea,
-        Page.Modal       => PageModal(),
-        _                => new TextBlock("?")
+        Page.Spinner => PageSpinner,
+        Page.Table => PageTable,
+        Page.Checkbox => PageCheckbox,
+        Page.Tabs => PageTabs,
+        Page.TextArea => PageTextArea,
+        Page.Modal => PageModal(),
+        _ => new TextBlock("?")
     };
 
     // ── PAGE: TextBlock ───────────────────────────────────────────────────────
@@ -935,16 +936,17 @@ record GalleryModel(
 
     private (IModel, ICmd?) HandleScrollWheel(MouseMsg msg)
     {
-        bool up   = msg.Button == MouseButton.ScrollUp;
-        int  dir  = up ? -1 : 1;
+        bool up = msg.Button == MouseButton.ScrollUp;
+        int dir = up ? -1 : 1;
 
         // ── Sidebar focused: navigate pages ───────────────────────────────
         if (FocusIndex == 0)
         {
-            var newIdx  = Math.Clamp(NavList.SelectedIndex + dir, 0, PageNames.Length - 1);
+            var newIdx = Math.Clamp(NavList.SelectedIndex + dir, 0, PageNames.Length - 1);
             var newPage = (Page)newIdx;
-            return (this with {
-                NavList    = new List(NavList.Items, newIdx) { HasFocus = true },
+            return (this with
+            {
+                NavList = new List(NavList.Items, newIdx) { HasFocus = true },
                 ActivePage = newPage,
             }, null);
         }
@@ -975,8 +977,8 @@ record GalleryModel(
         return ActivePage switch
         {
             Page.Table => (this with { TableSelected = Math.Clamp(TableSelected + dir, 0, TableRows.Count - 1) }, null),
-            Page.Tabs  => (this with { TabsActiveIndex = (TabsActiveIndex + dir + 3) % 3 }, null),
-            _          => (this, null),
+            Page.Tabs => (this with { TabsActiveIndex = (TabsActiveIndex + dir + 3) % 3 }, null),
+            _ => (this, null),
         };
     }
 
@@ -1218,9 +1220,12 @@ record GalleryModel(
         var m = v - c;
         var (r1, g1, b1) = (int)(h / 60) switch
         {
-            0 => (c, x, 0.0), 1 => (x, c, 0.0),
-            2 => (0.0, c, x), 3 => (0.0, x, c),
-            4 => (x, 0.0, c), _ => (c, 0.0, x),
+            0 => (c, x, 0.0),
+            1 => (x, c, 0.0),
+            2 => (0.0, c, x),
+            3 => (0.0, x, c),
+            4 => (x, 0.0, c),
+            _ => (c, 0.0, x),
         };
         return ((byte)((r1 + m) * 255), (byte)((g1 + m) * 255), (byte)((b1 + m) * 255));
     }
