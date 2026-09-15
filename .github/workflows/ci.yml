@@ -1,0 +1,42 @@
+name: CI
+
+# Until now the only workflow running the suite was the release job, which fires on a
+# v*.*.* tag — so a branch could carry a failing test all the way to a release. This runs
+# on every push and pull request instead.
+on:
+  push:
+    branches-ignore:
+      - gh-pages
+  pull_request:
+
+# A new push to the same branch or PR makes the in-flight run irrelevant.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.x'
+
+      - name: Restore
+        run: dotnet restore ConsoleForge.slnx
+
+      # Release, matching the release job: the benchmarks are meaningless in Debug and
+      # a Release-only compile error should not wait for a tag to surface.
+      - name: Build (Release)
+        run: dotnet build ConsoleForge.slnx -c Release --no-restore
+
+      - name: Test
+        run: dotnet test ConsoleForge.slnx -c Release --no-build
