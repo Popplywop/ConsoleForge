@@ -23,15 +23,15 @@ public sealed record FocusChangedMsg(IWidget? Previous, IWidget? Next) : IMsg;
 public sealed record FocusRequestedMsg(string Key) : IMsg;
 
 /// <summary>Internal: aggregates results from Cmd.Batch concurrent execution.</summary>
-public sealed record BatchMsg(IMsg[] Messages) : IMsg;
+internal sealed record BatchMsg(IMsg[] Messages) : IMsg;
 
 /// <summary>Carries the children of a <see cref="Cmd.Batch"/> to the event
 /// loop, which dispatches each independently so every message is delivered
 /// as soon as its command completes (no barrier).</summary>
-public sealed record BatchDispatchMsg(IReadOnlyList<ICmd> Cmds) : IMsg;
+internal sealed record BatchDispatchMsg(IReadOnlyList<ICmd> Cmds) : IMsg;
 
 /// <summary>Internal: aggregates results from Cmd.Sequence serial execution.</summary>
-public sealed record SequenceMsg(IMsg[] Messages) : IMsg;
+internal sealed record SequenceMsg(IMsg[] Messages) : IMsg;
 
 /// <summary>Triggers a re-render without changing model state (e.g., theme swap).</summary>
 public sealed record RedrawMsg : IMsg;

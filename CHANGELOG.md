@@ -43,6 +43,10 @@ marked **Breaking**.
   than an `IFocusable`, so a model can drive Tab traversal from the key it already
   stores. They also step a plain key list, so widget-shaped concerns stay in
   `CollectFocusKeys`.
+- **Breaking:** `BatchMsg`, `BatchDispatchMsg` and `SequenceMsg` are `internal`.
+  They carry `Cmd.Batch` and `Cmd.Sequence` results to the event loop, which unfolds
+  them before the model runs, so a model never received one. Matching on them in an
+  `Update` no longer compiles.
 - `LayoutEngine` and `Container.Render` now share one layout solver, so the
   regions a container renders into match the ones layout resolved.
 - Input is drawn one frame per batch rather than one frame per message. A burst
