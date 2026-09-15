@@ -21,10 +21,10 @@ public sealed record TextArea : IFocusable
 {
     // ── IFocusable ───────────────────────────────────────────────────────────
     /// <inheritdoc/>
-    public bool HasFocus { get; set; }
+    public bool HasFocus { get; init; }
 
     // ── IWidget ─────────────────────────────────────────────────────────────
-    public SizeConstraint Width  { get; init; } = SizeConstraint.Flex(1);
+    public SizeConstraint Width { get; init; } = SizeConstraint.Flex(1);
     public SizeConstraint Height { get; init; } = SizeConstraint.Flex(1);
 
     // ── TextArea-specific ────────────────────────────────────────────────────
@@ -72,11 +72,11 @@ public sealed record TextArea : IFocusable
         int maxLines = 0,
         Style? style = null)
     {
-        Lines     = lines is { Count: > 0 } ? lines : [""];
+        Lines = lines is { Count: > 0 } ? lines : [""];
         CursorRow = Math.Clamp(cursorRow, 0, Lines.Count - 1);
         CursorCol = Math.Clamp(cursorCol, 0, Lines[CursorRow].Length);
         ScrollRow = Math.Max(0, scrollRow);
-        MaxLines  = maxLines;
+        MaxLines = maxLines;
         if (style is not null) Style = style.Value;
     }
 
@@ -152,17 +152,17 @@ public sealed record TextArea : IFocusable
 
             // ── Editing ────────────────────────────────────────────────────
             case ConsoleKey.Enter:
-            {
-                // No-op when MaxLines limit reached
-                if (MaxLines > 0 && mutableLines.Count >= MaxLines) break;
+                {
+                    // No-op when MaxLines limit reached
+                    if (MaxLines > 0 && mutableLines.Count >= MaxLines) break;
 
-                var tail = mutableLines[row][col..];
-                mutableLines[row] = mutableLines[row][..col];
-                mutableLines.Insert(row + 1, tail);
-                row++;
-                col = 0;
-                break;
-            }
+                    var tail = mutableLines[row][col..];
+                    mutableLines[row] = mutableLines[row][..col];
+                    mutableLines.Insert(row + 1, tail);
+                    row++;
+                    col = 0;
+                    break;
+                }
 
             case ConsoleKey.Backspace:
                 if (col > 0)
@@ -195,23 +195,23 @@ public sealed record TextArea : IFocusable
                 break;
 
             default:
-            {
-                // Printable characters
-                if (key.Character is char c && !char.IsControl(c))
                 {
-                    mutableLines[row] = mutableLines[row][..col] + c + mutableLines[row][col..];
-                    col++;
+                    // Printable characters
+                    if (key.Character is char c && !char.IsControl(c))
+                    {
+                        mutableLines[row] = mutableLines[row][..col] + c + mutableLines[row][col..];
+                        col++;
+                    }
+                    else return (this, null); // Unhandled key — dispatch nothing
+                    break;
                 }
-                else return (this, null); // Unhandled key — dispatch nothing
-                break;
-            }
         }
 
         // Clamp to valid range after all edits
         row = Math.Clamp(row, 0, mutableLines.Count - 1);
         col = Math.Clamp(col, 0, mutableLines[row].Length);
 
-        return (this with { Lines = mutableLines.AsReadOnly(), CursorRow = row, CursorCol = col}, null);
+        return (this with { Lines = mutableLines.AsReadOnly(), CursorRow = row, CursorCol = col }, null);
     }
 
     // ── Scroll helper ─────────────────────────────────────────────────────────
@@ -252,12 +252,12 @@ public sealed record TextArea : IFocusable
         if (region.Width <= 0 || region.Height <= 0) return;
 
         var effectiveStyle = Style.Inherit(ctx.Theme.BaseStyle);
-        var fill           = new string(' ', region.Width);
+        var fill = new string(' ', region.Width);
 
         for (var rowOffset = 0; rowOffset < region.Height; rowOffset++)
         {
             var lineIdx = ScrollRow + rowOffset;
-            var absRow  = region.Row + rowOffset;
+            var absRow = region.Row + rowOffset;
 
             // Fill row background first
             ctx.Write(region.Col, absRow, fill, effectiveStyle);

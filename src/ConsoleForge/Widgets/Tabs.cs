@@ -26,10 +26,10 @@ public sealed record Tabs : IFocusable
 {
     // ── IFocusable ───────────────────────────────────────────────────────────
     /// <inheritdoc/>
-    public bool HasFocus { get; set; }
+    public bool HasFocus { get; init; }
 
     // ── IWidget ─────────────────────────────────────────────────────────────
-    public SizeConstraint Width  { get; init; } = SizeConstraint.Flex(1);
+    public SizeConstraint Width { get; init; } = SizeConstraint.Flex(1);
     public SizeConstraint Height { get; init; } = SizeConstraint.Flex(1);
 
     // ── Tabs-specific ─────────────────────────────────────────────────────────
@@ -79,11 +79,11 @@ public sealed record Tabs : IFocusable
         Style? activeTabStyle = null,
         Style? inactiveTabStyle = null)
     {
-        Labels         = labels;
-        ActiveIndex    = labels.Count > 0 ? Math.Clamp(activeIndex, 0, labels.Count - 1) : 0;
-        Body           = body;
-        if (style           is not null) Style           = style.Value;
-        if (activeTabStyle   is not null) ActiveTabStyle  = activeTabStyle.Value;
+        Labels = labels;
+        ActiveIndex = labels.Count > 0 ? Math.Clamp(activeIndex, 0, labels.Count - 1) : 0;
+        Body = body;
+        if (style is not null) Style = style.Value;
+        if (activeTabStyle is not null) ActiveTabStyle = activeTabStyle.Value;
         if (inactiveTabStyle is not null) InactiveTabStyle = inactiveTabStyle.Value;
     }
 
@@ -96,7 +96,7 @@ public sealed record Tabs : IFocusable
     {
         if (Labels.Count == 0) return (this, null);
 
-        var next = key.Key switch 
+        var next = key.Key switch
         {
             ConsoleKey.LeftArrow => ActiveIndex <= 0 ? Labels.Count - 1 : ActiveIndex - 1,
             ConsoleKey.RightArrow => (ActiveIndex + 1) % Labels.Count,
@@ -139,12 +139,12 @@ public sealed record Tabs : IFocusable
                 if (col >= region.Col + region.Width) break;
             }
 
-            var isActive  = i == ActiveIndex;
-            var tabStyle  = isActive
+            var isActive = i == ActiveIndex;
+            var tabStyle = isActive
                 ? ActiveTabStyle.Inherit(HasFocus ? ctx.Theme.FocusedStyle : ctx.Theme.BaseStyle)
                 : InactiveTabStyle.Inherit(ctx.Theme.BaseStyle);
 
-            var label    = $" {Labels[i]} ";
+            var label = $" {Labels[i]} ";
             var maxChars = region.Col + region.Width - col;
             label = TextUtils.TruncateToWidth(label, maxChars);
 

@@ -11,21 +11,21 @@ public sealed record TextInput : IFocusable
 {
     // ── IFocusable ───────────────────────────────────────────────────────────
     /// <inheritdoc/>
-    public bool HasFocus { get; set; }
+    public bool HasFocus { get; init; }
 
     // ── IWidget ─────────────────────────────────────────────────────────────
-    public SizeConstraint Width  { get; init; } = SizeConstraint.Flex(1);
+    public SizeConstraint Width { get; init; } = SizeConstraint.Flex(1);
     public SizeConstraint Height { get; init; } = SizeConstraint.Fixed(1);
 
     // ── TextInput-specific ───────────────────────────────────────────────────
     /// <summary>Current text value in the input field.</summary>
-    public string Value          { get; init; } = "";
+    public string Value { get; init; } = "";
     /// <summary>Placeholder text shown when <see cref="Value"/> is empty.</summary>
-    public string Placeholder    { get; init; } = "";
+    public string Placeholder { get; init; } = "";
     /// <summary>Zero-based index of the cursor within <see cref="Value"/>.</summary>
-    public int    CursorPosition { get; init; }
+    public int CursorPosition { get; init; }
     /// <summary>Visual style for the input text. Inherits theme base style when no properties are set.</summary>
-    public Style  Style          { get; init; } = Style.Default;
+    public Style Style { get; init; } = Style.Default;
 
     /// <summary>Object-initializer constructor; all properties default.</summary>
     public TextInput() { }
@@ -43,8 +43,8 @@ public sealed record TextInput : IFocusable
         int cursorPosition = 0,
         Style? style = null)
     {
-        Value          = value;
-        Placeholder    = placeholder;
+        Value = value;
+        Placeholder = placeholder;
         CursorPosition = Math.Clamp(cursorPosition, 0, value.Length);
         if (style is not null) Style = style.Value;
     }
@@ -62,7 +62,7 @@ public sealed record TextInput : IFocusable
     public (IFocusable Next, ICmd? Cmd) Update(KeyMsg key)
     {
         var before = new TextInputState(Value, CursorPosition);
-        var after  = before.HandleKey(key);
+        var after = before.HandleKey(key);
         if (ReferenceEquals(after, before)) return (this, null);
 
         return (this with { Value = after.Value, CursorPosition = after.Cursor }, null);
@@ -78,9 +78,9 @@ public sealed record TextInput : IFocusable
         var effectiveStyle = Style.Inherit(ctx.Theme.BaseStyle);
 
         // Apply widget's own padding (not inherited — local property)
-        int padL = Style.HasPadding ? Style.PaddingLeft  : 0;
+        int padL = Style.HasPadding ? Style.PaddingLeft : 0;
         int padR = Style.HasPadding ? Style.PaddingRight : 0;
-        int textCol   = region.Col + padL;
+        int textCol = region.Col + padL;
         int textWidth = Math.Max(0, region.Width - padL - padR);
         if (textWidth <= 0) return;
 

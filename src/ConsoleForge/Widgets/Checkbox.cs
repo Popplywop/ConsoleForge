@@ -14,10 +14,10 @@ public sealed record Checkbox : IFocusable
 {
     // ── IFocusable ───────────────────────────────────────────────────────────
     /// <inheritdoc/>
-    public bool HasFocus { get; set; }
+    public bool HasFocus { get; init; }
 
     // ── IWidget ─────────────────────────────────────────────────────────────
-    public SizeConstraint Width  { get; init; } = SizeConstraint.Flex(1);
+    public SizeConstraint Width { get; init; } = SizeConstraint.Flex(1);
     public SizeConstraint Height { get; init; } = SizeConstraint.Fixed(1);
 
     // ── Checkbox-specific ────────────────────────────────────────────────────
@@ -52,9 +52,9 @@ public sealed record Checkbox : IFocusable
         char uncheckedChar = ' ',
         Style? style = null)
     {
-        Label         = label;
-        IsChecked     = isChecked;
-        CheckedChar   = checkedChar;
+        Label = label;
+        IsChecked = isChecked;
+        CheckedChar = checkedChar;
         UncheckedChar = uncheckedChar;
         if (style is not null) Style = style.Value;
     }

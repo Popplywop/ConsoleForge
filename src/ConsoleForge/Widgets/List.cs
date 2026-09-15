@@ -12,32 +12,32 @@ public sealed record List : IFocusable
 {
     // ── IFocusable ───────────────────────────────────────────────────────────
     /// <inheritdoc/>
-    public bool HasFocus { get; set; }
+    public bool HasFocus { get; init; }
 
     // ── IWidget ─────────────────────────────────────────────────────────────
-    public SizeConstraint Width  { get; init; } = SizeConstraint.Flex(1);
+    public SizeConstraint Width { get; init; } = SizeConstraint.Flex(1);
     public SizeConstraint Height { get; init; } = SizeConstraint.Flex(1);
 
     // ── List-specific ────────────────────────────────────────────────────────
     /// <summary>The display strings shown in the list.</summary>
-    public IReadOnlyList<string> Items         { get; init; } = [];
+    public IReadOnlyList<string> Items { get; init; } = [];
     /// <summary>Zero-based index of the currently highlighted item.</summary>
-    public int                   SelectedIndex { get; init; }
+    public int SelectedIndex { get; init; }
     /// <summary>Visual style for unselected rows. Inherits theme base style when no properties set.</summary>
-    public Style                 Style         { get; init; } = Style.Default;
+    public Style Style { get; init; } = Style.Default;
     /// <summary>Visual style applied to the highlighted row. Defaults to reverse-video.</summary>
-    public Style                 SelectedItemStyle { get; init; } = Style.Default.Reverse(true);
+    public Style SelectedItemStyle { get; init; } = Style.Default.Reverse(true);
     /// <summary>
     /// Number of blank columns inserted to the left of each item's text.
     /// Provides breathing room when the list is placed inside a <see cref="BorderBox"/>.
     /// Defaults to <c>1</c>.
     /// </summary>
-    public int                   PaddingLeft  { get; init; } = 1;
+    public int PaddingLeft { get; init; } = 1;
     /// <summary>
     /// Number of blank columns reserved to the right of each item's text.
     /// Defaults to <c>0</c>.
     /// </summary>
-    public int                   PaddingRight { get; init; } = 0;
+    public int PaddingRight { get; init; } = 0;
 
     /// <summary>
     /// Zero-based index of the first item rendered in the viewport.
@@ -79,20 +79,20 @@ public sealed record List : IFocusable
         SelectedIndex = Math.Clamp(selectedIndex, 0, Math.Max(0, items.Count - 1));
         if (style is not null) Style = style.Value;
         if (selectedItemStyle is not null) SelectedItemStyle = selectedItemStyle.Value;
-        PaddingLeft   = paddingLeft;
-        PaddingRight  = paddingRight;
-        ScrollOffset  = Math.Max(0, scrollOffset);
+        PaddingLeft = paddingLeft;
+        PaddingRight = paddingRight;
+        ScrollOffset = Math.Max(0, scrollOffset);
     }
 
     // ── Key handling ─────────────────────────────────────────────────────────
     /// <inheritdoc/>
     public (IFocusable Next, ICmd? Cmd) Update(KeyMsg key) => key.Key switch
     {
-        ConsoleKey.UpArrow => (this with { SelectedIndex = Math.Max(0, SelectedIndex -1 )}, null),
-        ConsoleKey.DownArrow => (this with { SelectedIndex = Math.Min(Items.Count - 1, SelectedIndex + 1)}, null),
+        ConsoleKey.UpArrow => (this with { SelectedIndex = Math.Max(0, SelectedIndex - 1) }, null),
+        ConsoleKey.DownArrow => (this with { SelectedIndex = Math.Min(Items.Count - 1, SelectedIndex + 1) }, null),
         ConsoleKey.Enter when Items.Count > 0
             => (this, Cmd.Msg(new ListItemSelectedMsg(SelectedIndex, Items[SelectedIndex]))),
-        _    => (this, null),
+        _ => (this, null),
     };
 
     // ── Render ───────────────────────────────────────────────────────────────
@@ -107,8 +107,8 @@ public sealed record List : IFocusable
             ? SelectedItemStyle.Inherit(ctx.Theme.FocusedStyle)
             : SelectedItemStyle.Inherit(ctx.Theme.BaseStyle);
 
-        var fill     = new string(' ', region.Width);
-        var padLeft  = Math.Max(0, PaddingLeft);
+        var fill = new string(' ', region.Width);
+        var padLeft = Math.Max(0, PaddingLeft);
         var padRight = Math.Max(0, PaddingRight);
         // Width available for item text after subtracting horizontal padding
         var textWidth = Math.Max(0, region.Width - padLeft - padRight);
@@ -116,7 +116,7 @@ public sealed record List : IFocusable
         var maxRows = Math.Min(Items.Count - ScrollOffset, region.Height);
         for (var i = 0; i < maxRows; i++)
         {
-            var itemIdx  = ScrollOffset + i;
+            var itemIdx = ScrollOffset + i;
             var rowStyle = itemIdx == SelectedIndex ? selectedStyle : baseStyle;
 
             // 1. Fill the entire row so the background colour covers edge-to-edge
