@@ -326,10 +326,11 @@ public sealed class App
             if (!_renderer.TryGetLastFrame(out var rootWidget, out var layout)) return;
 
             hit = FocusManager.FindFocusableAt(rootWidget, layout, click.Col, click.Row);
-            if (hit?.FocusKey is string key)
-            {
-                _channel.Writer.TryWrite(new FocusRequestedMsg(key));
-            }
+        }
+
+        if (hit?.FocusKey is string key)
+        {
+            _channel.Writer.TryWrite(new FocusRequestedMsg(key));
         }
     }
 
