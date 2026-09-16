@@ -32,6 +32,16 @@ marked **Breaking**.
   Ctrl+letter arrives as a control character and Alt+key is a separate binding.
 - `KeyMap.On(char, ...)` — bind a character directly, mirroring the `ConsoleKey`
   overloads.
+- `ConsoleForge.Core.ListState` — selection and scroll as a pure value (`Count`,
+  `SelectedIndex`, `ScrollOffset`, `ViewportHeight`) with `HandleKey`, `MoveUp/Down/To`,
+  `WithCount`, `WithViewport` and a `VisibleRange` slice. It holds the item *count*, not
+  the items, so it serves an array, a filtered view or virtualised pages alike. Because
+  the viewport lives in the state, scroll is maintained on every move rather than being
+  something a model remembers to recompute.
+- `ConsoleForge.Core.TextAreaState` — multi-line editing as a pure value (`Lines`,
+  `CursorRow`, `CursorCol`, `MaxLines`). Single-line edits delegate to `TextInputState`,
+  so grapheme clusters, word jumps and kill-to-edge behave identically in both; this type
+  owns only what crosses lines — Up/Down, Enter, and the joins at either edge.
 - `ConsoleForge.Core.TextInputState` — a pure editing reducer (`Value`, `Cursor`,
   and the edit operations) usable without a `TextInput` widget.
 - `IFocusable.FocusKey` — an optional, application-assigned identity for a focusable
@@ -48,6 +58,17 @@ marked **Breaking**.
 
 ### Changed
 
+- `TextAreaChangedMsg` and `ListSelectionChangedMsg` are `[Obsolete]`. Neither has been
+  raised since widgets stopped emitting messages — `TextArea.Update` and `List.Update`
+  return the next widget — but both still documented a dispatch that does not happen, and
+  the Gallery carried a `case ListSelectionChangedMsg` arm that could never run. Same
+  treatment `TextInputChangedMsg` and `CheckboxToggledMsg` already had.
+- `TextArea` and `List` delegate to `TextAreaState` and `ListState`, so widget and reducer
+  cannot drift. Both gain bindings they never had: `TextArea` picks up word jumps
+  (`Ctrl+←/→`, `Ctrl+W`), kill-to-edge (`Ctrl+U`/`Ctrl+K`) and `Ctrl+A`/`Ctrl+E`, and its
+  cursor now moves and deletes in grapheme clusters rather than UTF-16 units, so an emoji
+  is no longer split in half. `List` picks up Home/End. `Ctrl+A` in a `TextArea` was
+  previously ignored and now means start-of-line, matching `TextInput`.
 - **Breaking:** `KeyPattern.Key` is `ConsoleKey?`. Null is a wildcard, matching how the
   modifier fields already behaved, which is what lets a pattern match on `Character`
   alone. Constructing a pattern is unchanged, since `ConsoleKey` widens implicitly, but

@@ -284,20 +284,6 @@ record GalleryModel(
                 when ActivePage != Page.TextInput && ActivePage != Page.TextArea:
                 return Update(new CycleThemeMsg());
 
-            // ── ListSelectionChangedMsg from sidebar List widget ───────────
-            case ListSelectionChangedMsg { Source: var src, NewIndex: var newIdx }
-                when ReferenceEquals(src, NavList):
-                {
-                    var page = (Page)newIdx;
-                    return (this with
-                    {
-                        NavList = new List(
-                            NavList.Items, newIdx)
-                        { HasFocus = NavList.HasFocus },
-                        ActivePage = page
-                    }, null);
-                }
-
             // ── Tick ──────────────────────────────────────────────────────
             case TickMsg:
                 return (this with

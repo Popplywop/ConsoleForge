@@ -55,11 +55,17 @@ public class TextAreaTests
     }
 
     [Fact]
-    public void Update_ControlChar_NoDispatch()
+    public void Update_ControlChar_IsNotInsertedAsText()
     {
+        // Ctrl+A carries '\x01' in Character. It must never reach the document as text —
+        // and since TextArea delegates to TextInputState it now also *means* something:
+        // start of line, the same binding TextInput has.
         var ta = new TextArea(["text"], cursorRow: 0, cursorCol: 4);
         var (next, _) = ta.Update(new KeyMsg(ConsoleKey.A, '\x01', Ctrl: true));
-        Assert.Same(ta, next);
+        var moved = Assert.IsType<TextArea>(next);
+
+        Assert.Equal(new[] { "text" }, moved.Lines);
+        Assert.Equal(0, moved.CursorCol);
     }
 
     // ── Backspace ─────────────────────────────────────────────────────────────

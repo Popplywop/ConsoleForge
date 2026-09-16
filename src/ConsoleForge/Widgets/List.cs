@@ -44,8 +44,10 @@ public sealed record List : IFocusable
 
     /// <summary>
     /// Zero-based index of the first item rendered in the viewport.
-    /// Update via <see cref="ComputeScrollOffset"/> when handling
-    /// <see cref="ListSelectionChangedMsg"/> to keep the selection visible.
+    /// The widget cannot maintain this — it has no viewport until render time — so a
+    /// model updates it with <see cref="ComputeScrollOffset"/> after storing the widget
+    /// <see cref="Update"/> returned, or holds a <see cref="ListState"/> instead and lets
+    /// it keep scroll and selection consistent.
     /// </summary>
     public int ScrollOffset { get; init; }
 
@@ -89,14 +91,34 @@ public sealed record List : IFocusable
 
     // ── Key handling ─────────────────────────────────────────────────────────
     /// <inheritdoc/>
-    public (IFocusable Next, ICmd? Cmd) Update(KeyMsg key) => key.Key switch
+    /// <remarks>
+    /// Navigation lives in <see cref="ListState"/>; this only carries it across, so a
+    /// model that keeps its own <see cref="ListState"/> and one that stores the widget
+    /// behave identically.
+    /// <para>
+    /// The widget has no viewport to hand over — it learns its region only at render
+    /// time — so <see cref="ScrollOffset"/> is left to the model via
+    /// <see cref="ComputeScrollOffset"/>, and PageUp/PageDown do nothing here. A model
+    /// holding a <see cref="ListState"/> with <c>WithViewport</c> gets both.
+    /// </para>
+    /// </remarks>
+    public (IFocusable Next, ICmd? Cmd) Update(KeyMsg key)
     {
-        ConsoleKey.UpArrow => (this with { SelectedIndex = Math.Max(0, SelectedIndex - 1) }, null),
-        ConsoleKey.DownArrow => (this with { SelectedIndex = Math.Min(Items.Count - 1, SelectedIndex + 1) }, null),
-        ConsoleKey.Enter when Items.Count > 0
-            => (this, Cmd.Msg(new ListItemSelectedMsg(SelectedIndex, Items[SelectedIndex]))),
-        _ => (this, null),
-    };
+        if (key.Key == ConsoleKey.Enter)
+            return Items.Count > 0
+                ? (this, Cmd.Msg(new ListItemSelectedMsg(SelectedIndex, Items[SelectedIndex])))
+                : (this, null);
+
+        var before = new ListState(Items.Count, SelectedIndex, ScrollOffset);
+        var after = before.HandleKey(key);
+        if (ReferenceEquals(after, before)) return (this, null);
+
+        return (this with
+        {
+            SelectedIndex = after.SelectedIndex,
+            ScrollOffset = after.ScrollOffset,
+        }, null);
+    }
 
     // ── Render ───────────────────────────────────────────────────────────────
     /// <inheritdoc/>
@@ -143,26 +165,26 @@ public sealed record List : IFocusable
     /// <summary>
     /// Computes a new <see cref="ScrollOffset"/> that keeps
     /// <paramref name="selectedIndex"/> within the visible viewport.
-    /// Call this from your model's Update handler when processing
-    /// <see cref="ListSelectionChangedMsg"/>.
+    /// Call this from your model's Update handler after storing the widget
+    /// <see cref="Update"/> returned.
     /// </summary>
     /// <param name="selectedIndex">The newly selected item index.</param>
     /// <param name="viewportHeight">Number of visible rows in the List's region.</param>
     /// <param name="currentScrollOffset">Current <see cref="ScrollOffset"/>.</param>
+    /// <remarks>
+    /// Kept for a model that stores the widget rather than a <see cref="ListState"/>. It
+    /// has no item count to clamp against, so it only slides the offset far enough to
+    /// show the selection — <see cref="ListState"/> does that and bounds the offset too.
+    /// </remarks>
     public static int ComputeScrollOffset(
         int selectedIndex, int viewportHeight, int currentScrollOffset)
-    {
-        if (viewportHeight <= 0) return currentScrollOffset;
-        if (selectedIndex < currentScrollOffset)
-            return selectedIndex;
-        if (selectedIndex >= currentScrollOffset + viewportHeight)
-            return selectedIndex - viewportHeight + 1;
-        return currentScrollOffset;
-    }
+        => ListState.EnsureVisible(selectedIndex, currentScrollOffset, viewportHeight);
 }
 
 /// <summary>
-/// Dispatched when the highlighted row in a <see cref="List"/> changes.
-/// The model should replace its List reference with <c>list with { SelectedIndex = msg.NewIndex }</c>.
+/// Was dispatched when the highlighted row in a <see cref="List"/> changed, back when
+/// widgets emitted messages through a callback. Nothing raises it now —
+/// <see cref="List.Update"/> returns the moved widget directly.
 /// </summary>
+[Obsolete("Unused since widgets stopped emitting messages. List.Update returns the next widget; store that instead.")]
 public sealed record ListSelectionChangedMsg(List Source, int NewIndex) : IMsg;

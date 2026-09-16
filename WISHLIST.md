@@ -15,33 +15,43 @@ worked example — see the 0.4.0 rows in Fixed — and item 8 carries the rest.
 
 ## 0.4.0
 
-The release that finishes the Elm-purity migration. `OnKeyEvent` is already gone
-`HasFocus` is immutable, and focus has moved out of the framework; these close the
-rest. Every remaining breaking change lands here, so 0.5.0 can be purely additive.
+The release that finishes the Elm-purity migration. `OnKeyEvent` is gone, `HasFocus`
+is immutable, focus has moved out of the framework, and the reducers that keep widget
+and model from drifting are in. Every remaining breaking change landed here, so 0.5.0
+can be purely additive.
 
 Item numbers are stable identifiers, not priorities or ordering — they never get
-reused or renumbered. Work the items in the order listed.
+reused or renumbered.
 
-**Done when:** the item below is resolved, `CHANGELOG.md` has its
+**Every item is resolved** — see the Fixed table. **Done when:** `CHANGELOG.md` has its
 `[Unreleased]` section promoted to `0.4.0`, and the tag is pushed.
-
-### 8. `TextAreaState` and `ListState` reducers
-
-`TextInputState` landed and `TextInput` delegates to it, so the two cannot drift.
-`TextArea` and `List` have no equivalent: `TextArea` re-implements cursor movement
-and editing in its own `Update`, and `List` clamps selection and scroll itself.
-Anyone wanting a filter box or a selectable list without taking the widget
-re-implements both — the situation `TextInputState` was written to end.
-
-**Proposal:** `TextAreaState` (multi-line editing, reusing `TextInputState`'s
-grapheme-cluster handling) and `ListState` (selection plus scroll clamping against
-a viewport height). Both widgets delegate, as `TextInput` does.
-
-Additive, and the lowest-risk item in the release — take it last.
 
 ## Later
 
 Additive, so deferring costs no one a migration.
+
+### 9. A widget's viewport height never reaches the model
+
+Scroll is a function of how many rows are visible, and nothing tells a model that
+number. A widget learns its region at render time, and `WindowResizeMsg` carries the
+terminal's size, not a widget's — so every consumer hand-computes it and hardcodes
+the result: `PlexTui` has `private const int ViewportRows = 20`, the Gallery passes
+`viewportHeight: 12` and `8`, and `TextArea` pages by a fixed 10 rows. Each of those
+is a guess that silently goes wrong when the layout around it changes.
+
+`ListState` carries a `ViewportHeight` and keeps scroll correct against it, which
+makes the missing input the only crude part left: `List` itself has nothing to put
+there, so it constructs the state with no viewport and leaves `ScrollOffset` to the
+model.
+
+**Proposal:** report resolved regions back to the model, so `ViewportHeight` comes
+from layout rather than arithmetic. A `RegionChangedMsg` keyed by `FocusKey` — the
+identity the application already assigns for click-focus — would fit the existing
+shape, and `FocusRequestedMsg` is the precedent: the framework reports what only it
+can know, and the model decides what it means.
+
+Letting a widget own its own scroll would also close it, and is the thing to avoid:
+that is the stateful-component mechanism the design target rules out.
 
 ### 1. Component-level subscriptions
 
@@ -103,6 +113,7 @@ What each gap turned out to be, and what shipped.
 | 0.4.0 | Making images movable left one path unfixed: a payload that moved was re-placed through `Refresh`, which returns null outside tmux — correctly, since a payload that stayed put needs nothing and renewing one every frame is what made artwork flicker. But the frame builder had already deleted the placement at the region the payload just left, so outside tmux a scrolling shelf deleted each image and placed nothing, and the artwork simply vanished. Motion and renewal are now distinct operations: `IRawEscapePayload.Place` re-places a payload that moved — mandatory, and cheap, since Kitty separates transmit from place — while `Refresh` keeps the narrower job of renewing a *stationary* placement against tmux's cursor drift. The bug was invisible to anyone running the suite inside tmux, where the renewal happened to cover the moved case, which is the more useful half of the lesson: `KittyPayload` read `TMUX` from the ambient environment, so the test suite's result depended on the developer's terminal. tmux is now a declared capability (`TerminalCapabilities.InsideTmux`, filled by `Detect()`), tests state the mode instead of inheriting it, and a CI workflow runs the suite on every push and pull request — previously the only job running tests fired on a `v*.*.*` tag, so a branch could carry a failing test to the edge of a release. |
 | 0.4.0 | `SizeConstraint.Auto` resolved as flex weight 1 — an Auto child took an equal share of free space instead of shrinking to fit, so `TextBlock` and `Spinner`, which default to Auto on both axes, filled their container. Widgets now report a content size through the new `IMeasurable`, implemented by `TextBlock`, `Spinner`, `Container`, `BorderBox` and `ZStack`; anything not implementing it keeps the old behaviour, so no third-party layout moved. Min/Max fold over the measurement (`Max(10, Auto)` is content capped at 10). Prerequisite: `LayoutEngine` and `Container.Render` carried separate copies of the constraint arithmetic and would have disagreed about where Auto children go, so both now share `LayoutSolver`. Overflow of *measured* children clamps rather than throwing — running out of room for text is ordinary; an impossible all-`Fixed` layout still throws. |
 | 0.4.0 | Documentation drift: README called the entry point `Program.Run` (it is `App.Run`), typed `Subscriptions()` as `IEnumerable` where the interface requires `IReadOnlyList`, omitted `KeyPattern.WithShift`, and never mentioned `ImageWidget` or Kitty graphics. `SizeConstraint.Auto` claimed to shrink to content in both README and XML docs while resolving as flex weight 1; both now state the real behaviour and point at item 1. `TextArea` carried a `<see cref="OnKeyEvent"/>` to a member deleted in this version, which Doxygen published. `TextInputChangedMsg` and `CheckboxToggledMsg` documented a dispatch that no longer happens; both are now `[Obsolete]`. |
+| 0.4.0 | `TextArea` re-implemented cursor movement and editing in its own `Update` and `List` clamped selection itself, so anyone wanting a filter box or a selectable list without taking the widget rewrote both. `ConsoleForge.Core.TextAreaState` and `ConsoleForge.Core.ListState` are the reducers; both widgets delegate, as `TextInput` does, so widget and reducer cannot drift. `TextAreaState` owns only what crosses lines — Up/Down, Enter, and the joins at either edge — and hands every single-line key to `TextInputState`, which is how `TextArea` picked up word jumps, kill-to-edge and `Ctrl+A`/`Ctrl+E` for free, and how its cursor stopped stepping in UTF-16 units and splitting emoji in half. `ListState` holds the item *count* rather than the items, so it serves an array, a filtered view or virtualised pages alike. Its one real design question was where the viewport height lives: it is a layout result, so a state that took it per call could never maintain scroll on its own and could not express paging at all. Putting `ViewportHeight` in the state makes "the selection is visible" an invariant again — reconciled by the same function every constructor and every `init` accessor funnels through, so no `with` in any order can produce a selection outside the list or an offset that hides it. `List` still cannot use that half: a widget learns its region only at render time, so it constructs the state with no viewport and leaves `ScrollOffset` to the model, which is the gap the viewport-plumbing item now carries. `TextAreaChangedMsg` and `ListSelectionChangedMsg` went `[Obsolete]` alongside, having documented a dispatch that stopped happening when widgets stopped emitting messages; the Gallery's `case ListSelectionChangedMsg` arm was dead code and is gone. |
 | 0.4.0 | `Modal.ShowBackdrop` documented itself as "a dark overlay" that "replaces background content" — two readings at once, and everyone takes the first, which is a translucent tint. It is a paint-over: the backdrop fills the modal's entire region with spaces, so the cells beneath are erased, not dimmed. The region is the trap. `Modal` defaults both size constraints to flex and `ZStack` hands every layer the full region, so the fill is normally the whole terminal — a backdrop over a `ZStack` blanks the application behind the dialog, which is what "the application disappeared" was. Both widgets now say so, `ZStack` gaining the general form of it: layers composite by painting, not blending, so a layer that fills its region hides every layer under it. `BackdropStyle`'s "faint text" was wrong too — the fill writes spaces, so only its background colour is visible and the default's `Faint` is inert. Behaviour unchanged, and one characterisation test now pins the erasure, which the existing ZStack test set up and then never asserted. The `BackdropStyle` dim stays unimplemented: restyling cells already in the buffer is a read-modify-write the render context does not offer, since `Write` replaces content and style together — a `RenderContext` capability question, and a feature rather than a correction. |
 | 0.4.0 | `KeyPattern` could only name a `ConsoleKey`, so every printable binding silently assumed a US keyboard: `?` was `WithShift(Oem2)`, which is that glyph's position on that layout and nowhere else. `KeyMsg` already carried the character the terminal produced — layout applied by the OS long before the byte arrives — so the fix was to match on it. `KeyPattern.OfChar(char)` does, with `KeyMap.On(char, ...)` as the shorthand. Case-sensitive bindings (`n` vs `N`) fall out of the same ordinal comparison, and characters with no `ConsoleKey` mapping became bindable at all for the first time. Shift stays a wildcard, because it was already consumed producing the glyph and requiring it would restore the assumption being removed; Ctrl and Alt must be absent, since Ctrl+letter arrives as a control character and Alt+key is a separate binding that would otherwise match — the Alt path preserves `Character`. **Not additive, as the item claimed:** expressing "match the character, whatever key made it" meant `Key` became `ConsoleKey?`, so null is a wildcard as it already was for the modifiers. Construction is unchanged, but reading or deconstructing `.Key` now yields a nullable, and a pattern with no field set matches every key — a usable trailing catch-all, and a trap for a `default` struct reached by accident. The terminal layer needed nothing: printable keys never touch the escape parser, and the CSI/SS3 paths correctly report no character. |
 | 0.4.0 | `Cmd.Debounce` and `Cmd.Throttle` held their state in the closure the factory returned, so they rate-limited only across re-dispatches of one stored instance — and `Update`, which is where you decide to debounce, builds a fresh command every call. The documented usage silently did nothing. Storing an instance was no way out: the captured `fn` varies per item (a different poster URL per row), and a mutable closure in the model breaks immutability. Both now take a key, and the window belongs to that key in the event loop, so re-dispatch supersedes the pending one however many instances were built. The latest `fn` wins, which is what makes a per-item closure safe. Suppressed calls now emit nothing: they used to resolve to a `RedrawMsg` sentinel the model had to discard, which repainted once per suppressed call. Windows are linked to the shutdown token, so none outlives the program. PlexTui's generation-counter-plus-`Cmd.Tick` workaround was the shape of the missing feature. |
