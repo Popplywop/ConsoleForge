@@ -98,6 +98,15 @@ marked **Breaking**.
 
 ### Fixed
 
+- Documentation: `Modal.ShowBackdrop` described itself as "a dark overlay" that "replaces
+  background content", which reads as a translucent tint and is not what it does. The
+  backdrop fills the modal's entire region with spaces, erasing whatever is beneath it —
+  and since the modal's size constraints are flex and `ZStack` hands every layer the full
+  region, that is normally the whole terminal, so a backdrop over a `ZStack` blanks the
+  application behind the dialog. `Modal` and `ZStack` now both say so. `BackdropStyle`
+  claimed "faint text": the fill writes spaces, so only its background colour is visible
+  and the default's `Faint` does nothing. The flag's behaviour is unchanged; a dim that
+  restyles the cells underneath rather than blanking them remains unimplemented.
 - An image that moved vanished outside tmux. A payload present in the previous frame
   was re-placed through `Refresh`, which returns null when not inside tmux — correctly,
   because a payload that stayed put needs nothing and renewing one every frame is what

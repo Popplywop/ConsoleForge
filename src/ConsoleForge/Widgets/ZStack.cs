@@ -19,6 +19,12 @@ namespace ConsoleForge.Widgets;
 /// <remarks>
 /// <see cref="Core.FocusManager"/> traverses all layers for focus collection,
 /// so interactive widgets in any layer participate in Tab-order traversal.
+/// <para>
+/// Layers composite by painting, not by blending: a layer that writes a cell replaces
+/// what was there, and one that fills its whole region hides every layer beneath it.
+/// <see cref="Modal.ShowBackdrop"/> is the case to know about — it blanks the full region
+/// before drawing its dialog, which erases the layout you stacked it over.
+/// </para>
 /// </remarks>
 public sealed record ZStack : IWidget, ILayeredContainer, IMeasurable
 {

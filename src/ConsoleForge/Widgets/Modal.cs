@@ -22,9 +22,18 @@ namespace ConsoleForge.Widgets;
 /// automatically (Modal implements <see cref="ISingleBodyWidget"/>). The model is responsible
 /// for routing keyboard input to the modal when it is open.
 /// <para>
-/// <b>Backdrop</b> — When <see cref="ShowBackdrop"/> is true, the entire region is filled with
-/// <see cref="BackdropStyle"/> spaces before drawing the dialog box. This replaces background
-/// content with a dark overlay. When false (default), content behind the modal remains visible.
+/// <b>Backdrop</b> — off by default, and the modal then draws only its dialog box. Cells
+/// outside the box are left untouched, so lower <see cref="ZStack"/> layers show through
+/// exactly as they were. Nothing dims them: there is no middle setting.
+/// </para>
+/// <para>
+/// <see cref="ShowBackdrop"/> fills the modal's <em>entire</em> region with spaces in
+/// <see cref="BackdropStyle"/> before the dialog is drawn, which <em>erases</em> what is
+/// underneath rather than tinting it — a paint-over, not a translucent overlay. Since
+/// <see cref="Width"/> and <see cref="Height"/> default to flex and <see cref="ZStack"/>
+/// hands every layer the full region, that region is normally the whole terminal, so a
+/// backdrop over a ZStack blanks the application behind the dialog. That is the intended
+/// behaviour of the flag, not a bug; leave it off to keep context visible.
 /// </para>
 /// </remarks>
 public sealed record Modal : IWidget, ISingleBodyWidget
@@ -65,14 +74,23 @@ public sealed record Modal : IWidget, ISingleBodyWidget
 
     /// <summary>
     /// When true, fills the entire region with <see cref="BackdropStyle"/> spaces before
-    /// rendering the dialog box, creating a dark-overlay effect.
-    /// Default false (background content remains visible).
+    /// rendering the dialog box, erasing whatever was drawn underneath. Default false,
+    /// which leaves background content visible and undimmed.
+    /// <para>
+    /// The fill covers the modal's outer region, not the dialog box, and that region is
+    /// flex by default — the whole terminal under a <see cref="ZStack"/>.
+    /// </para>
     /// </summary>
     public bool ShowBackdrop { get; init; } = false;
 
     /// <summary>
     /// Style used for the backdrop fill when <see cref="ShowBackdrop"/> is true.
-    /// Defaults to a dark background with faint text.
+    /// <para>
+    /// The fill writes spaces, so only the background colour is visible; foreground
+    /// attributes on this style have no ink to act on. The default carries <c>Faint</c>
+    /// for that reason inertly, and its near-black background is what produces the
+    /// darkened look — set a light background and the backdrop is light.
+    /// </para>
     /// </summary>
     public Style BackdropStyle { get; init; } =
         Style.Default.Background(Color.FromRgb(20, 20, 20)).Faint(true);
@@ -85,7 +103,7 @@ public sealed record Modal : IWidget, ISingleBodyWidget
     /// <param name="body">Content widget inside the dialog.</param>
     /// <param name="dialogWidth">Dialog box width (columns). Default 60.</param>
     /// <param name="dialogHeight">Dialog box height (rows). Default 16.</param>
-    /// <param name="showBackdrop">Fill background with <see cref="BackdropStyle"/> before drawing.</param>
+    /// <param name="showBackdrop">Erase the region with <see cref="BackdropStyle"/> before drawing; see <see cref="ShowBackdrop"/>.</param>
     /// <param name="style">Optional border/title style override.</param>
     public Modal(
         string title = "",
@@ -126,7 +144,7 @@ public sealed record Modal : IWidget, ISingleBodyWidget
     // ── Render ───────────────────────────────────────────────────────────────
 
     /// <summary>
-    /// Optionally fills the region with a backdrop, then renders a centered bordered
+    /// Optionally erases the region with a backdrop fill, then renders a centered bordered
     /// dialog box containing <see cref="Body"/>.
     /// </summary>
     public void Render(IRenderContext ctx)

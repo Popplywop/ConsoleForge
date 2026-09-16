@@ -114,8 +114,12 @@ public class ModalTests
     }
 
     [Fact]
-    public void ZStack_WithBackdropModal_ModalContentVisible()
+    public void ZStack_WithBackdropModal_ErasesTheLayerBeneathIt()
     {
+        // The backdrop is a paint-over, not a translucent overlay: it fills the modal's
+        // whole region with spaces, and the region is flex, so under a ZStack that is the
+        // whole terminal. The layer underneath is gone, not dimmed — which is what makes a
+        // backdrop read as "the application disappeared". Documented on Modal.ShowBackdrop.
         var background = new TextBlock("Hidden under backdrop");
         var modal = new Modal("Alert", body: new TextBlock("ImportantMessage"),
             showBackdrop: true, dialogWidth: 40, dialogHeight: 8);
@@ -124,6 +128,7 @@ public class ModalTests
         var plain = TestHelpers.StripAnsi(ViewDescriptor.From(zs, width: 80, height: 24).Content);
 
         Assert.Contains("ImportantMessage", plain);
+        Assert.DoesNotContain("Hidden under backdrop", plain);
     }
 
     // ── Focus traversal ───────────────────────────────────────────────────────
