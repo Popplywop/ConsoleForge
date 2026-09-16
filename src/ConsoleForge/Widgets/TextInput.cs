@@ -93,11 +93,16 @@ public sealed record TextInput : IFocusable
 
         ctx.Write(textCol, region.Row, display, effectiveStyle);
 
-        // Draw cursor when focused
+        // Draw cursor when focused. CursorPosition indexes UTF-16 units, but the terminal
+        // cursor is placed in columns, so the offset is the visual width of the text
+        // before it — a wide glyph or an emoji is one index step and two columns. It
+        // measures Value, not display, which may be the placeholder or truncated.
         if (HasFocus)
         {
-            int cursorScreenCol = textCol + Math.Min(CursorPosition, textWidth);
-            ctx.SetCursorDescriptor(new(true, cursorScreenCol, region.Row));
+            int pos = Math.Clamp(CursorPosition, 0, Value.Length);
+            int cursorCol = TextUtils.VisualWidth(Value.AsSpan(0, pos));
+            ctx.SetCursorDescriptor(
+                new(true, textCol + Math.Min(cursorCol, textWidth), region.Row));
         }
     }
 }

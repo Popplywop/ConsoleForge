@@ -166,11 +166,16 @@ public sealed record TextArea : IFocusable
             if (visible.Length > 0)
                 ctx.Write(region.Col, absRow, visible, effectiveStyle);
 
-            // Draw cursor when focused and this is the cursor row
+            // Draw cursor when focused and this is the cursor row.
+            // CursorCol indexes UTF-16 units, but the terminal cursor is placed in
+            // columns, so the offset is the visual width of the text before it — a wide
+            // glyph or an emoji is one index step and two columns.
             if (HasFocus && lineIdx == CursorRow)
             {
-                var cursorScreenCol = Math.Min(CursorCol, region.Width - 1);
-                ctx.SetCursorDescriptor(new(true, cursorScreenCol, absRow));
+                int col = Math.Clamp(CursorCol, 0, line.Length);
+                int cursorCol = TextUtils.VisualWidth(line.AsSpan(0, col));
+                ctx.SetCursorDescriptor(
+                    new(true, region.Col + Math.Min(cursorCol, region.Width - 1), absRow));
             }
         }
     }

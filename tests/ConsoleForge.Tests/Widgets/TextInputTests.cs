@@ -242,4 +242,30 @@ public class TextInputTests
         Assert.NotSame(input, result);
         Assert.Equal("hix", result.Value);
     }
+
+    // ── Hardware cursor placement ─────────────────────────────────────────────
+
+    [Fact]
+    public void Cursor_CountsColumnsNotCodeUnits()
+    {
+        // Same column-vs-index bug TextArea had. TextInput already added region.Col, so
+        // only the width of the text before the cursor was wrong.
+        var input = new TextInput("世界x") { HasFocus = true, CursorPosition = 2 };
+
+        var cursor = ViewDescriptor.From(input, width: 20, height: 1).Cursor;
+
+        Assert.Equal(4, cursor.Col);
+    }
+
+    [Fact]
+    public void Cursor_MeasuresTheValueNotThePlaceholder()
+    {
+        // An empty input renders its placeholder, but the cursor belongs at the start of
+        // the (empty) value, not after the placeholder text.
+        var input = new TextInput("", "type here") { HasFocus = true };
+
+        var cursor = ViewDescriptor.From(input, width: 20, height: 1).Cursor;
+
+        Assert.Equal(0, cursor.Col);
+    }
 }

@@ -1,4 +1,5 @@
 using ConsoleForge.Core;
+using ConsoleForge.Layout;
 using ConsoleForge.Widgets;
 
 namespace ConsoleForge.Tests.Widgets;
@@ -397,5 +398,49 @@ public class TextAreaTests
 
         Assert.NotSame(ta, result);
         Assert.Equal("hi!", result.Lines[0]);
+    }
+
+    // ── Hardware cursor placement ─────────────────────────────────────────────
+
+    [Fact]
+    public void Cursor_IsPlacedInsideTheWidgetsRegion_NotAtTheScreenEdge()
+    {
+        // The cursor column was computed relative to the region and reported as an
+        // absolute screen column, so a TextArea in a right-hand pane put its cursor over
+        // whatever sat on the left of the screen.
+        var sidebar = new TextBlock("nav") { Width = SizeConstraint.Fixed(20) };
+        var area = new TextArea(["hello"], cursorRow: 0, cursorCol: 3) { HasFocus = true };
+        var row = new Container(Axis.Horizontal, [sidebar, area]);
+
+        var cursor = ViewDescriptor.From(row, width: 60, height: 5).Cursor;
+
+        Assert.True(cursor.Visible);
+        Assert.Equal(23, cursor.Col); // 20 columns of sidebar + 3 into the text
+        Assert.Equal(0, cursor.Row);
+    }
+
+    [Fact]
+    public void Cursor_CountsColumnsNotCodeUnits()
+    {
+        // "世" is one index step and two columns. Placing the cursor by index drifts left
+        // of the text by one column per wide glyph before it.
+        var area = new TextArea(["世界x"], cursorRow: 0, cursorCol: 2) { HasFocus = true };
+
+        var cursor = ViewDescriptor.From(area, width: 20, height: 3).Cursor;
+
+        Assert.Equal(4, cursor.Col); // two wide glyphs = four columns
+    }
+
+    [Fact]
+    public void Cursor_TracksTheScrolledRow()
+    {
+        var area = new TextArea(["a", "b", "c", "d"], cursorRow: 3, cursorCol: 0, scrollRow: 2)
+        {
+            HasFocus = true,
+        };
+
+        var cursor = ViewDescriptor.From(area, width: 20, height: 2).Cursor;
+
+        Assert.Equal(1, cursor.Row); // line 3 is the second visible row
     }
 }

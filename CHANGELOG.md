@@ -119,6 +119,19 @@ marked **Breaking**.
 
 ### Fixed
 
+- The `TextArea` cursor was drawn at the wrong place on screen. Its column was computed
+  relative to the widget's region but handed to the terminal as an absolute screen
+  column, so a `TextArea` in a right-hand pane put its cursor over whatever sat on the
+  left of the screen. The row was always right, which is why the symptom was purely
+  horizontal.
+- Both `TextArea` and `TextInput` placed the cursor by string index rather than by
+  column. A wide glyph or an emoji is one index step and two columns, so the cursor
+  drifted a column left of the text for each one before it. Newly visible in `TextArea`,
+  whose cursor only started landing cleanly after grapheme clusters this release.
+- `ViewDescriptor.From` reported an invisible cursor no matter what a focused widget
+  asked for during `Render`, unlike `Renderer` on the live path. Nothing in the framework
+  used it, but it made cursor placement untestable — which is why the two bugs above
+  survived.
 - Documentation: `Modal.ShowBackdrop` described itself as "a dark overlay" that "replaces
   background content", which reads as a translucent tint and is not what it does. The
   backdrop fills the modal's entire region with spaces, erasing whatever is beneath it —
