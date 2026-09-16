@@ -267,8 +267,10 @@ public sealed record TextAreaState
 
     private List<string> ReplaceLine(int row, string text)
     {
-        var next = new List<string>(_lines);
-        next[row] = text;
+        var next = new List<string>(_lines)
+        {
+            [row] = text
+        };
         return next;
     }
 
