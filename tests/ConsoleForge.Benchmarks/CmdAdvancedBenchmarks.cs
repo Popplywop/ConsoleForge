@@ -6,6 +6,8 @@ using ConsoleForge.Core;
 /// Benchmarks for newer <see cref="Cmd"/> factory methods:
 /// <see cref="Cmd.Run"/>, <see cref="Cmd.Tick"/>, <see cref="Cmd.Debounce"/>,
 /// <see cref="Cmd.Throttle"/>, and error-dispatch via <see cref="CmdErrorMsg"/>.
+/// Debounce/Throttle windows are applied by the event loop, not by the cmd, so what
+/// is measured here is the dispatch, not the rate limit.
 ///
 /// All benchmarks that exercise the roundtrip use <c>DispatchAndWait</c>, matching
 /// the baseline established in <see cref="CmdDispatchBenchmarks"/>.
@@ -19,9 +21,9 @@ public class CmdAdvancedBenchmarks
     private ICmd _throwingCmd  = null!;
     private ICmd _tickCmd      = null!;
 
-    // Debounce/Throttle: same cmd instance is reused across iterations to
-    // preserve the internal state (CTS / lastFired timestamp) that drives
-    // their behaviour.
+    // Debounce/Throttle: the rate-limiting itself is the event loop's work, keyed
+    // and held there. What a dispatch costs is building the request and writing it
+    // to the channel, which is what these measure.
     private ICmd _debounceCmd  = null!;
     private ICmd _throttleCmd  = null!;
 
@@ -41,9 +43,8 @@ public class CmdAdvancedBenchmarks
         // Cmd.Tick with a zero interval so Task.Delay completes immediately.
         _tickCmd = Cmd.Tick(TimeSpan.Zero, ts => new RedrawMsg());
 
-        // Debounce / Throttle with a zero window so they always pass through.
-        _debounceCmd = Cmd.Debounce(TimeSpan.Zero, ts => new RedrawMsg());
-        _throttleCmd = Cmd.Throttle(TimeSpan.Zero, ts => new RedrawMsg());
+        _debounceCmd = Cmd.Debounce("bench", TimeSpan.Zero, ts => new RedrawMsg());
+        _throttleCmd = Cmd.Throttle("bench", TimeSpan.Zero, ts => new RedrawMsg());
     }
 
     [IterationCleanup]
@@ -82,32 +83,18 @@ public class CmdAdvancedBenchmarks
         => await CmdDispatcher.DispatchAndWait(_tickCmd, _channel.Writer);
 
     /// <summary>
-    /// Roundtrip: invoke a <c>Cmd.Debounce</c> cmd when the window has already
-    /// expired (pass-through path — no cancellation, no waiting).
+    /// Roundtrip: invoke a <c>Cmd.Debounce</c> cmd. Resolution is synchronous —
+    /// it builds the keyed request the event loop acts on.
     /// </summary>
     [Benchmark]
-    public async Task Dispatch_Debounce_PassThrough()
+    public async Task Dispatch_Debounce_Request()
         => await CmdDispatcher.DispatchAndWait(_debounceCmd, _channel.Writer);
 
     /// <summary>
-    /// Roundtrip: invoke a <c>Cmd.Throttle</c> cmd when the window has already
-    /// expired (pass-through path — returns fn result immediately).
+    /// Roundtrip: invoke a <c>Cmd.Throttle</c> cmd — same shape as debounce, and
+    /// the same cost, since the mode only changes what the loop does with it.
     /// </summary>
     [Benchmark]
-    public async Task Dispatch_Throttle_PassThrough()
+    public async Task Dispatch_Throttle_Request()
         => await CmdDispatcher.DispatchAndWait(_throttleCmd, _channel.Writer);
-
-    /// <summary>
-    /// Throttle drop path: two back-to-back invocations of the same throttled cmd.
-    /// The second call is within the throttle window and returns RedrawMsg without
-    /// invoking fn. Measures the cost of the fast-drop branch.
-    /// </summary>
-    [Benchmark]
-    public async Task Dispatch_Throttle_Drop()
-    {
-        // First call passes through and sets _lastFired = now.
-        var throttleOnce = Cmd.Throttle(TimeSpan.FromHours(1), ts => new RedrawMsg());
-        await CmdDispatcher.DispatchAndWait(throttleOnce, _channel.Writer); // pass-through
-        await CmdDispatcher.DispatchAndWait(throttleOnce, _channel.Writer); // dropped
-    }
 }

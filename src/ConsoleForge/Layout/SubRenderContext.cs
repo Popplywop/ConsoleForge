@@ -50,4 +50,19 @@ public sealed class SubRenderContext : IRenderContext
 
     public void SetCursorDescriptor(CursorDescriptor cursor)
         => _parent.SetCursorDescriptor(cursor);
+
+    /// <inheritdoc/>
+    public void WriteRawEscape(Region region, IRawEscapePayload payload)
+    {
+        // Clamp region to this sub-context's bounds before forwarding.
+        // A widget must not paint outside its allocated region.
+        int col    = Math.Max(region.Col, Region.Col);
+        int row    = Math.Max(region.Row, Region.Row);
+        int right  = Math.Min(region.Col + region.Width,  Region.Col + Region.Width);
+        int bottom = Math.Min(region.Row + region.Height, Region.Row + Region.Height);
+        int w = right  - col;
+        int h = bottom - row;
+        if (w <= 0 || h <= 0) return;
+        _parent.WriteRawEscape(new Region(col, row, w, h), payload);
+    }
 }

@@ -32,151 +32,163 @@ public class TextInputTests
     // ── Printable character input ─────────────────────────────────────────────
 
     [Fact]
-    public void OnKeyEvent_PrintableChar_AppendsAtCursorAndAdvances()
+    public void Update_PrintableChar_AppendsAtCursorAndAdvances()
     {
         var input = new TextInput("ab", cursorPosition: 2);
-        TextInputChangedMsg? received = null;
-        input.OnKeyEvent(new KeyMsg(ConsoleKey.NoName, 'c'), msg => received = msg as TextInputChangedMsg);
+        var (next, _) = input.Update(new KeyMsg(ConsoleKey.NoName, 'c'));
+        var result = (TextInput)next;
 
-        Assert.NotNull(received);
-        Assert.Equal("abc", received!.NewValue);
-        Assert.Equal(3, received.NewCursorPosition);
+        Assert.Equal("abc", result.Value);
+        Assert.Equal(3, result.CursorPosition);
     }
 
     [Fact]
-    public void OnKeyEvent_PrintableChar_InsertsAtMiddle()
+    public void Update_PrintableChar_InsertsAtMiddle()
     {
         var input = new TextInput("ac", cursorPosition: 1);
-        TextInputChangedMsg? received = null;
-        input.OnKeyEvent(new KeyMsg(ConsoleKey.NoName, 'b'), msg => received = msg as TextInputChangedMsg);
+        var (next, _) = input.Update(new KeyMsg(ConsoleKey.NoName, 'b'));
+        var result = (TextInput)next;
 
-        Assert.NotNull(received);
-        Assert.Equal("abc", received!.NewValue);
-        Assert.Equal(2, received.NewCursorPosition);
+        Assert.Equal("abc", result.Value);
+        Assert.Equal(2, result.CursorPosition);
     }
 
     [Fact]
-    public void OnKeyEvent_ControlChar_Ignored()
+    public void Update_ControlChar_IsNotTyped()
+    {
+        // Ctrl+A carries \x01 as its character; it moves the cursor (readline's
+        // beginning-of-line) but must never end up in the text.
+        var input = new TextInput("hello", cursorPosition: 5);
+        var (next, _) = input.Update(new KeyMsg(ConsoleKey.A, '\x01', Ctrl: true));
+        var typed = Assert.IsType<TextInput>(next);
+        Assert.Equal("hello", typed.Value);
+        Assert.Equal(0, typed.CursorPosition);
+    }
+
+    [Fact]
+    public void Update_UnhandledKey_ReturnsTheSameInstance()
     {
         var input = new TextInput("hello", cursorPosition: 5);
-        TextInputChangedMsg? received = null;
-        // '\x01' is a control char (Ctrl+A)
-        input.OnKeyEvent(new KeyMsg(ConsoleKey.A, '\x01', Ctrl: true), msg => received = msg as TextInputChangedMsg);
-        Assert.Null(received);
+        var (next, _) = input.Update(new KeyMsg(ConsoleKey.F5, null));
+        Assert.Same(input, next);
+    }
+
+    [Fact]
+    public void Update_SharesEditingRulesWithTextInputState()
+    {
+        // The widget must not grow its own copy of the editing logic.
+        var key = new KeyMsg(ConsoleKey.W, '\u0017', Ctrl: true);
+        var state = new TextInputState("one two three").HandleKey(key);
+
+        var (next, _) = new TextInput("one two three", cursorPosition: 13).Update(key);
+        var typed = Assert.IsType<TextInput>(next);
+
+        Assert.Equal(state.Value, typed.Value);
+        Assert.Equal(state.Cursor, typed.CursorPosition);
     }
 
     // ── Backspace ─────────────────────────────────────────────────────────────
 
     [Fact]
-    public void OnKeyEvent_Backspace_DeletesCharBeforeCursor()
+    public void Update_Backspace_DeletesCharBeforeCursor()
     {
         var input = new TextInput("hello", cursorPosition: 5);
-        TextInputChangedMsg? received = null;
-        input.OnKeyEvent(new KeyMsg(ConsoleKey.Backspace, null), msg => received = msg as TextInputChangedMsg);
+        var (next, _) = input.Update(new KeyMsg(ConsoleKey.Backspace, null));
+        var result = (TextInput)next;
 
-        Assert.NotNull(received);
-        Assert.Equal("hell", received!.NewValue);
-        Assert.Equal(4, received.NewCursorPosition);
+        Assert.Equal("hell", result.Value);
+        Assert.Equal(4, result.CursorPosition);
     }
 
     [Fact]
-    public void OnKeyEvent_Backspace_AtStart_DoesNothing()
+    public void Update_Backspace_AtStart_DoesNothing()
     {
         var input = new TextInput("hello", cursorPosition: 0);
-        TextInputChangedMsg? received = null;
-        input.OnKeyEvent(new KeyMsg(ConsoleKey.Backspace, null), msg => received = msg as TextInputChangedMsg);
-        Assert.Null(received);
+        var (next, _) = input.Update(new KeyMsg(ConsoleKey.Backspace, null));
+        Assert.Same(input, next);
     }
 
     [Fact]
-    public void OnKeyEvent_Backspace_EmptyValue_DoesNothing()
+    public void Update_Backspace_EmptyValue_DoesNothing()
     {
         var input = new TextInput("", cursorPosition: 0);
-        TextInputChangedMsg? received = null;
-        input.OnKeyEvent(new KeyMsg(ConsoleKey.Backspace, null), msg => received = msg as TextInputChangedMsg);
-        Assert.Null(received);
+        var (next, _) = input.Update(new KeyMsg(ConsoleKey.Backspace, null));
+        Assert.Same(input, next);
     }
 
     [Fact]
-    public void OnKeyEvent_Backspace_InMiddle_DeletesCorrectChar()
+    public void Update_Backspace_InMiddle_DeletesCorrectChar()
     {
         var input = new TextInput("abc", cursorPosition: 2);
-        TextInputChangedMsg? received = null;
-        input.OnKeyEvent(new KeyMsg(ConsoleKey.Backspace, null), msg => received = msg as TextInputChangedMsg);
+        var (next, _) = input.Update(new KeyMsg(ConsoleKey.Backspace, null));
+        var result = (TextInput)next;
 
-        Assert.NotNull(received);
-        Assert.Equal("ac", received!.NewValue);
-        Assert.Equal(1, received.NewCursorPosition);
+        Assert.Equal("ac", result.Value);
+        Assert.Equal(1, result.CursorPosition);
     }
 
     // ── Delete ────────────────────────────────────────────────────────────────
 
     [Fact]
-    public void OnKeyEvent_Delete_DeletesCharAtCursor()
+    public void Update_Delete_DeletesCharAtCursor()
     {
         var input = new TextInput("hello", cursorPosition: 0);
-        TextInputChangedMsg? received = null;
-        input.OnKeyEvent(new KeyMsg(ConsoleKey.Delete, null), msg => received = msg as TextInputChangedMsg);
+        var (next, _) = input.Update(new KeyMsg(ConsoleKey.Delete, null));
+        var result = (TextInput)next;
 
-        Assert.NotNull(received);
-        Assert.Equal("ello", received!.NewValue);
-        Assert.Equal(0, received.NewCursorPosition);
+        Assert.Equal("ello", result.Value);
+        Assert.Equal(0, result.CursorPosition);
     }
 
     [Fact]
-    public void OnKeyEvent_Delete_AtEnd_DoesNothing()
+    public void Update_Delete_AtEnd_DoesNothing()
     {
         var input = new TextInput("hello", cursorPosition: 5);
-        TextInputChangedMsg? received = null;
-        input.OnKeyEvent(new KeyMsg(ConsoleKey.Delete, null), msg => received = msg as TextInputChangedMsg);
-        Assert.Null(received);
+        var (next, _) = input.Update(new KeyMsg(ConsoleKey.Delete, null));
+        Assert.Same(input, next);
     }
 
     // ── Cursor movement ───────────────────────────────────────────────────────
 
     [Fact]
-    public void OnKeyEvent_LeftArrow_DecrementsCursor()
+    public void Update_LeftArrow_DecrementsCursor()
     {
         var input = new TextInput("hello", cursorPosition: 3);
-        TextInputChangedMsg? received = null;
-        input.OnKeyEvent(new KeyMsg(ConsoleKey.LeftArrow, null), msg => received = msg as TextInputChangedMsg);
+        var (next, _) = input.Update(new KeyMsg(ConsoleKey.LeftArrow, null));
+        var result = (TextInput)next;
 
-        Assert.NotNull(received);
-        Assert.Equal("hello", received!.NewValue);
-        Assert.Equal(2, received.NewCursorPosition);
+        Assert.Equal("hello", result.Value);
+        Assert.Equal(2, result.CursorPosition);
     }
 
     [Fact]
-    public void OnKeyEvent_LeftArrow_AtStart_StaysAtZero()
+    public void Update_LeftArrow_AtStart_StaysAtZero()
     {
         var input = new TextInput("hello", cursorPosition: 0);
-        TextInputChangedMsg? received = null;
-        input.OnKeyEvent(new KeyMsg(ConsoleKey.LeftArrow, null), msg => received = msg as TextInputChangedMsg);
+        var (next, _) = input.Update(new KeyMsg(ConsoleKey.LeftArrow, null));
+        var result = (TextInput)next;
 
-        Assert.NotNull(received);
-        Assert.Equal(0, received!.NewCursorPosition);
+        Assert.Equal(0, result.CursorPosition);
     }
 
     [Fact]
-    public void OnKeyEvent_RightArrow_IncrementsCursor()
+    public void Update_RightArrow_IncrementsCursor()
     {
         var input = new TextInput("hello", cursorPosition: 2);
-        TextInputChangedMsg? received = null;
-        input.OnKeyEvent(new KeyMsg(ConsoleKey.RightArrow, null), msg => received = msg as TextInputChangedMsg);
+        var (next, _) = input.Update(new KeyMsg(ConsoleKey.RightArrow, null));
+        var result = (TextInput)next;
 
-        Assert.NotNull(received);
-        Assert.Equal(3, received!.NewCursorPosition);
+        Assert.Equal(3, result.CursorPosition);
     }
 
     [Fact]
-    public void OnKeyEvent_RightArrow_AtEnd_StaysAtEnd()
+    public void Update_RightArrow_AtEnd_StaysAtEnd()
     {
         var input = new TextInput("hello", cursorPosition: 5);
-        TextInputChangedMsg? received = null;
-        input.OnKeyEvent(new KeyMsg(ConsoleKey.RightArrow, null), msg => received = msg as TextInputChangedMsg);
+        var (next, _) = input.Update(new KeyMsg(ConsoleKey.RightArrow, null));
+        var result = (TextInput)next;
 
-        Assert.NotNull(received);
-        Assert.Equal(5, received!.NewCursorPosition);
+        Assert.Equal(5, result.CursorPosition);
     }
 
     // ── Render ────────────────────────────────────────────────────────────────
@@ -209,23 +221,51 @@ public class TextInputTests
     [Fact]
     public void Render_Focused_IncludesCursorHighlight()
     {
-        var input = new TextInput("hello", cursorPosition: 0);
-        input.HasFocus = true;
+        var input = new TextInput("hello", cursorPosition: 0)
+        {
+            HasFocus = true
+        };
         // Just verify render doesn't throw and produces output
         var descriptor = ViewDescriptor.From(input, width: 20, height: 1);
         Assert.NotEmpty(descriptor.Content);
     }
 
-    // ── Source identity in message ────────────────────────────────────────────
+    // ── Return identity ───────────────────────────────────────────────────────
 
     [Fact]
-    public void OnKeyEvent_Message_SourceIsThisInput()
+    public void Update_ReturnsNewInstance_WhenValueChanges()
     {
         var input = new TextInput("hi", cursorPosition: 2);
-        TextInputChangedMsg? received = null;
-        input.OnKeyEvent(new KeyMsg(ConsoleKey.NoName, 'x'), msg => received = msg as TextInputChangedMsg);
+        var (next, _) = input.Update(new KeyMsg(ConsoleKey.NoName, 'x'));
+        var result = (TextInput)next;
 
-        Assert.NotNull(received);
-        Assert.Same(input, received!.Source);
+        Assert.NotSame(input, result);
+        Assert.Equal("hix", result.Value);
+    }
+
+    // ── Hardware cursor placement ─────────────────────────────────────────────
+
+    [Fact]
+    public void Cursor_CountsColumnsNotCodeUnits()
+    {
+        // Same column-vs-index bug TextArea had. TextInput already added region.Col, so
+        // only the width of the text before the cursor was wrong.
+        var input = new TextInput("世界x") { HasFocus = true, CursorPosition = 2 };
+
+        var cursor = ViewDescriptor.From(input, width: 20, height: 1).Cursor;
+
+        Assert.Equal(4, cursor.Col);
+    }
+
+    [Fact]
+    public void Cursor_MeasuresTheValueNotThePlaceholder()
+    {
+        // An empty input renders its placeholder, but the cursor belongs at the start of
+        // the (empty) value, not after the placeholder text.
+        var input = new TextInput("", "type here") { HasFocus = true };
+
+        var cursor = ViewDescriptor.From(input, width: 20, height: 1).Cursor;
+
+        Assert.Equal(0, cursor.Col);
     }
 }

@@ -8,7 +8,7 @@ namespace ConsoleForge.Widgets;
 /// Participates in two-pass layout via <see cref="IContainer"/>.
 /// Supports optional scrolling along the main axis.
 /// </summary>
-public sealed class Container : IWidget, IContainer
+public sealed record Container : IWidget, IContainer, IMeasurable
 {
     /// <summary>
     /// Primary constructor matching quickstart usage:
@@ -26,7 +26,7 @@ public sealed class Container : IWidget, IContainer
         bool scrollable = false)
     {
         Direction  = direction;
-        Children   = (IReadOnlyList<IWidget>)(children ?? []);
+        Children   = children ?? [];
         Width      = width  ?? SizeConstraint.Flex(1);
         Height     = height ?? SizeConstraint.Flex(1);
         if (style is not null) Style = style.Value;
@@ -72,6 +72,62 @@ public sealed class Container : IWidget, IContainer
         w is IContainer or ISingleBodyWidget or ILayeredContainer;
 
         /// </summary>
+    /// <inheritdoc cref="IMeasurable.Measure"/>
+    /// <remarks>
+    /// Children are summed along <see cref="Direction"/> and maxed across it, including
+    /// their margins and this container's padding.
+    /// <para>
+    /// A flex child contributes nothing along the stacking axis: flex means "fill what is
+    /// left over", which is not a content size. So an <c>Auto</c> container whose children
+    /// are all flex measures to zero along that axis — give it a <see cref="SizeConstraint.Fixed"/>
+    /// or <see cref="SizeConstraint.Flex"/> size instead. Across the axis a flex child does
+    /// take the full width on offer, since that is what it will fill.
+    /// </para>
+    /// </remarks>
+    public Size Measure(int availableWidth, int availableHeight)
+    {
+        int padH = Style.HasPadding ? Style.PaddingLeft + Style.PaddingRight  : 0;
+        int padV = Style.HasPadding ? Style.PaddingTop  + Style.PaddingBottom : 0;
+
+        int innerW = Math.Max(0, availableWidth  - padH);
+        int innerH = Math.Max(0, availableHeight - padV);
+
+        bool horizontal = Direction == Axis.Horizontal;
+        int alongAvail  = horizontal ? innerW : innerH;
+        int crossAvail  = horizontal ? innerH : innerW;
+
+        int along = 0, cross = 0;
+        for (var i = 0; i < Children.Count; i++)
+        {
+            var child = Children[i];
+            var st    = child.Style;
+
+            int mAlong = 0, mCross = 0;
+            if (st.HasMargin)
+            {
+                mAlong = horizontal ? st.MarginLeft + st.MarginRight  : st.MarginTop  + st.MarginBottom;
+                mCross = horizontal ? st.MarginTop  + st.MarginBottom : st.MarginLeft + st.MarginRight;
+            }
+
+            int alongLeft = Math.Max(0, alongAvail - along - mAlong);
+            int crossRoom = Math.Max(0, crossAvail - mCross);
+
+            var desired = LayoutSolver.DesiredSize(
+                child,
+                availableWidth:  horizontal ? alongLeft : crossRoom,
+                availableHeight: horizontal ? crossRoom : alongLeft,
+                flexWidth:       horizontal ? 0 : crossRoom,
+                flexHeight:      horizontal ? crossRoom : 0);
+
+            along += (horizontal ? desired.Width  : desired.Height) + mAlong;
+            cross  = Math.Max(cross, (horizontal ? desired.Height : desired.Width) + mCross);
+        }
+
+        return new Size(
+            Math.Min(availableWidth,  (horizontal ? along : cross) + padH),
+            Math.Min(availableHeight, (horizontal ? cross : along) + padV));
+    }
+
     public void Render(IRenderContext ctx)
     {
         var region = ctx.Region;
@@ -103,17 +159,14 @@ public sealed class Container : IWidget, IContainer
                 bool isHO = Direction == Axis.Horizontal;
                 int availO = isHO ? region.Width : region.Height;
                 var resO = new int[Children.Count];
-                int tFO = 0, tWO = 0;
-                for (var i = 0; i < Children.Count; i++)
-                {
-                    int sz = ResolveFixed(isHO ? Children[i].Width : Children[i].Height);
-                    if (sz >= 0) { resO[i] = sz; tFO += sz; }
-                    else { int w = GetFlexWeight(isHO ? Children[i].Width : Children[i].Height); resO[i] = -w; tWO += w; }
-                }
-                int frO = Math.Max(0, availO - tFO), dO = 0, lO = -1;
-                for (var i = 0; i < Children.Count; i++)
-                    if (resO[i] < 0) { int w = -resO[i]; int s = tWO > 0 ? frO * w / tWO : 0; resO[i] = s; dO += s; lO = i; }
-                if (lO >= 0) resO[lO] += frO - dO;
+                // Same clamping as LayoutEngine, so the regions children render into match
+                // the ones focus and hit-testing were given. Only the throw differs: the
+                // layout pass has already raised it, and doing so again here would turn a
+                // frame that could still be drawn into a crash.
+                LayoutSolver.ResolveSizes(
+                    Children, Direction, availO,
+                    crossAvailable: isHO ? region.Height : region.Width,
+                    includeMargins: false, throwWhenImpossible: false, resO);
 
                 int curO = isHO ? region.Col : region.Row;
                 for (var i = 0; i < Children.Count; i++)
@@ -128,8 +181,8 @@ public sealed class Container : IWidget, IContainer
                     if (!Overlaps(cr, region)) continue;
                     Region cl = Clip(cr, region);
                     if (cl.Width <= 0 || cl.Height <= 0) continue;
-                    if (IsComposite(Children[i]) && ctx.TryReuseWidget(Children[i], cl))
-                    { ctx.RegisterWidget(Children[i], cl); }
+                    // A cache hit re-registers the widget itself; only the miss path registers here.
+                    if (IsComposite(Children[i]) && ctx.TryReuseWidget(Children[i], cl)) { }
                     else
                     { Children[i].Render(new SubRenderContext(ctx, cl));
                       if (IsComposite(Children[i])) ctx.RegisterWidget(Children[i], cl); }
@@ -152,19 +205,10 @@ public sealed class Container : IWidget, IContainer
         bool isH = Direction == Axis.Horizontal;
         int avail = isH ? lW : lH;
         var resolved = new int[Children.Count];
-        int tF = 0, tW = 0;
-        for (var i = 0; i < Children.Count; i++)
-        {
-            var cs = Children[i].Style;
-            int mM = cs.HasMargin ? (isH ? cs.MarginLeft + cs.MarginRight : cs.MarginTop + cs.MarginBottom) : 0;
-            int sz = ResolveFixed(isH ? Children[i].Width : Children[i].Height);
-            if (sz >= 0) { resolved[i] = sz + mM; tF += sz + mM; }
-            else { int w = GetFlexWeight(isH ? Children[i].Width : Children[i].Height); resolved[i] = -w; tW += w; }
-        }
-        int fr = Math.Max(0, avail - tF), di = 0, la = -1;
-        for (var i = 0; i < Children.Count; i++)
-            if (resolved[i] < 0) { int w = -resolved[i]; int s = tW > 0 ? fr * w / tW : 0; resolved[i] = s; di += s; la = i; }
-        if (la >= 0) resolved[la] += fr - di;
+        LayoutSolver.ResolveSizes(
+            Children, Direction, avail,
+            crossAvailable: isH ? lH : lW,
+            includeMargins: true, throwWhenImpossible: false, resolved);
 
         int cur = isH ? lCol : lRow, cross = isH ? lH : lW, crossO = isH ? lRow : lCol;
         for (var i = 0; i < Children.Count; i++)
@@ -185,8 +229,8 @@ public sealed class Container : IWidget, IContainer
             if (!Overlaps(cr, lReg)) continue;
             Region cl = Clip(cr, lReg);
             if (cl.Width <= 0 || cl.Height <= 0) continue;
-            if (IsComposite(Children[i]) && ctx.TryReuseWidget(Children[i], cl))
-            { ctx.RegisterWidget(Children[i], cl); }
+            // A cache hit re-registers the widget itself; only the miss path registers here.
+            if (IsComposite(Children[i]) && ctx.TryReuseWidget(Children[i], cl)) { }
             else
             { Children[i].Render(new SubRenderContext(ctx, cl));
               if (IsComposite(Children[i])) ctx.RegisterWidget(Children[i], cl); }
@@ -194,30 +238,6 @@ public sealed class Container : IWidget, IContainer
     }
 
     // Removed helper methods — fast path and full path both inline above.
-
-    // ── Layout helpers (mirrors LayoutEngine logic) ──────────────────────────
-
-    private static int ResolveFixed(SizeConstraint constraint) =>
-        constraint switch
-        {
-            SizeConstraint.FixedConstraint f  => f.Size,
-            SizeConstraint.AutoConstraint     => -1,   // Auto = flex weight 1 in a Container
-            SizeConstraint.MinConstraint m    => Math.Max(m.MinSize, ResolveFixed(m.Inner)),
-            SizeConstraint.MaxConstraint mx   => ResolveFixed(mx.Inner) is int inner and >= 0
-                                                    ? Math.Min(mx.MaxSize, inner)
-                                                    : -1,
-            SizeConstraint.FlexConstraint     => -1,
-            _                                 => -1
-        };
-
-    private static int GetFlexWeight(SizeConstraint constraint) =>
-        constraint switch
-        {
-            SizeConstraint.FlexConstraint f => f.Weight,
-            SizeConstraint.MinConstraint m  => GetFlexWeight(m.Inner),
-            SizeConstraint.MaxConstraint mx => GetFlexWeight(mx.Inner),
-            _                               => 1
-        };
 
     private static bool Overlaps(Region a, Region b) =>
         a.Col < b.Col + b.Width  &&

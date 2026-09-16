@@ -19,8 +19,14 @@ namespace ConsoleForge.Widgets;
 /// <remarks>
 /// <see cref="Core.FocusManager"/> traverses all layers for focus collection,
 /// so interactive widgets in any layer participate in Tab-order traversal.
+/// <para>
+/// Layers composite by painting, not by blending: a layer that writes a cell replaces
+/// what was there, and one that fills its whole region hides every layer beneath it.
+/// <see cref="Modal.ShowBackdrop"/> is the case to know about — it blanks the full region
+/// before drawing its dialog, which erases the layout you stacked it over.
+/// </para>
 /// </remarks>
-public sealed class ZStack : IWidget, ILayeredContainer
+public sealed record ZStack : IWidget, ILayeredContainer, IMeasurable
 {
     // ── IWidget ─────────────────────────────────────────────────────────────
     public SizeConstraint Width  { get; init; } = SizeConstraint.Flex(1);
@@ -38,6 +44,22 @@ public sealed class ZStack : IWidget, ILayeredContainer
     /// <summary>Positional constructor for inline usage.</summary>
     /// <param name="layers">Layers in back-to-front render order.</param>
     public ZStack(IReadOnlyList<IWidget> layers) => Layers = layers;
+
+    /// <inheritdoc/>
+    /// <remarks>Large enough for every layer: the maximum desired size across them.</remarks>
+    public Size Measure(int availableWidth, int availableHeight)
+    {
+        int width = 0, height = 0;
+        for (var i = 0; i < Layers.Count; i++)
+        {
+            var desired = LayoutSolver.DesiredSize(
+                Layers[i], availableWidth, availableHeight,
+                flexWidth: availableWidth, flexHeight: availableHeight);
+            width  = Math.Max(width,  desired.Width);
+            height = Math.Max(height, desired.Height);
+        }
+        return new Size(Math.Min(availableWidth, width), Math.Min(availableHeight, height));
+    }
 
     // ── Render ───────────────────────────────────────────────────────────────
 

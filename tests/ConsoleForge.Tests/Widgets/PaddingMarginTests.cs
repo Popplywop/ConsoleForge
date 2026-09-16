@@ -12,6 +12,14 @@ namespace ConsoleForge.Tests.Widgets;
 /// </summary>
 public class PaddingMarginTests
 {
+    /// <summary>
+    /// A child that fills whatever it is given, so a test measures the inset under test
+    /// rather than the content size. A bare TextBlock is Auto on both axes and shrinks to
+    /// its text, which would make these assertions about something else entirely.
+    /// </summary>
+    private static TextBlock Filler(string text = "X") =>
+        new(text) { Width = SizeConstraint.Flex(1), Height = SizeConstraint.Flex(1) };
+
     // ═══════════════════════════════════════════════════════════════════════
     // Container padding — children are inset within the container's bounds
     // ═══════════════════════════════════════════════════════════════════════
@@ -32,7 +40,7 @@ public class PaddingMarginTests
     [Fact]
     public void Container_Padding1_ChildInsetBy1OnAllSides()
     {
-        var child = new TextBlock("X");
+        var child = Filler();
         var root  = new Container(Axis.Vertical, [child],
             style: Style.Default.Padding(1));
         var layout = LayoutEngine.Resolve(root, 10, 5);
@@ -47,7 +55,7 @@ public class PaddingMarginTests
     public void Container_AsymmetricPadding_ChildInsetCorrectly()
     {
         // Padding(top:1, right:2, bottom:3, left:4)
-        var child = new TextBlock("X");
+        var child = Filler();
         var root  = new Container(Axis.Vertical, [child],
             style: Style.Default.Padding(1, 2, 3, 4));
         var layout = LayoutEngine.Resolve(root, 20, 10);
@@ -86,15 +94,14 @@ public class PaddingMarginTests
     [Fact]
     public void Container_ChildWithMargin1_ChildRegionInsetBy1()
     {
-        var child = new TextBlock("X") { Style = Style.Default.Margin(1) };
+        var child = Filler() with { Style = Style.Default.Margin(1) };
         var root  = new Container(Axis.Vertical, [child]);
         var layout = LayoutEngine.Resolve(root, 10, 5);
         var r = layout.GetRegion(child)!.Value;
         Assert.Equal(1, r.Col);    // cross-axis margin
         Assert.Equal(1, r.Row);    // main-axis margin start
         Assert.Equal(8, r.Width);  // 10 - 1 - 1
-        // Height = total space (5) - margin(1+1) = 3, but child is flex so gets remaining
-        Assert.Equal(3, r.Height);
+        Assert.Equal(3, r.Height); // 5 - margin(1 + 1); the flex child takes the remainder
     }
 
     [Fact]

@@ -24,21 +24,36 @@ public sealed class RenderContext : IRenderContext
     // styled space that happens to contain a literal " ".
     internal static readonly string WideCharSpacer = new(' ', 1);
 
+    // Sentinel written into every cell covered by a WriteRawEscape region.
+    // ToAnsiFrame skips these cells entirely — the pixel-graphics protocol paints
+    // over them visually; emitting a styled space would corrupt the image.
+    // Using a distinct reference-identical object ensures ReferenceEquals detection
+    // with zero string comparison cost.
+    internal static readonly string RawRegionSpacer = new(' ', 1);
+
     // Double buffer: _cells = current frame being written; _prev = last emitted frame.
     private string[] _cells;
     private string[]? _prev; // null = no previous frame (first render)
     private int _prevWidth;
     private int _prevHeight;
 
+    // Raw escape region side-channel: payloads registered via WriteRawEscape this frame
+    // and the previous frame. Used by ToAnsiFrame for emit, hash-skip, and cleanup.
+    private readonly record struct RawEntry(Region Region, IRawEscapePayload Payload, int Hash);
+    private List<RawEntry>? _rawRegions;     // current frame
+    private List<RawEntry>? _prevRawRegions; // previous frame (cleanup + hash-skip)
+
     // Widget render cache: flat arrays for widget→region map from previous frame.
     // Used by Container.Render to skip re-rendering unchanged model-stored widgets.
     // Flat arrays are cheaper than Dictionary for typical widget counts (<100).
+    // Two buffers that ping-pong in Reset. The previous frame's map must stay
+    // readable for the whole frame, so RegisterWidget may never consume it.
     private IWidget?[]? _prevWidgets;
     private Region[]?   _prevRegions;
     private int         _prevWidgetCount;
     // Lazy-allocated on first RegisterWidget call — leaf widgets (TextBlock,
     // TextInput, ProgressBar, etc.) never call Register so they pay nothing.
-    private IWidget[]?  _curWidgets;
+    private IWidget?[]? _curWidgets;
     private Region[]?   _curRegions;
     private int         _curWidgetCount;
 
@@ -75,7 +90,8 @@ public sealed class RenderContext : IRenderContext
     public void Reset(Region region, Theme theme, ColorProfile colorProfile, ResolvedLayout layout)
     {
         bool sizeChanged  = region.Width != Region.Width || region.Height != Region.Height;
-        bool themeChanged = !ReferenceEquals(theme, Theme);
+        bool themeChanged = !ReferenceEquals(theme, Theme) && !theme.Equals(Theme);
+        bool styleChanged = themeChanged || colorProfile != ColorProfile;
 
         Region       = region;
         Theme        = theme;
@@ -83,34 +99,43 @@ public sealed class RenderContext : IRenderContext
         Layout       = layout;
         Cursor       = null;
 
+        // Swap raw region lists before clearing cell buffer.
+        _prevRawRegions = _rawRegions;
+        _rawRegions     = null;
+
         if (sizeChanged)
         {
             _cells = new string[region.Width * region.Height];
             _prev  = null;
-            _prevWidgets = null;
-            _prevWidgetCount = 0;
+            // Force raw regions to re-emit after resize — placed images are
+            // cleared by the terminal when the viewport changes.
+            _prevRawRegions = null;
         }
         else
         {
             Array.Clear(_cells, 0, _cells.Length);
         }
 
-        // Swap widget maps: current → previous.
-        _prevWidgets     = _curWidgets;   // may be null if no composites were rendered
-        _prevRegions     = _curRegions;
+        // Swap widget maps: this frame writes into the array the previous frame read
+        // from, and vice versa. Both stay allocated, so steady-state frames allocate
+        // nothing here and _prevWidgets survives the whole frame — RegisterWidget used
+        // to steal it, which switched the cache off for every widget after the first.
+        (_prevWidgets, _curWidgets) = (_curWidgets, _prevWidgets);
+        (_prevRegions, _curRegions) = (_curRegions, _prevRegions);
         _prevWidgetCount = _curWidgetCount;
         _curWidgetCount  = 0;
-        _curWidgets      = null;          // will be lazy-allocated by next RegisterWidget
-        _curRegions      = null;
 
-        // Invalidate widget cache AFTER the swap so TryReuseWidget cannot
-        // serve stale cells from the old theme. Setting null here means the
-        // now-swapped _prevWidgets is discarded; all widgets render fresh.
-        if (themeChanged)
-        {
-            _prevWidgets     = null;
-            _prevWidgetCount = 0;
-        }
+        // Invalidate the caches AFTER the swap so TryReuseWidget cannot serve stale
+        // cells from the old theme or a differently-sized buffer. Zeroing the count
+        // rather than dropping the array keeps the buffer available for recycling.
+        //
+        // On a style change the previous cell buffer goes too, forcing a full redraw.
+        // Both the widget cells and the themed default cell behind them are re-rendered
+        // under the new theme, and cells no widget writes to differ only in that
+        // default — without this the diff would match them against the new default and
+        // skip repainting, leaving the old background on screen.
+        if (styleChanged) _prev = null;
+        if (styleChanged || sizeChanged) _prevWidgetCount = 0;
     }
 
     /// <summary>
@@ -145,12 +170,41 @@ public sealed class RenderContext : IRenderContext
             return;
         }
 
-        // General path: enumerate runes (handles multi-codepoint graphemes via scalar fallback)
+        // General path: enumerate runes, coalescing zero-width runes (combining marks,
+        // ZWJ, variation selectors) onto the preceding character. A grapheme cluster
+        // occupies exactly one cell, which is how the terminal draws it — giving a
+        // combining mark its own cell would shift the rest of the line one column
+        // right of where the terminal actually puts it, and the frame diff would
+        // never notice the drift.
+        string clusterText = string.Empty;
+        int clusterIdx     = -1; // cell holding the current cluster, -1 when none
+        int clusterCol     = -1; // that cell's column within the region
+        int clusterWidth   = 0;
+
         foreach (Rune rune in text.EnumerateRunes())
         {
-            string element = rune.ToString();
-            int cellCol = col - Region.Col + cellOffset;
             int width = RuneDisplayWidth(rune);
+
+            if (width == 0)
+            {
+                if (clusterIdx < 0) continue; // no base character to attach to
+
+                // U+FE0F selects emoji presentation, widening the base from 1 to 2.
+                if (rune.Value == TextUtils.VariationSelector16 && clusterWidth == 1)
+                {
+                    clusterWidth = 2;
+                    cellOffset++;
+                    if (clusterCol + 1 < Region.Width)
+                        _cells[clusterIdx + 1] = WideCharSpacer;
+                }
+
+                clusterText = clusterText + rune.ToString();
+                _cells[clusterIdx] = style.Render(clusterText, ColorProfile);
+                continue;
+            }
+
+            int cellCol = col - Region.Col + cellOffset;
+            clusterIdx = -1;
 
             // Wide character straddles the left edge: write a space in the first visible cell
             if (cellCol == -1 && width == 2)
@@ -164,7 +218,12 @@ public sealed class RenderContext : IRenderContext
             if (cellCol >= Region.Width) break;
 
             int idx = cellRow * Region.Width + cellCol;
-            _cells[idx] = style.Render(element, ColorProfile);
+            clusterText = rune.ToString();
+            _cells[idx] = style.Render(clusterText, ColorProfile);
+
+            clusterIdx   = idx;
+            clusterCol   = cellCol;
+            clusterWidth = width;
 
             if (width == 2 && cellCol + 1 < Region.Width)
                 _cells[idx + 1] = WideCharSpacer; // sentinel: right half of wide glyph
@@ -203,22 +262,14 @@ public sealed class RenderContext : IRenderContext
     /// </summary>
     public void RegisterWidget(IWidget widget, Region region)
     {
-        // Lazy-allocate on first use. Reuse the prev arrays as the new cur
-        // buffer when available — avoids a fresh allocation every frame.
+        // Lazy-allocate on first use. Never take _prevWidgets: TryReuseWidget reads it
+        // for the rest of the frame, and every widget registered after this one would
+        // miss. Reset recycles the buffers instead, so this allocates once, not
+        // per frame.
         if (_curWidgets is null)
         {
-            if (_prevWidgets is not null && _prevWidgets.Length >= 32)
-            {
-                _curWidgets  = _prevWidgets!;
-                _curRegions  = _prevRegions!;
-                _prevWidgets = null;   // prevent double-use as both cur and prev
-                _prevRegions = null;
-            }
-            else
-            {
-                _curWidgets = new IWidget[32];
-                _curRegions = new Region[32];
-            }
+            _curWidgets = new IWidget?[32];
+            _curRegions = new Region[32];
         }
         else if (_curWidgetCount >= _curWidgets.Length)
         {
@@ -318,13 +369,33 @@ public sealed class RenderContext : IRenderContext
                 if (ReferenceEquals(cell, WideCharSpacer))
                     continue;
 
+                // Raw region sentinel: the cell is visually covered by a pixel-graphics
+                // image. Skip entirely — do not emit a space or try to diff it.
+                if (ReferenceEquals(cell, RawRegionSpacer))
+                    continue;
+
                 string cellContent = cell is { Length: > 0 } ? cell : defaultCell;
 
-                // Skip unchanged cells (diff against previous frame)
-                if (!fullRedraw && _prev![idx] is { } prevCell)
+                // Skip unchanged cells (diff against previous frame).
+                if (!fullRedraw)
                 {
-                    string prevContent = prevCell is { Length: > 0 } ? prevCell : defaultCell;
-                    if (cellContent == prevContent) continue;
+                    var prevCell = _prev![idx];
+
+                    // A sentinel means the terminal owns that cell — the right half of a
+                    // wide glyph, or pixels painted by a raw escape. What it displays is
+                    // not derivable from the buffer, so never assume a match: repaint.
+                    bool prevIsUnknown = ReferenceEquals(prevCell, WideCharSpacer)
+                                      || ReferenceEquals(prevCell, RawRegionSpacer);
+
+                    if (!prevIsUnknown)
+                    {
+                        // A null entry means no widget wrote there, which renders as the
+                        // themed default cell — exactly what an empty current cell renders
+                        // as. Treating null as "unknown" instead would re-emit every
+                        // untouched background cell on every frame.
+                        string prevContent = prevCell is { Length: > 0 } ? prevCell : defaultCell;
+                        if (cellContent == prevContent) continue;
+                    }
                 }
 
                 // Only emit cursor move if position is not the next expected column
@@ -348,6 +419,77 @@ public sealed class RenderContext : IRenderContext
             }
         }
 
+        // ── Raw escape regions ─────────────────────────────────────────────────────
+        // 1. Emit cleanup for payloads that are gone this frame, and for those that moved.
+        //    A move needs one too: graphics protocols place an image *in addition to* its
+        //    existing placements rather than replacing them, so leaving the old position
+        //    alone strands a copy of the image there. All cleanups go out before any
+        //    placement below, so a delete cannot land on top of a placement just made.
+        if (_prevRawRegions is not null)
+        {
+            foreach (var prev in _prevRawRegions)
+            {
+                if (!IsRawPayloadStillAtSameRegion(prev))
+                {
+                    var cleanup = prev.Payload.Cleanup(prev.Region);
+                    if (cleanup is not null) sb.Append(cleanup);
+                }
+            }
+        }
+
+        // 2. Emit current raw regions. Matching on payload identity rather than on region
+        //    is what makes motion affordable: a scrolling row changes every region every
+        //    frame, and re-uploading each image per frame costs the whole payload again.
+        //    - Not present last frame    → full Encode() (upload + place).
+        //    - Present, at a new region  → Place(): step 1 already deleted the placement at
+        //      the old region, so this one is mandatory — skipping it leaves nothing on
+        //      screen — but it must not re-upload.
+        //    - Present, same region      → Refresh(), which is optional and usually null;
+        //      a payload that stayed put generally needs nothing at all.
+        if (_rawRegions is not null)
+        {
+            foreach (var entry in _rawRegions)
+            {
+                bool alreadyUploaded = WasRawPayloadPresentLastFrame(entry);
+
+                // Cursor-move to region top-left (used by both paths below).
+                // For DCS-passthrough payloads (Kitty/tmux) the payload
+                // embeds its own cursor-move inside the DCS block; this
+                // outer move is harmless there but required for non-tmux paths.
+                void EmitCursorMove()
+                {
+                    sb.Append("\x1b[");
+                    sb.Append(entry.Region.Row + 1);
+                    sb.Append(';');
+                    sb.Append(entry.Region.Col + 1);
+                    sb.Append('H');
+                }
+
+                if (!alreadyUploaded)
+                {
+                    EmitCursorMove();
+                    foreach (var seq in entry.Payload.Encode(entry.Region, ColorProfile))
+                        sb.Append(seq);
+                }
+                else if (!WasRawPayloadAtSameRegionLastFrame(entry))
+                {
+                    EmitCursorMove();
+                    foreach (var seq in entry.Payload.Place(entry.Region, ColorProfile))
+                        sb.Append(seq);
+                }
+                else
+                {
+                    var refresh = entry.Payload.Refresh(entry.Region, ColorProfile);
+                    if (refresh is not null)
+                    {
+                        EmitCursorMove();
+                        foreach (var seq in refresh)
+                            sb.Append(seq);
+                    }
+                }
+            }
+        }
+
         // Swap buffers: current → previous; old previous → current (reused, cleared by Reset next frame)
         var oldPrev = _prev;
         _prev       = _cells;
@@ -361,4 +503,104 @@ public sealed class RenderContext : IRenderContext
 
     public void SetCursorDescriptor(CursorDescriptor cursor)
         => Cursor = cursor;
+
+    /// <summary>
+    /// Register a raw escape payload for <paramref name="region"/>.
+    /// Cells covered by the region are filled with <see cref="RawRegionSpacer"/> sentinels
+    /// so <see cref="ToAnsiFrame"/> skips them during the cell diff pass.
+    /// The payload's sequences are emitted after the cell diff in the same frame.
+    /// </summary>
+    public void WriteRawEscape(Region region, IRawEscapePayload payload)
+    {
+        (_rawRegions ??= new()).Add(new RawEntry(region, payload, payload.ContentHash));
+        SentinelFillRegion(region);
+    }
+
+    // ── Raw region helpers ───────────────────────────────────────────────────────
+
+    /// <summary>Fill every cell in <paramref name="region"/> with <see cref="RawRegionSpacer"/>.</summary>
+    private void SentinelFillRegion(Region region)
+    {
+        int w      = Region.Width;
+        int rStart = region.Row - Region.Row;
+        int rEnd   = rStart + region.Height;
+        int cStart = region.Col - Region.Col;
+        int cEnd   = cStart + region.Width;
+
+        for (int r = rStart; r < rEnd; r++)
+        {
+            if (r < 0 || r >= Region.Height) continue;
+            for (int c = cStart; c < cEnd; c++)
+            {
+                if (c < 0 || c >= w) continue;
+                int idx = r * w + c;
+                if ((uint)idx < (uint)_cells.Length)
+                    _cells[idx] = RawRegionSpacer;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Sequences that remove every raw-escape payload currently on screen, for use when
+    /// tearing the application down.
+    /// </summary>
+    /// <remarks>
+    /// Pixel graphics live outside the cell buffer, so leaving the alternate screen does
+    /// not necessarily take them with it. Under tmux especially: the payloads were passed
+    /// through to the outer terminal, whose screen tmux does not model, so nothing else
+    /// will ever clean them up and they outlive the process that drew them.
+    /// </remarks>
+    public string? BuildRawCleanup()
+    {
+        // After the final frame the current list holds it; before any Reset, so does prev.
+        var entries = _rawRegions ?? _prevRawRegions;
+        if (entries is null || entries.Count == 0) return null;
+
+        var sb = new StringBuilder();
+        foreach (var entry in entries)
+        {
+            var cleanup = entry.Payload.Cleanup(entry.Region);
+            if (cleanup is not null) sb.Append(cleanup);
+        }
+        return sb.Length == 0 ? null : sb.ToString();
+    }
+
+    /// <summary>
+    /// Returns true if <paramref name="prev"/>'s payload is still on screen this frame at
+    /// exactly the same region — the one case needing neither a delete nor a re-place.
+    /// Anything else (gone, or moved) is cleaned up first.
+    /// </summary>
+    private bool IsRawPayloadStillAtSameRegion(RawEntry prev)
+    {
+        if (_rawRegions is null) return false;
+        foreach (var cur in _rawRegions)
+            if (cur.Hash == prev.Hash && cur.Region == prev.Region) return true;
+        return false;
+    }
+
+    /// <summary>
+    /// Returns true if this payload was on screen last frame, anywhere. The terminal still
+    /// holds its data, so it can be re-placed instead of re-transmitted.
+    /// </summary>
+    private bool WasRawPayloadPresentLastFrame(RawEntry entry)
+    {
+        if (_prevRawRegions is null) return false;
+        foreach (var prev in _prevRawRegions)
+            if (prev.Hash == entry.Hash) return true;
+        return false;
+    }
+
+    /// <summary>
+    /// True when this payload occupied this same region last frame, i.e. it did not move.
+    /// The inverse of the test in <see cref="IsRawPayloadStillAtSameRegion"/>, read from the
+    /// current frame's side: that one decides whether a vacated region needs a delete, this
+    /// one whether the payload needs re-placing where it now sits.
+    /// </summary>
+    private bool WasRawPayloadAtSameRegionLastFrame(RawEntry entry)
+    {
+        if (_prevRawRegions is null) return false;
+        foreach (var prev in _prevRawRegions)
+            if (prev.Hash == entry.Hash && prev.Region == entry.Region) return true;
+        return false;
+    }
 }

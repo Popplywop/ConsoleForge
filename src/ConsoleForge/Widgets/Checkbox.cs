@@ -7,16 +7,20 @@ namespace ConsoleForge.Widgets;
 /// <summary>
 /// A single toggleable checkbox widget.
 /// Renders as <c>[✓] Label</c> or <c>[ ] Label</c>.
-/// Dispatches <see cref="CheckboxToggledMsg"/> when the user presses Space or Enter.
+/// Space or Enter toggles the value; <see cref="Update"/> returns the toggled checkbox
+/// for the model to store.
 /// </summary>
-public sealed class Checkbox : IFocusable
+public sealed record Checkbox : IFocusable
 {
     // ── IFocusable ───────────────────────────────────────────────────────────
     /// <inheritdoc/>
-    public bool HasFocus { get; set; }
+    public bool HasFocus { get; init; }
+
+    /// <inheritdoc/>
+    public string? FocusKey { get; init; }
 
     // ── IWidget ─────────────────────────────────────────────────────────────
-    public SizeConstraint Width  { get; init; } = SizeConstraint.Flex(1);
+    public SizeConstraint Width { get; init; } = SizeConstraint.Flex(1);
     public SizeConstraint Height { get; init; } = SizeConstraint.Fixed(1);
 
     // ── Checkbox-specific ────────────────────────────────────────────────────
@@ -51,22 +55,11 @@ public sealed class Checkbox : IFocusable
         char uncheckedChar = ' ',
         Style? style = null)
     {
-        Label         = label;
-        IsChecked     = isChecked;
-        CheckedChar   = checkedChar;
+        Label = label;
+        IsChecked = isChecked;
+        CheckedChar = checkedChar;
         UncheckedChar = uncheckedChar;
         if (style is not null) Style = style.Value;
-    }
-
-    // ── Key handling ─────────────────────────────────────────────────────────
-
-    /// <summary>
-    /// Toggle the checkbox state when Space or Enter is pressed.
-    /// </summary>
-    public void OnKeyEvent(KeyMsg key, Action<IMsg> dispatch)
-    {
-        if (key.Key is ConsoleKey.Spacebar or ConsoleKey.Enter)
-            dispatch(new CheckboxToggledMsg(this, !IsChecked));
     }
 
     // ── Render ───────────────────────────────────────────────────────────────
@@ -98,11 +91,22 @@ public sealed class Checkbox : IFocusable
             ctx.Write(region.Col + textVisualWidth, region.Row, pad, baseStyle);
         }
     }
+
+    public (IFocusable Next, ICmd? Cmd) Update(KeyMsg key)
+    {
+        if (key.Key is ConsoleKey.Spacebar or ConsoleKey.Enter)
+        {
+            return (this with { IsChecked = !IsChecked }, null);
+        }
+
+        return (this, null);
+    }
 }
 
 /// <summary>
-/// Dispatched when a <see cref="Checkbox"/> is toggled by the user.
-/// The model should replace its Checkbox reference with
-/// <c>checkbox with { IsChecked = msg.NewValue }</c>.
+/// Was dispatched when a <see cref="Checkbox"/> was toggled, back when widgets emitted
+/// messages through a callback. Nothing raises it now — <see cref="Checkbox.Update"/>
+/// returns the toggled widget directly.
 /// </summary>
+[Obsolete("Unused since widgets stopped emitting messages. Checkbox.Update returns the next widget; store that instead.")]
 public sealed record CheckboxToggledMsg(Checkbox Source, bool NewValue) : IMsg;

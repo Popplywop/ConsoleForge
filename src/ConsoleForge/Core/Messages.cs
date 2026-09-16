@@ -19,17 +19,19 @@ public sealed record WindowResizeMsg(int Width, int Height) : IMsg;
 /// <summary>Focus moved from one widget to another.</summary>
 public sealed record FocusChangedMsg(IWidget? Previous, IWidget? Next) : IMsg;
 
-/// <summary>
-/// Focus moved to the widget at <see cref="Index"/> in the depth-first focusable list.
-/// Models use this to set <c>HasFocus = true</c> on the correct widget instance.
-/// </summary>
-public sealed record FocusIndexChangedMsg(int Index) : IMsg;
+/// <summary>Focus was requested for a given widget by a mouse click event. </summary>
+public sealed record FocusRequestedMsg(string Key) : IMsg;
 
 /// <summary>Internal: aggregates results from Cmd.Batch concurrent execution.</summary>
-public sealed record BatchMsg(IMsg[] Messages) : IMsg;
+internal sealed record BatchMsg(IMsg[] Messages) : IMsg;
+
+/// <summary>Carries the children of a <see cref="Cmd.Batch"/> to the event
+/// loop, which dispatches each independently so every message is delivered
+/// as soon as its command completes (no barrier).</summary>
+internal sealed record BatchDispatchMsg(IReadOnlyList<ICmd> Cmds) : IMsg;
 
 /// <summary>Internal: aggregates results from Cmd.Sequence serial execution.</summary>
-public sealed record SequenceMsg(IMsg[] Messages) : IMsg;
+internal sealed record SequenceMsg(IMsg[] Messages) : IMsg;
 
 /// <summary>Triggers a re-render without changing model state (e.g., theme swap).</summary>
 public sealed record RedrawMsg : IMsg;
@@ -95,5 +97,20 @@ public sealed record MouseMsg(
     int Col,
     int Row,
     bool Shift = false,
-    bool Alt   = false,
-    bool Ctrl  = false) : IMsg;
+    bool Alt = false,
+    bool Ctrl = false) : IMsg;
+
+// ── Debounce / Throttle ────────────────────────────────────────────────────────────────
+internal enum RateLimitMode
+{
+    Debounce,
+    Throttle,
+}
+
+/// <summary>Carries a keyed <see cref="Cmd.Debounce"/>/<see cref="Cmd.Throttle"/>
+/// request to the event loop, which owns the per-key state.</summary>
+internal sealed record RateLimitDispatchMsg(
+    string Key,
+    TimeSpan Interval,
+    RateLimitMode Mode,
+    Func<DateTimeOffset, IMsg> Fn) : IMsg;

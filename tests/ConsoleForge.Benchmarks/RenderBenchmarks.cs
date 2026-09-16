@@ -12,11 +12,19 @@ public class RenderBenchmarks
     private IWidget _singleBlock = null!;
     private IWidget _borderBox = null!;
 
-    // Persistent contexts for warm-buffer benchmarks.
-    // Each is primed once in GlobalSetup so _prev is populated before any measurement.
-    private RenderContext _ctxTwenty = null!;
-    private RenderContext _ctxSingle = null!;
-    private RenderContext _ctxBorderBox = null!;
+    // One Renderer per benchmark: Renderer is what an application runs, and it carries
+    // the render context and the layout buffers a real frame reuses. They cannot be
+    // shared — a renderer driven with two different trees or sizes treats every frame as
+    // a full redraw, which is the opposite of what the warm benchmarks measure.
+    //
+    // Warm renderers are primed in GlobalSetup and never invalidated. Cold ones are
+    // invalidated per iteration, which drops the context exactly as a resize does.
+    private Renderer _warmTwenty = null!;
+    private Renderer _warmSingle = null!;
+    private Renderer _warmBorderBox = null!;
+    private Renderer _coldTwenty = null!;
+    private Renderer _coldSingle = null!;
+    private Renderer _coldBorderBox = null!;
 
     [GlobalSetup]
     public void Setup()
@@ -36,20 +44,27 @@ public class RenderBenchmarks
             body: new TextBlock("Press Q to quit."),
             style: Style.Default.BorderForeground(Color.Cyan));
 
-        // --- prime warm contexts (one render each so _prev is populated) ---
-        _ctxTwenty   = PrimeContext(_layout,      width: 80, height: 24);
-        _ctxSingle   = PrimeContext(_singleBlock, width: 80, height: 1);
-        _ctxBorderBox = PrimeContext(_borderBox,  width: 80, height: 24);
+        // --- prime renderers (one render each so _prev is populated) ---
+        _warmTwenty    = PrimeRenderer(_layout,      width: 80, height: 24);
+        _warmSingle    = PrimeRenderer(_singleBlock, width: 80, height: 1);
+        _warmBorderBox = PrimeRenderer(_borderBox,   width: 80, height: 24);
+        _coldTwenty    = PrimeRenderer(_layout,      width: 80, height: 24);
+        _coldSingle    = PrimeRenderer(_singleBlock, width: 80, height: 1);
+        _coldBorderBox = PrimeRenderer(_borderBox,   width: 80, height: 24);
     }
 
-    private static RenderContext PrimeContext(IWidget root, int width, int height)
+    private static Renderer PrimeRenderer(IWidget root, int width, int height)
     {
-        var layout = LayoutEngine.Resolve(root, width, height);
-        var region = layout.GetRegion(root) ?? new Region(0, 0, width, height);
-        var ctx    = new RenderContext(region, Theme.Default, ColorProfile.TrueColor, layout);
-        root.Render(ctx);
-        ctx.ToAnsiFrame(); // populates _prev
-        return ctx;
+        var renderer = new Renderer();
+        renderer.Render(root, width, height, Theme.Default, ColorProfile.TrueColor);
+        return renderer;
+    }
+
+    /// <summary>One cold frame: no previous buffer, so the whole screen is emitted.</summary>
+    private static string ColdFrame(Renderer renderer, IWidget root, int width, int height)
+    {
+        renderer.Invalidate();
+        return renderer.Render(root, width, height, Theme.Default, ColorProfile.TrueColor).Content;
     }
 
     // -------------------------------------------------------------------------
@@ -62,30 +77,21 @@ public class RenderBenchmarks
     /// </summary>
     [Benchmark(Baseline = true)]
     public string RenderTwentyWidgets_Cold()
-    {
-        var descriptor = ViewDescriptor.From(_layout, width: 80, height: 24);
-        return descriptor.Content;
-    }
+        => ColdFrame(_coldTwenty, _layout, 80, 24);
 
     /// <summary>
     /// Cold: render a single TextBlock — minimal overhead baseline.
     /// </summary>
     [Benchmark]
     public string RenderSingleTextBlock_Cold()
-    {
-        var descriptor = ViewDescriptor.From(_singleBlock, width: 80, height: 1);
-        return descriptor.Content;
-    }
+        => ColdFrame(_coldSingle, _singleBlock, 80, 1);
 
     /// <summary>
     /// Cold: render a BorderBox with a body TextBlock at full terminal size.
     /// </summary>
     [Benchmark]
     public string RenderBorderBox_Cold()
-    {
-        var descriptor = ViewDescriptor.From(_borderBox, width: 80, height: 24);
-        return descriptor.Content;
-    }
+        => ColdFrame(_coldBorderBox, _borderBox, 80, 24);
 
     // -------------------------------------------------------------------------
     // Warm-steady benchmarks — persistent RenderContext, identical widget tree
@@ -98,30 +104,21 @@ public class RenderBenchmarks
     /// </summary>
     [Benchmark]
     public string RenderTwentyWidgets_WarmSteady()
-    {
-        var descriptor = ViewDescriptor.From(_layout, existingCtx: _ctxTwenty, width: 80, height: 24);
-        return descriptor.Content;
-    }
+        => _warmTwenty.Render(_layout, 80, 24, Theme.Default, ColorProfile.TrueColor).Content;
 
     /// <summary>
     /// Warm-steady: single TextBlock, no changes.
     /// </summary>
     [Benchmark]
     public string RenderSingleTextBlock_WarmSteady()
-    {
-        var descriptor = ViewDescriptor.From(_singleBlock, existingCtx: _ctxSingle, width: 80, height: 1);
-        return descriptor.Content;
-    }
+        => _warmSingle.Render(_singleBlock, 80, 1, Theme.Default, ColorProfile.TrueColor).Content;
 
     /// <summary>
     /// Warm-steady: BorderBox, no changes.
     /// </summary>
     [Benchmark]
     public string RenderBorderBox_WarmSteady()
-    {
-        var descriptor = ViewDescriptor.From(_borderBox, existingCtx: _ctxBorderBox, width: 80, height: 24);
-        return descriptor.Content;
-    }
+        => _warmBorderBox.Render(_borderBox, 80, 24, Theme.Default, ColorProfile.TrueColor).Content;
 
     // -------------------------------------------------------------------------
     // Dirty-skip benchmarks — Renderer.RenderIfDirty with clean flag.

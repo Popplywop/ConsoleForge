@@ -45,6 +45,28 @@ public sealed class KeyMap
         return this;
     }
 
+    /// <summary>
+    /// Bind a printable character to a message factory, matching whatever key produced
+    /// it — see <see cref="KeyPattern.OfChar"/>. Shift is a wildcard; Ctrl and Alt must
+    /// be absent.
+    /// </summary>
+    public KeyMap On(char key, Func<IMsg> handler)
+    {
+        _keys.Add((KeyPattern.OfChar(key), _ => handler()));
+        return this;
+    }
+
+    /// <summary>
+    /// Bind a printable character to a message factory that receives the original
+    /// <see cref="KeyMsg"/>, matching whatever key produced it — see
+    /// <see cref="KeyPattern.OfChar"/>. Shift is a wildcard; Ctrl and Alt must be absent.
+    /// </summary>
+    public KeyMap On(char key, Func<KeyMsg, IMsg> handler)
+    {
+        _keys.Add((KeyPattern.OfChar(key), handler));
+        return this;
+    }
+
     /// <summary>Bind a <see cref="KeyPattern"/> to a message factory.</summary>
     public KeyMap On(KeyPattern pattern, Func<IMsg> handler)
     {
@@ -98,9 +120,9 @@ public sealed class KeyMap
     /// </summary>
     public IMsg? Handle(IMsg msg) => msg switch
     {
-        KeyMsg key   => HandleKey(key),
+        KeyMsg key => HandleKey(key),
         MouseMsg mouse => HandleMouse(mouse),
-        _            => null,
+        _ => null,
     };
 
     /// <summary>Try to resolve a keyboard message. Returns null if no binding matches.</summary>

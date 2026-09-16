@@ -27,10 +27,15 @@ public class NewWidgetRenderBenchmarks
     private IWidget _spinner         = null!;
     private IWidget _table           = null!;
 
-    // Warm contexts — primed once so _prev is populated before measurement.
-    private RenderContext _ctxProgressBar = null!;
-    private RenderContext _ctxSpinner     = null!;
-    private RenderContext _ctxTable       = null!;
+    // Renderers, not raw contexts: Renderer is the path an application runs, and it
+    // owns the layout buffers a real frame reuses. Warm renderers are primed once and
+    // never invalidated; cold ones are invalidated per iteration.
+    private Renderer _warmProgressBar = null!;
+    private Renderer _warmSpinner     = null!;
+    private Renderer _warmTable       = null!;
+    private Renderer _coldProgressBar = null!;
+    private Renderer _coldSpinner     = null!;
+    private Renderer _coldTable       = null!;
 
     [GlobalSetup]
     public void Setup()
@@ -63,20 +68,27 @@ public class NewWidgetRenderBenchmarks
             .ToList();
         _table = new Table(columns, rows, selectedIndex: 2);
 
-        // Prime warm-steady contexts.
-        _ctxProgressBar = PrimeContext(_progressBar, width: 80, height: 1);
-        _ctxSpinner     = PrimeContext(_spinner,     width: 80, height: 1);
-        _ctxTable       = PrimeContext(_table,       width: 80, height: 24);
+        // Prime renderers.
+        _warmProgressBar = PrimeRenderer(_progressBar, width: 80, height: 1);
+        _warmSpinner     = PrimeRenderer(_spinner,     width: 80, height: 1);
+        _warmTable       = PrimeRenderer(_table,       width: 80, height: 24);
+        _coldProgressBar = PrimeRenderer(_progressBar, width: 80, height: 1);
+        _coldSpinner     = PrimeRenderer(_spinner,     width: 80, height: 1);
+        _coldTable       = PrimeRenderer(_table,       width: 80, height: 24);
     }
 
-    private static RenderContext PrimeContext(IWidget root, int width, int height)
+    private static Renderer PrimeRenderer(IWidget root, int width, int height)
     {
-        var layout = LayoutEngine.Resolve(root, width, height);
-        var region = layout.GetRegion(root) ?? new Region(0, 0, width, height);
-        var ctx    = new RenderContext(region, Theme.Default, ColorProfile.TrueColor, layout);
-        root.Render(ctx);
-        ctx.ToAnsiFrame(); // populates _prev buffer
-        return ctx;
+        var renderer = new Renderer();
+        renderer.Render(root, width, height, Theme.Default, ColorProfile.TrueColor);
+        return renderer;
+    }
+
+    /// <summary>One cold frame: no previous buffer, so the whole screen is emitted.</summary>
+    private static string ColdFrame(Renderer renderer, IWidget root, int width, int height)
+    {
+        renderer.Invalidate();
+        return renderer.Render(root, width, height, Theme.Default, ColorProfile.TrueColor).Content;
     }
 
     // ── Cold benchmarks ──────────────────────────────────────────────────────
@@ -87,8 +99,7 @@ public class NewWidgetRenderBenchmarks
     [Benchmark(Baseline = true)]
     public string RenderProgressBar_Cold()
     {
-        var descriptor = ViewDescriptor.From(_progressBar, width: 80, height: 1);
-        return descriptor.Content;
+        return ColdFrame(_coldProgressBar, _progressBar, 80, 1);
     }
 
     /// <summary>
@@ -97,8 +108,7 @@ public class NewWidgetRenderBenchmarks
     [Benchmark]
     public string RenderSpinner_Cold()
     {
-        var descriptor = ViewDescriptor.From(_spinner, width: 80, height: 1);
-        return descriptor.Content;
+        return ColdFrame(_coldSpinner, _spinner, 80, 1);
     }
 
     /// <summary>
@@ -107,8 +117,7 @@ public class NewWidgetRenderBenchmarks
     [Benchmark]
     public string RenderTable_Cold()
     {
-        var descriptor = ViewDescriptor.From(_table, width: 80, height: 24);
-        return descriptor.Content;
+        return ColdFrame(_coldTable, _table, 80, 24);
     }
 
     // ── Warm-steady benchmarks ───────────────────────────────────────────────
@@ -119,8 +128,7 @@ public class NewWidgetRenderBenchmarks
     [Benchmark]
     public string RenderProgressBar_WarmSteady()
     {
-        var descriptor = ViewDescriptor.From(_progressBar, existingCtx: _ctxProgressBar, width: 80, height: 1);
-        return descriptor.Content;
+        return _warmProgressBar.Render(_progressBar, 80, 1, Theme.Default, ColorProfile.TrueColor).Content;
     }
 
     /// <summary>
@@ -129,8 +137,7 @@ public class NewWidgetRenderBenchmarks
     [Benchmark]
     public string RenderSpinner_WarmSteady()
     {
-        var descriptor = ViewDescriptor.From(_spinner, existingCtx: _ctxSpinner, width: 80, height: 1);
-        return descriptor.Content;
+        return _warmSpinner.Render(_spinner, 80, 1, Theme.Default, ColorProfile.TrueColor).Content;
     }
 
     /// <summary>
@@ -140,16 +147,17 @@ public class NewWidgetRenderBenchmarks
     [Benchmark]
     public string RenderTable_WarmSteady()
     {
-        var descriptor = ViewDescriptor.From(_table, existingCtx: _ctxTable, width: 80, height: 24);
-        return descriptor.Content;
+        return _warmTable.Render(_table, 80, 24, Theme.Default, ColorProfile.TrueColor).Content;
     }
 
     // ── Large-dataset benchmarks — prove O(viewport) not O(total items) ──────
 
     private IWidget _list1000     = null!;
     private IWidget _table1000    = null!;
-    private RenderContext _ctxList1000  = null!;
-    private RenderContext _ctxTable1000 = null!;
+    private Renderer _warmList1000  = null!;
+    private Renderer _warmTable1000 = null!;
+    private Renderer _coldList1000  = null!;
+    private Renderer _coldTable1000 = null!;
 
     [GlobalSetup(Targets = [
         nameof(RenderList1000_Cold),
@@ -170,8 +178,10 @@ public class NewWidgetRenderBenchmarks
             .ToList();
         _table1000 = new Table(cols, tableRows, selectedIndex: 500, scrollOffset: 490);
 
-        _ctxList1000  = PrimeContext(_list1000,  width: 80, height: 24);
-        _ctxTable1000 = PrimeContext(_table1000, width: 80, height: 24);
+        _warmList1000  = PrimeRenderer(_list1000,  width: 80, height: 24);
+        _warmTable1000 = PrimeRenderer(_table1000, width: 80, height: 24);
+        _coldList1000  = PrimeRenderer(_list1000,  width: 80, height: 24);
+        _coldTable1000 = PrimeRenderer(_table1000, width: 80, height: 24);
     }
 
     /// <summary>
@@ -181,8 +191,7 @@ public class NewWidgetRenderBenchmarks
     [Benchmark]
     public string RenderList1000_Cold()
     {
-        var descriptor = ViewDescriptor.From(_list1000, width: 80, height: 24);
-        return descriptor.Content;
+        return ColdFrame(_coldList1000, _list1000, 80, 24);
     }
 
     /// <summary>
@@ -191,23 +200,20 @@ public class NewWidgetRenderBenchmarks
     [Benchmark]
     public string RenderTable1000_Cold()
     {
-        var descriptor = ViewDescriptor.From(_table1000, width: 80, height: 24);
-        return descriptor.Content;
+        return ColdFrame(_coldTable1000, _table1000, 80, 24);
     }
 
     /// <summary>Warm-steady: 1 000-item List, no changes — only diff overhead.</summary>
     [Benchmark]
     public string RenderList1000_WarmSteady()
     {
-        var descriptor = ViewDescriptor.From(_list1000, existingCtx: _ctxList1000, width: 80, height: 24);
-        return descriptor.Content;
+        return _warmList1000.Render(_list1000, 80, 24, Theme.Default, ColorProfile.TrueColor).Content;
     }
 
     /// <summary>Warm-steady: 1 000-row Table, no changes — only diff overhead.</summary>
     [Benchmark]
     public string RenderTable1000_WarmSteady()
     {
-        var descriptor = ViewDescriptor.From(_table1000, existingCtx: _ctxTable1000, width: 80, height: 24);
-        return descriptor.Content;
+        return _warmTable1000.Render(_table1000, 80, 24, Theme.Default, ColorProfile.TrueColor).Content;
     }
 }

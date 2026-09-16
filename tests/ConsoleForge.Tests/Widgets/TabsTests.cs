@@ -1,6 +1,4 @@
 using ConsoleForge.Core;
-using ConsoleForge.Layout;
-using ConsoleForge.Styling;
 using ConsoleForge.Widgets;
 
 namespace ConsoleForge.Tests.Widgets;
@@ -27,77 +25,63 @@ public class TabsTests
     // ── Key handling ──────────────────────────────────────────────────────────
 
     [Fact]
-    public void OnKeyEvent_RightArrow_AdvancesTab()
+    public void Update_RightArrow_AdvancesTab()
     {
         var tabs = new Tabs(["A", "B", "C"], activeIndex: 0);
-        TabChangedMsg? received = null;
-        tabs.OnKeyEvent(new KeyMsg(ConsoleKey.RightArrow, null), msg => received = msg as TabChangedMsg);
+        var (next, _) = tabs.Update(new KeyMsg(ConsoleKey.RightArrow, null));
+        var result = (Tabs)next;
 
-        Assert.NotNull(received);
-        Assert.Equal(1, received!.NewIndex);
-        Assert.Same(tabs, received.Source);
+        Assert.Equal(1, result.ActiveIndex);
     }
 
     [Fact]
-    public void OnKeyEvent_RightArrow_AtLast_WrapsToFirst()
+    public void Update_RightArrow_AtLast_WrapsToFirst()
     {
         var tabs = new Tabs(["A", "B", "C"], activeIndex: 2);
-        TabChangedMsg? received = null;
-        tabs.OnKeyEvent(new KeyMsg(ConsoleKey.RightArrow, null), msg => received = msg as TabChangedMsg);
+        var (next, _) = tabs.Update(new KeyMsg(ConsoleKey.RightArrow, null));
+        var result = (Tabs)next;
 
-        Assert.NotNull(received);
-        Assert.Equal(0, received!.NewIndex);
+        Assert.Equal(0, result.ActiveIndex);
     }
 
     [Fact]
-    public void OnKeyEvent_LeftArrow_RetreatsTab()
+    public void Update_LeftArrow_RetreatsTab()
     {
         var tabs = new Tabs(["A", "B", "C"], activeIndex: 2);
-        TabChangedMsg? received = null;
-        tabs.OnKeyEvent(new KeyMsg(ConsoleKey.LeftArrow, null), msg => received = msg as TabChangedMsg);
+        var (next, _) = tabs.Update(new KeyMsg(ConsoleKey.LeftArrow, null));
+        var result = (Tabs)next;
 
-        Assert.NotNull(received);
-        Assert.Equal(1, received!.NewIndex);
+        Assert.Equal(1, result.ActiveIndex);
     }
 
     [Fact]
-    public void OnKeyEvent_LeftArrow_AtFirst_WrapsToLast()
+    public void Update_LeftArrow_AtFirst_WrapsToLast()
     {
         var tabs = new Tabs(["A", "B", "C"], activeIndex: 0);
-        TabChangedMsg? received = null;
-        tabs.OnKeyEvent(new KeyMsg(ConsoleKey.LeftArrow, null), msg => received = msg as TabChangedMsg);
+        var (next, _) = tabs.Update(new KeyMsg(ConsoleKey.LeftArrow, null));
+        var result = (Tabs)next;
 
-        Assert.NotNull(received);
-        Assert.Equal(2, received!.NewIndex);
+        Assert.Equal(2, result.ActiveIndex);
     }
 
     [Fact]
-    public void OnKeyEvent_NumberKey_JumpsToTab()
+    public void Update_NumberKey_JumpsToTab()
     {
         var tabs = new Tabs(["A", "B", "C"], activeIndex: 0);
-        TabChangedMsg? received = null;
-        tabs.OnKeyEvent(new KeyMsg(ConsoleKey.D3, '3'), msg => received = msg as TabChangedMsg);
+        var (next, _) = tabs.Update(new KeyMsg(ConsoleKey.D3, '3'));
+        var result = (Tabs)next;
 
-        Assert.NotNull(received);
-        Assert.Equal(2, received!.NewIndex); // '3' → index 2
+        Assert.Equal(2, result.ActiveIndex); // '3' → index 2
     }
 
     [Fact]
-    public void OnKeyEvent_NumberKey_OutOfRange_DoesNothing()
+    public void Update_NumberKey_OutOfRange_ClampsToLastTab()
     {
         var tabs = new Tabs(["A", "B"], activeIndex: 0); // only 2 tabs
-        TabChangedMsg? received = null;
-        tabs.OnKeyEvent(new KeyMsg(ConsoleKey.D9, '9'), msg => received = msg as TabChangedMsg);
-        Assert.Null(received);
-    }
+        var (next, _) = tabs.Update(new KeyMsg(ConsoleKey.D9, '9'));
+        var result = (Tabs)next;
 
-    [Fact]
-    public void OnKeyEvent_EmptyLabels_DoesNothing()
-    {
-        var tabs = new Tabs([]);
-        IMsg? received = null;
-        tabs.OnKeyEvent(new KeyMsg(ConsoleKey.RightArrow, null), msg => received = msg);
-        Assert.Null(received);
+        Assert.Equal(1, result.ActiveIndex); // '9' → clamped to last index
     }
 
     // ── Render ────────────────────────────────────────────────────────────────

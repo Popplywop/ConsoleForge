@@ -70,7 +70,10 @@ public readonly record struct ViewDescriptor
         return new ViewDescriptor
         {
             Content    = ctx.ToAnsiFrame(),
-            Cursor     = new CursorDescriptor(Visible: false),
+            // Whatever a focused widget asked for during Render, as Renderer does on the
+            // live path. Hardcoding an invisible cursor here made this helper disagree
+            // with the real one, and made cursor placement untestable.
+            Cursor     = ctx.Cursor ?? new CursorDescriptor(Visible: false),
             RootWidget = root
         };
     }

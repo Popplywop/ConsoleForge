@@ -34,37 +34,33 @@ public class CheckboxTests
     [Theory]
     [InlineData(ConsoleKey.Spacebar)]
     [InlineData(ConsoleKey.Enter)]
-    public void OnKeyEvent_SpaceOrEnter_Unchecked_DispatchesToggledTrue(ConsoleKey key)
+    public void Update_SpaceOrEnter_Unchecked_DispatchesToggledTrue(ConsoleKey key)
     {
         var cb = new Checkbox("test", isChecked: false);
-        CheckboxToggledMsg? received = null;
-        cb.OnKeyEvent(new KeyMsg(key, null), msg => received = msg as CheckboxToggledMsg);
+        var (next, _) = cb.Update(new KeyMsg(key, null));
+        var result = (Checkbox)next;
 
-        Assert.NotNull(received);
-        Assert.True(received!.NewValue);
-        Assert.Same(cb, received.Source);
+        Assert.True(result.IsChecked);
     }
 
     [Theory]
     [InlineData(ConsoleKey.Spacebar)]
     [InlineData(ConsoleKey.Enter)]
-    public void OnKeyEvent_SpaceOrEnter_Checked_DispatchesToggledFalse(ConsoleKey key)
+    public void Update_SpaceOrEnter_Checked_DispatchesToggledFalse(ConsoleKey key)
     {
         var cb = new Checkbox("test", isChecked: true);
-        CheckboxToggledMsg? received = null;
-        cb.OnKeyEvent(new KeyMsg(key, null), msg => received = msg as CheckboxToggledMsg);
+        var (next, _) = cb.Update(new KeyMsg(key, null));
+        var result = (Checkbox)next;
 
-        Assert.NotNull(received);
-        Assert.False(received!.NewValue);
+        Assert.False(result.IsChecked);
     }
 
     [Fact]
-    public void OnKeyEvent_OtherKey_DispatchesNothing()
+    public void Update_OtherKey_DispatchesNothing()
     {
         var cb = new Checkbox("test");
-        IMsg? received = null;
-        cb.OnKeyEvent(new KeyMsg(ConsoleKey.Tab, null), msg => received = msg);
-        Assert.Null(received);
+        var (next, _) = cb.Update(new KeyMsg(ConsoleKey.Tab, null));
+        Assert.Same(cb, next);
     }
 
     // ── Render ────────────────────────────────────────────────────────────────

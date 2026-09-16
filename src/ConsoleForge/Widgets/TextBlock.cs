@@ -7,7 +7,7 @@ namespace ConsoleForge.Widgets;
 /// A widget that renders a single string, wrapping at region width.
 /// Inherits style from the active theme's BaseStyle when widget style has no properties set.
 /// </summary>
-public sealed class TextBlock : IWidget
+public sealed record TextBlock : IWidget, IMeasurable
 {
     /// <summary>Positional constructor for inline usage.</summary>
     public TextBlock(string text, Style? style = null)
@@ -49,6 +49,32 @@ public sealed class TextBlock : IWidget
         var maxRows = Math.Min(lines.Count, textHeight);
         for (var i = 0; i < maxRows; i++)
             ctx.Write(textCol, textRow + i, lines[i], effectiveStyle);
+    }
+
+    /// <inheritdoc/>
+    /// <remarks>
+    /// Wraps the text at the offered width and reports the longest resulting line and the
+    /// number of lines. This is the same wrap <see cref="Render"/> performs, so an
+    /// <c>Auto</c> TextBlock is allocated exactly the rows its text occupies.
+    /// </remarks>
+    public Size Measure(int availableWidth, int availableHeight)
+    {
+        int padH = Style.HasPadding ? Style.PaddingLeft + Style.PaddingRight  : 0;
+        int padV = Style.HasPadding ? Style.PaddingTop  + Style.PaddingBottom : 0;
+
+        int textWidth = Math.Max(0, availableWidth - padH);
+        if (textWidth == 0)
+            return new Size(Math.Min(availableWidth, padH), Math.Min(availableHeight, padV));
+
+        // The shape of the same wrap Render performs — including for empty text, which
+        // wraps to a single empty line, so a blank TextBlock is a one-row spacer rather
+        // than a zero-row one. Measured without building the lines: this runs every frame
+        // and Render rebuilds them anyway.
+        int lineCount = TextUtils.MeasureWrapped(Text, textWidth, out int widest);
+
+        return new Size(
+            Math.Min(availableWidth,  widest + padH),
+            Math.Min(availableHeight, lineCount + padV));
     }
 
     internal static List<string> WrapText(string text, int width) =>

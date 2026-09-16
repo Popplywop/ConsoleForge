@@ -20,30 +20,35 @@ public static class FocusManager
     }
 
     /// <summary>
-    /// Return the next focusable after <paramref name="current"/> (wrapping).
-    /// If <paramref name="current"/> is null or not found, returns the first item.
-    /// Returns null if <paramref name="all"/> is empty.
+    /// Collect the focus key of every <see cref="IFocusable"/> in the tree rooted at
+    /// <paramref name="root"/>, in depth-first, declaration order. A widget whose
+    /// <see cref="IFocusable.FocusKey"/> is null is skipped — it is not a focus target.
     /// </summary>
-    public static IFocusable? GetNext(IFocusable? current, IReadOnlyList<IFocusable> all)
+    public static IReadOnlyList<string> CollectFocusKeys(IWidget root)
     {
-        if (all.Count == 0) return null;
-        if (current is null) return all[0];
-        var idx = IndexOf(all, current);
-        return idx < 0 ? all[0] : all[(idx + 1) % all.Count];
+        var keys = new List<string>();
+        foreach (var f in CollectFocusable(root))
+        {
+            if (f.FocusKey is string k) keys.Add(k);
+        }
+        return keys;
     }
 
     /// <summary>
-    /// Return the previous focusable before <paramref name="current"/> (wrapping).
-    /// If <paramref name="current"/> is null or not found, returns the last item.
-    /// Returns null if <paramref name="all"/> is empty.
+    /// Return the key after <paramref name="currentKey"/> in <paramref name="keys"/>,
+    /// wrapping past the end. If <paramref name="currentKey"/> is null or not present,
+    /// returns the first key. Returns null if <paramref name="keys"/> is empty.
     /// </summary>
-    public static IFocusable? GetPrev(IFocusable? current, IReadOnlyList<IFocusable> all)
-    {
-        if (all.Count == 0) return null;
-        if (current is null) return all[all.Count - 1];
-        var idx = IndexOf(all, current);
-        return idx < 0 ? all[all.Count - 1] : all[(idx - 1 + all.Count) % all.Count];
-    }
+    public static string? GetNext(string? currentKey, IReadOnlyList<string> keys)
+        => Step(currentKey, keys, +1);
+
+    /// <summary>
+    /// Return the key before <paramref name="currentKey"/> in <paramref name="keys"/>,
+    /// wrapping past the start. If <paramref name="currentKey"/> is null or not present,
+    /// returns the last key. Returns null if <paramref name="keys"/> is empty.
+    /// </summary>
+    public static string? GetPrev(string? currentKey, IReadOnlyList<string> keys)
+        => Step(currentKey, keys, -1);
 
     // ── Private helpers ──────────────────────────────────────────────────────
 
@@ -67,10 +72,25 @@ public static class FocusManager
         }
     }
 
-    private static int IndexOf(IReadOnlyList<IFocusable> all, IFocusable target)
+    private static string? Step(string? currentKey, IReadOnlyList<string> keys, int delta)
     {
-        for (var i = 0; i < all.Count; i++)
-            if (ReferenceEquals(all[i], target)) return i;
+        if (keys.Count == 0) return null;
+
+        var idx = IndexOf(keys, currentKey);
+
+        return idx < 0 ? delta > 0 ? keys[0] : keys[keys.Count - 1] : keys[(idx + delta + keys.Count) % keys.Count];
+    }
+
+    private static int IndexOf(IReadOnlyList<string> keys, string? key)
+    {
+        if (key is null) return -1;
+        for (var i = 0; i < keys.Count; i++)
+        {
+            if (StringComparer.Ordinal.Equals(keys[i], key))
+            {
+                return i;
+            }
+        }
         return -1;
     }
 

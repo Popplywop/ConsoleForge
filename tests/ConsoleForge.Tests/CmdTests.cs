@@ -1,4 +1,5 @@
 using System.Threading.Channels;
+
 using ConsoleForge.Core;
 
 namespace ConsoleForge.Tests;
@@ -71,19 +72,54 @@ public class CmdTests
     }
 
     [Fact]
-    public async Task Cmd_Batch_MultipleCmds_ReturnsBatchMsg()
+    public async Task Cmd_Batch_MultipleCmds_ResolvesToDispatchRequest()
     {
-        var cmd = Cmd.Batch(
-            () => Task.FromResult<IMsg>(new TestMsg("a")),
-            () => Task.FromResult<IMsg>(new TestMsg("b")));
+        // Batch must NOT await its children (no barrier): it resolves
+        // immediately to a BatchDispatchMsg carrying them, and the event loop
+        // fires each independently so messages stream in as they complete.
+        ICmd a = () => Task.FromResult<IMsg>(new TestMsg("a"));
+        ICmd b = () => Task.FromResult<IMsg>(new TestMsg("b"));
+        var cmd = Cmd.Batch(a, b);
 
         Assert.NotNull(cmd);
-        var msg = await cmd!();
+        var msg = await cmd();
 
-        var batchMsg = Assert.IsType<BatchMsg>(msg);
-        Assert.Equal(2, batchMsg.Messages.Length);
-        var values = batchMsg.Messages.Cast<TestMsg>().Select(m => m.Value).OrderBy(v => v).ToArray();
-        Assert.Equal(["a", "b"], values);
+        var dispatch = Assert.IsType<BatchDispatchMsg>(msg);
+        Assert.Equal(2, dispatch.Cmds.Count);
+        Assert.Same(a, dispatch.Cmds[0]);
+        Assert.Same(b, dispatch.Cmds[1]);
+    }
+
+    [Fact]
+    public async Task Cmd_Batch_DoesNotAwaitSlowChildren()
+    {
+        // Regression: the old implementation was Task.WhenAll — a never-ending
+        // child hung the whole batch (spinner ticks waited on fetches).
+        var never = new TaskCompletionSource<IMsg>();
+        var cmd = Cmd.Batch(
+            () => never.Task,
+            () => Task.FromResult<IMsg>(new TestMsg("fast")));
+
+        var resolved = await cmd!().WaitAsync(TimeSpan.FromSeconds(1), TestContext.Current.CancellationToken);
+        Assert.IsType<BatchDispatchMsg>(resolved);
+    }
+
+    [Fact]
+    public async Task Cmd_Batch_Nested_UnfoldsOneLevelPerDispatch()
+    {
+        // Regression: nested batches were silently swallowed by the event loop.
+        ICmd a = () => Task.FromResult<IMsg>(new TestMsg("a"));
+        ICmd b = () => Task.FromResult<IMsg>(new TestMsg("b"));
+        ICmd c = () => Task.FromResult<IMsg>(new TestMsg("c"));
+        var outer = Cmd.Batch(Cmd.Batch(a, b), c);
+
+        var outerDispatch = Assert.IsType<BatchDispatchMsg>(await outer!());
+        Assert.Equal(2, outerDispatch.Cmds.Count);
+
+        var innerDispatch = Assert.IsType<BatchDispatchMsg>(await outerDispatch.Cmds[0]());
+        Assert.Same(a, innerDispatch.Cmds[0]);
+        Assert.Same(b, innerDispatch.Cmds[1]);
+        Assert.Same(c, outerDispatch.Cmds[1]);
     }
 
     // ── Cmd.Sequence ─────────────────────────────────────────────────────────
@@ -99,7 +135,7 @@ public class CmdTests
             async () => { order.Add(3); await Task.Yield(); return new TestMsg("3"); });
 
         Assert.NotNull(cmd);
-        var msg = await cmd!();
+        var msg = await cmd();
 
         var seqMsg = Assert.IsType<SequenceMsg>(msg);
         Assert.Equal(3, seqMsg.Messages.Length);
@@ -135,49 +171,46 @@ public class CmdTests
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => cmd());
     }
 
-    // ── Cmd.Debounce ─────────────────────────────────────────────────────────
+    // ── Cmd.Debounce / Cmd.Throttle ──────────────────────────────────────────
+    //
+    // Both resolve to a request the event loop handles; the state that makes them
+    // rate-limit lives there, keyed, not in the returned closure. Behaviour is
+    // covered end-to-end in Core/RateLimitTests — these only pin the request shape.
 
     [Fact]
-    public async Task Cmd_Debounce_LastCallWins()
+    public async Task Cmd_Debounce_ResolvesToAKeyedRequest()
     {
-        // A debounce cmd with a 200ms window.
-        // Call it three times in quick succession; only the last should produce a non-RedrawMsg.
-        var debounced = Cmd.Debounce(TimeSpan.FromMilliseconds(200), _ => new TestMsg("fired"));
+        var window = TimeSpan.FromMilliseconds(200);
+        Func<DateTimeOffset, IMsg> fn = _ => new TestMsg("fired");
 
-        // First two calls — these should be cancelled by the third
-        var t1 = debounced();
-        var t2 = debounced();
-        var t3 = debounced();
+        var msg = await Cmd.Debounce("poster", window, fn)();
 
-        var results = await Task.WhenAll(t1, t2, t3);
-
-        // The last call must return the real message; prior calls return RedrawMsg (cancelled)
-        Assert.IsType<TestMsg>(results[2]);
-        Assert.Equal("fired", ((TestMsg)results[2]).Value);
-        // First two should be RedrawMsg (debounced away)
-        Assert.IsType<RedrawMsg>(results[0]);
-        Assert.IsType<RedrawMsg>(results[1]);
-    }
-
-    // ── Cmd.Throttle ─────────────────────────────────────────────────────────
-
-    [Fact]
-    public async Task Cmd_Throttle_FirstCallPassesThrough()
-    {
-        var throttled = Cmd.Throttle(TimeSpan.FromSeconds(10), _ => new TestMsg("pass"));
-        var msg = await throttled();
-        Assert.IsType<TestMsg>(msg);
-        Assert.Equal("pass", ((TestMsg)msg).Value);
+        var request = Assert.IsType<RateLimitDispatchMsg>(msg);
+        Assert.Equal("poster", request.Key);
+        Assert.Equal(window, request.Interval);
+        Assert.Equal(RateLimitMode.Debounce, request.Mode);
+        Assert.Same(fn, request.Fn);
     }
 
     [Fact]
-    public async Task Cmd_Throttle_SecondCallWithinWindowIsDropped()
+    public async Task Cmd_Throttle_ResolvesToAKeyedRequest()
     {
-        var throttled = Cmd.Throttle(TimeSpan.FromSeconds(10), _ => new TestMsg("pass"));
-        await throttled(); // first — passes through
+        var msg = await Cmd.Throttle("scroll", TimeSpan.FromSeconds(1), _ => new TestMsg("fired"))();
 
-        var msg = await throttled(); // second — within window, dropped
-        Assert.IsType<RedrawMsg>(msg);
+        var request = Assert.IsType<RateLimitDispatchMsg>(msg);
+        Assert.Equal("scroll", request.Key);
+        Assert.Equal(RateLimitMode.Throttle, request.Mode);
+    }
+
+    /// <summary>
+    /// Resolution is synchronous, so the request reaches the loop in the same drain
+    /// pass as the message that produced it rather than a frame later.
+    /// </summary>
+    [Fact]
+    public void Cmd_Debounce_ResolvesSynchronously()
+    {
+        var task = Cmd.Debounce("poster", TimeSpan.FromSeconds(1), _ => new TestMsg("fired"))();
+        Assert.True(task.IsCompletedSuccessfully);
     }
 
     // ── CmdDispatcher ─────────────────────────────────────────────────────────
@@ -213,9 +246,9 @@ public class CmdTests
     {
         var ct = TestContext.Current.CancellationToken;
         var channel = Channel.CreateUnbounded<IMsg>();
-        ICmd throwingCmd = () => throw new InvalidOperationException("boom");
+        static Task<IMsg> ThrowingCmd() => throw new InvalidOperationException("boom");
 
-        CmdDispatcher.Dispatch(throwingCmd, channel.Writer, ct);
+        CmdDispatcher.Dispatch(ThrowingCmd, channel.Writer, ct);
 
         var msg = await channel.Reader.ReadAsync(ct);
         var errorMsg = Assert.IsType<CmdErrorMsg>(msg);
@@ -242,9 +275,9 @@ public class CmdTests
     {
         var ct = TestContext.Current.CancellationToken;
         var channel = Channel.CreateUnbounded<IMsg>();
-        ICmd boom = () => Task.FromException<IMsg>(new ArgumentException("bad"));
+        static Task<IMsg> Boom() => Task.FromException<IMsg>(new ArgumentException("bad"));
 
-        await CmdDispatcher.DispatchAndWait(boom, channel.Writer, ct);
+        await CmdDispatcher.DispatchAndWait(Boom, channel.Writer, ct);
 
         Assert.True(channel.Reader.TryRead(out var msg));
         var errorMsg = Assert.IsType<CmdErrorMsg>(msg);
@@ -259,13 +292,13 @@ public class CmdTests
         cts.Cancel();
 
         var channel = Channel.CreateUnbounded<IMsg>();
-        ICmd longRunning = async () =>
+        async Task<IMsg> LongRunning()
         {
             await Task.Delay(TimeSpan.FromSeconds(10), cts.Token);
             return new TestMsg("never");
-        };
+        }
 
-        CmdDispatcher.Dispatch(longRunning, channel.Writer, cts.Token);
+        CmdDispatcher.Dispatch(LongRunning, channel.Writer, cts.Token);
 
         await Task.Delay(100, TestContext.Current.CancellationToken);
         // Cancelled cmd must not write anything (no CmdErrorMsg for OperationCanceledException)

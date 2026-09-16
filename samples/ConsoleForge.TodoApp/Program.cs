@@ -76,20 +76,11 @@ record TodoModel(
             }
 
             // ── Text input keystrokes ────────────────────────────
-            case TextInputChangedMsg m when Mode == AppMode.Add:
-                return (this with
-                {
-                    Input = new TextInput(m.NewValue, "New todo…", m.NewCursorPosition)
-                }, null);
-
             case KeyMsg keyMsg when Mode == AppMode.Add:
             {
-                // Route key to the input widget
-                IMsg? dispatched = null;
-                Input.OnKeyEvent(keyMsg, m => dispatched = m);
-                if (dispatched is not null)
-                    return Update(dispatched);
-                return (this, null);
+                var (next, _) = Input.Update(keyMsg);
+                if (ReferenceEquals(Input, next)) return (this, null);
+                return (this with { Input = (TextInput)next }, null);
             }
 
             // ── Navigation ───────────────────────────────────────

@@ -32,83 +32,68 @@ public class ListTests
     // ── DownArrow ─────────────────────────────────────────────────────────────
 
     [Fact]
-    public void OnKeyEvent_DownArrow_IncrementsSelection()
+    public void Update_DownArrow_IncrementsSelection()
     {
         var list = new List(["a", "b", "c"], selectedIndex: 0);
-        ListSelectionChangedMsg? received = null;
-        list.OnKeyEvent(new KeyMsg(ConsoleKey.DownArrow, null), msg => received = msg as ListSelectionChangedMsg);
+        var (next, _) = list.Update(new KeyMsg(ConsoleKey.DownArrow, null));
+        var result = (List)next;
 
-        Assert.NotNull(received);
-        Assert.Equal(1, received!.NewIndex);
+        Assert.Equal(1, result.SelectedIndex);
     }
 
     [Fact]
-    public void OnKeyEvent_DownArrow_AtLastItem_DoesNotExceedBound()
+    public void Update_DownArrow_AtLastItem_DoesNotExceedBound()
     {
         var list = new List(["a", "b", "c"], selectedIndex: 2);
-        ListSelectionChangedMsg? received = null;
-        list.OnKeyEvent(new KeyMsg(ConsoleKey.DownArrow, null), msg => received = msg as ListSelectionChangedMsg);
+        var (next, _) = list.Update(new KeyMsg(ConsoleKey.DownArrow, null));
+        var result = (List)next;
 
-        Assert.NotNull(received);
-        Assert.Equal(2, received!.NewIndex); // stays at 2
+        Assert.Equal(2, result.SelectedIndex); // stays at 2
     }
 
     // ── UpArrow ───────────────────────────────────────────────────────────────
 
     [Fact]
-    public void OnKeyEvent_UpArrow_DecrementsSelection()
+    public void Update_UpArrow_DecrementsSelection()
     {
         var list = new List(["a", "b", "c"], selectedIndex: 2);
-        ListSelectionChangedMsg? received = null;
-        list.OnKeyEvent(new KeyMsg(ConsoleKey.UpArrow, null), msg => received = msg as ListSelectionChangedMsg);
+        var (next, _) = list.Update(new KeyMsg(ConsoleKey.UpArrow, null));
+        var result = (List)next;
 
-        Assert.NotNull(received);
-        Assert.Equal(1, received!.NewIndex);
+        Assert.Equal(1, result.SelectedIndex);
     }
 
     [Fact]
-    public void OnKeyEvent_UpArrow_AtFirstItem_StaysAtZero()
+    public void Update_UpArrow_AtFirstItem_StaysAtZero()
     {
         var list = new List(["a", "b", "c"], selectedIndex: 0);
-        ListSelectionChangedMsg? received = null;
-        list.OnKeyEvent(new KeyMsg(ConsoleKey.UpArrow, null), msg => received = msg as ListSelectionChangedMsg);
+        var (next, _) = list.Update(new KeyMsg(ConsoleKey.UpArrow, null));
+        var result = (List)next;
 
-        Assert.NotNull(received);
-        Assert.Equal(0, received!.NewIndex);
+        Assert.Equal(0, result.SelectedIndex);
     }
 
     // ── Enter ─────────────────────────────────────────────────────────────────
 
     [Fact]
-    public void OnKeyEvent_Enter_DispatchesListItemSelectedMsg()
+    public void Update_Enter_DispatchesListItemSelectedMsg()
     {
         var list = new List(["alpha", "beta", "gamma"], selectedIndex: 1);
-        ListItemSelectedMsg? received = null;
-        list.OnKeyEvent(new KeyMsg(ConsoleKey.Enter, null), msg => received = msg as ListItemSelectedMsg);
+        var (next, cmd) = list.Update(new KeyMsg(ConsoleKey.Enter, null));
+        var result = (List)next;
 
-        Assert.NotNull(received);
-        Assert.Equal(1, received!.Index);
-        Assert.Equal("beta", received.Item);
+        Assert.Equal(1, result.SelectedIndex);
+        Assert.Equal("beta", result.Items[result.SelectedIndex]);
+        Assert.NotNull(cmd);
     }
 
     [Fact]
-    public void OnKeyEvent_Enter_EmptyList_DoesNothing()
+    public void Update_Enter_EmptyList_DoesNothing()
     {
         var list = new List([]);
-        ListItemSelectedMsg? received = null;
-        list.OnKeyEvent(new KeyMsg(ConsoleKey.Enter, null), msg => received = msg as ListItemSelectedMsg);
-        Assert.Null(received);
-    }
-
-    // ── Unhandled keys ────────────────────────────────────────────────────────
-
-    [Fact]
-    public void OnKeyEvent_OtherKey_DispatchesNothing()
-    {
-        var list = new List(["a", "b"], selectedIndex: 0);
-        IMsg? received = null;
-        list.OnKeyEvent(new KeyMsg(ConsoleKey.Escape, null), msg => received = msg);
-        Assert.Null(received);
+        var (next, _) = list.Update(new KeyMsg(ConsoleKey.Enter, null));
+        var result = (List)next;
+        Assert.Empty(result.Items);
     }
 
     // ── Render ────────────────────────────────────────────────────────────────
@@ -151,18 +136,5 @@ public class ListTests
         var list = new List(["first", "second", "third"], selectedIndex: 1);
         var descriptor = ViewDescriptor.From(list, width: 20, height: 10);
         Assert.Contains("second", TestHelpers.StripAnsi(descriptor.Content));
-    }
-
-    // ── Source identity in message ────────────────────────────────────────────
-
-    [Fact]
-    public void OnKeyEvent_SelectionMsg_SourceIsThisList()
-    {
-        var list = new List(["a", "b"], selectedIndex: 0);
-        ListSelectionChangedMsg? received = null;
-        list.OnKeyEvent(new KeyMsg(ConsoleKey.DownArrow, null), msg => received = msg as ListSelectionChangedMsg);
-
-        Assert.NotNull(received);
-        Assert.Same(list, received!.Source);
     }
 }

@@ -20,15 +20,15 @@ sealed record TextAreaComponent(
     {
         if (msg is not KeyMsg key) return (this, null);
         var ta = new TextArea(ActualLines, CursorRow, CursorCol, ScrollRow);
-        TextAreaChangedMsg? changed = null;
-        ta.OnKeyEvent(key, m => changed = m as TextAreaChangedMsg);
-        if (changed is null) return (this, null);
+        var (next, _) = ta.Update(key);
+        if (ReferenceEquals(ta, next)) return (this, null);
+        var updated = (TextArea)next;
         var scroll = TextArea.ComputeScrollRow(
-            changed.NewCursorRow, viewportHeight: 12, ScrollRow);
+            updated.CursorRow, viewportHeight: 12, ScrollRow);
         return (this with {
-            Lines     = changed.NewLines,
-            CursorRow = changed.NewCursorRow,
-            CursorCol = changed.NewCursorCol,
+            Lines     = updated.Lines,
+            CursorRow = updated.CursorRow,
+            CursorCol = updated.CursorCol,
             ScrollRow = scroll,
         }, null);
     }

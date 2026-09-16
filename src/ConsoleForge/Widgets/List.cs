@@ -8,41 +8,46 @@ namespace ConsoleForge.Widgets;
 /// A scrollable list widget that displays items and highlights the selected one.
 /// Dispatches <see cref="ListItemSelectedMsg"/> when the user presses Enter.
 /// </summary>
-public sealed class List : IFocusable
+public sealed record List : IFocusable
 {
     // ── IFocusable ───────────────────────────────────────────────────────────
     /// <inheritdoc/>
-    public bool HasFocus { get; set; }
+    public bool HasFocus { get; init; }
+
+    /// <inheritdoc/>
+    public string? FocusKey { get; init; }
 
     // ── IWidget ─────────────────────────────────────────────────────────────
-    public SizeConstraint Width  { get; init; } = SizeConstraint.Flex(1);
+    public SizeConstraint Width { get; init; } = SizeConstraint.Flex(1);
     public SizeConstraint Height { get; init; } = SizeConstraint.Flex(1);
 
     // ── List-specific ────────────────────────────────────────────────────────
     /// <summary>The display strings shown in the list.</summary>
-    public IReadOnlyList<string> Items         { get; init; } = [];
+    public IReadOnlyList<string> Items { get; init; } = [];
     /// <summary>Zero-based index of the currently highlighted item.</summary>
-    public int                   SelectedIndex { get; init; }
+    public int SelectedIndex { get; init; }
     /// <summary>Visual style for unselected rows. Inherits theme base style when no properties set.</summary>
-    public Style                 Style         { get; init; } = Style.Default;
+    public Style Style { get; init; } = Style.Default;
     /// <summary>Visual style applied to the highlighted row. Defaults to reverse-video.</summary>
-    public Style                 SelectedItemStyle { get; init; } = Style.Default.Reverse(true);
+    public Style SelectedItemStyle { get; init; } = Style.Default.Reverse(true);
     /// <summary>
     /// Number of blank columns inserted to the left of each item's text.
     /// Provides breathing room when the list is placed inside a <see cref="BorderBox"/>.
     /// Defaults to <c>1</c>.
     /// </summary>
-    public int                   PaddingLeft  { get; init; } = 1;
+    public int PaddingLeft { get; init; } = 1;
     /// <summary>
     /// Number of blank columns reserved to the right of each item's text.
     /// Defaults to <c>0</c>.
     /// </summary>
-    public int                   PaddingRight { get; init; } = 0;
+    public int PaddingRight { get; init; } = 0;
 
     /// <summary>
     /// Zero-based index of the first item rendered in the viewport.
-    /// Update via <see cref="ComputeScrollOffset"/> when handling
-    /// <see cref="ListSelectionChangedMsg"/> to keep the selection visible.
+    /// The widget cannot maintain this — it has no viewport until render time — so a
+    /// model updates it with <see cref="ComputeScrollOffset"/> after storing the widget
+    /// <see cref="Update"/> returned, or holds a <see cref="ListState"/> instead and lets
+    /// it keep scroll and selection consistent.
     /// </summary>
     public int ScrollOffset { get; init; }
 
@@ -79,27 +84,40 @@ public sealed class List : IFocusable
         SelectedIndex = Math.Clamp(selectedIndex, 0, Math.Max(0, items.Count - 1));
         if (style is not null) Style = style.Value;
         if (selectedItemStyle is not null) SelectedItemStyle = selectedItemStyle.Value;
-        PaddingLeft   = paddingLeft;
-        PaddingRight  = paddingRight;
-        ScrollOffset  = Math.Max(0, scrollOffset);
+        PaddingLeft = paddingLeft;
+        PaddingRight = paddingRight;
+        ScrollOffset = Math.Max(0, scrollOffset);
     }
 
     // ── Key handling ─────────────────────────────────────────────────────────
     /// <inheritdoc/>
-    public void OnKeyEvent(KeyMsg key, Action<IMsg> dispatch)
+    /// <remarks>
+    /// Navigation lives in <see cref="ListState"/>; this only carries it across, so a
+    /// model that keeps its own <see cref="ListState"/> and one that stores the widget
+    /// behave identically.
+    /// <para>
+    /// The widget has no viewport to hand over — it learns its region only at render
+    /// time — so <see cref="ScrollOffset"/> is left to the model via
+    /// <see cref="ComputeScrollOffset"/>, and PageUp/PageDown do nothing here. A model
+    /// holding a <see cref="ListState"/> with <c>WithViewport</c> gets both.
+    /// </para>
+    /// </remarks>
+    public (IFocusable Next, ICmd? Cmd) Update(KeyMsg key)
     {
-        switch (key.Key)
+        if (key.Key == ConsoleKey.Enter)
+            return Items.Count > 0
+                ? (this, Cmd.Msg(new ListItemSelectedMsg(SelectedIndex, Items[SelectedIndex])))
+                : (this, null);
+
+        var before = new ListState(Items.Count, SelectedIndex, ScrollOffset);
+        var after = before.HandleKey(key);
+        if (ReferenceEquals(after, before)) return (this, null);
+
+        return (this with
         {
-            case ConsoleKey.UpArrow:
-                dispatch(new ListSelectionChangedMsg(this, Math.Max(0, SelectedIndex - 1)));
-                break;
-            case ConsoleKey.DownArrow:
-                dispatch(new ListSelectionChangedMsg(this, Math.Min(Items.Count - 1, SelectedIndex + 1)));
-                break;
-            case ConsoleKey.Enter when Items.Count > 0:
-                dispatch(new ListItemSelectedMsg(SelectedIndex, Items[SelectedIndex]));
-                break;
-        }
+            SelectedIndex = after.SelectedIndex,
+            ScrollOffset = after.ScrollOffset,
+        }, null);
     }
 
     // ── Render ───────────────────────────────────────────────────────────────
@@ -114,18 +132,16 @@ public sealed class List : IFocusable
             ? SelectedItemStyle.Inherit(ctx.Theme.FocusedStyle)
             : SelectedItemStyle.Inherit(ctx.Theme.BaseStyle);
 
-        var fill     = new string(' ', region.Width);
-        var padLeft  = Math.Max(0, PaddingLeft);
+        var fill = new string(' ', region.Width);
+        var padLeft = Math.Max(0, PaddingLeft);
         var padRight = Math.Max(0, PaddingRight);
         // Width available for item text after subtracting horizontal padding
         var textWidth = Math.Max(0, region.Width - padLeft - padRight);
-        var leftPad  = new string(' ', padLeft);
-        var rightPad = new string(' ', padRight);
 
         var maxRows = Math.Min(Items.Count - ScrollOffset, region.Height);
         for (var i = 0; i < maxRows; i++)
         {
-            var itemIdx  = ScrollOffset + i;
+            var itemIdx = ScrollOffset + i;
             var rowStyle = itemIdx == SelectedIndex ? selectedStyle : baseStyle;
 
             // 1. Fill the entire row so the background colour covers edge-to-edge
@@ -149,26 +165,26 @@ public sealed class List : IFocusable
     /// <summary>
     /// Computes a new <see cref="ScrollOffset"/> that keeps
     /// <paramref name="selectedIndex"/> within the visible viewport.
-    /// Call this from your model's Update handler when processing
-    /// <see cref="ListSelectionChangedMsg"/>.
+    /// Call this from your model's Update handler after storing the widget
+    /// <see cref="Update"/> returned.
     /// </summary>
     /// <param name="selectedIndex">The newly selected item index.</param>
     /// <param name="viewportHeight">Number of visible rows in the List's region.</param>
     /// <param name="currentScrollOffset">Current <see cref="ScrollOffset"/>.</param>
+    /// <remarks>
+    /// Kept for a model that stores the widget rather than a <see cref="ListState"/>. It
+    /// has no item count to clamp against, so it only slides the offset far enough to
+    /// show the selection — <see cref="ListState"/> does that and bounds the offset too.
+    /// </remarks>
     public static int ComputeScrollOffset(
         int selectedIndex, int viewportHeight, int currentScrollOffset)
-    {
-        if (viewportHeight <= 0) return currentScrollOffset;
-        if (selectedIndex < currentScrollOffset)
-            return selectedIndex;
-        if (selectedIndex >= currentScrollOffset + viewportHeight)
-            return selectedIndex - viewportHeight + 1;
-        return currentScrollOffset;
-    }
+        => ListState.EnsureVisible(selectedIndex, currentScrollOffset, viewportHeight);
 }
 
 /// <summary>
-/// Dispatched when the highlighted row in a <see cref="List"/> changes.
-/// The model should replace its List reference with <c>list with { SelectedIndex = msg.NewIndex }</c>.
+/// Was dispatched when the highlighted row in a <see cref="List"/> changed, back when
+/// widgets emitted messages through a callback. Nothing raises it now —
+/// <see cref="List.Update"/> returns the moved widget directly.
 /// </summary>
+[Obsolete("Unused since widgets stopped emitting messages. List.Update returns the next widget; store that instead.")]
 public sealed record ListSelectionChangedMsg(List Source, int NewIndex) : IMsg;

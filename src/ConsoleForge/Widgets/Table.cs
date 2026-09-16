@@ -23,7 +23,7 @@ public sealed record TableColumn(string Header, int Width = 0, Style? Style = nu
 /// Content that exceeds a column's width is truncated. No scrolling — clip to
 /// the available height. For scrolling, wrap in a scrollable <see cref="Container"/>.
 /// </remarks>
-public sealed class Table : IWidget
+public sealed record Table : IWidget
 {
     // ── Render-cache constants ────────────────────────────────────────────────
 

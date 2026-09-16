@@ -1,4 +1,6 @@
+using System.Diagnostics;
 using System.Threading.Channels;
+
 using ConsoleForge.Layout;
 using ConsoleForge.Styling;
 using ConsoleForge.Terminal;
@@ -17,20 +19,14 @@ namespace ConsoleForge.Core;
 public sealed class App
 {
     private Theme _theme = Theme.Default;
-    private ColorProfile _colorProfile = ColorProfile.TrueColor;
     private bool _enableMouse;
 
     /// <summary>Detected color capability of the current terminal.</summary>
-    public ColorProfile ColorProfile => _colorProfile;
+    public ColorProfile ColorProfile { get; private set; } = ColorProfile.TrueColor;
     private ITerminal? _terminal;
     private readonly Channel<IMsg> _channel = Channel.CreateUnbounded<IMsg>();
     private readonly Renderer _renderer = new();
-
-    /// <summary>
-    /// Zero-based index into the depth-first focusable list. -1 = no focus.
-    /// Updated by HandleTabFocus; dispatched to the model as FocusIndexChangedMsg.
-    /// </summary>
-    private int _focusIndex = -1;
+    private TimeProvider _time = TimeProvider.System;
 
     /// <summary>
     /// Run the application asynchronously. Returns when the model produces a <see cref="QuitMsg"/>.
@@ -47,13 +43,15 @@ public sealed class App
         ITerminal? terminal = null,
         Theme? theme = null,
         int targetFps = 30,
-        bool enableMouse = false)
+        bool enableMouse = false,
+        TimeProvider? timeProvider = null)
     {
         var program = new App
         {
-            _theme      = theme ?? Theme.Default,
-            _colorProfile = DetectColorProfile(),
-            _enableMouse  = enableMouse,
+            _theme = theme ?? Theme.Default,
+            ColorProfile = DetectColorProfile(),
+            _enableMouse = enableMouse,
+            _time = timeProvider ?? TimeProvider.System
         };
         return program.RunInternal(model, terminal, targetFps);
     }
@@ -76,7 +74,10 @@ public sealed class App
     private IModel? _currentModel;
 
     /// <summary>Active subscriptions: key → linked CancellationTokenSource.</summary>
-    private readonly Dictionary<string, CancellationTokenSource> _activeSubs = new();
+    private readonly Dictionary<string, CancellationTokenSource> _activeSubs = [];
+    private readonly Dictionary<string, DateTimeOffset> _throttleGates = [];
+    private readonly Dictionary<string, CancellationTokenSource> _pendingDebounces = [];
+    private readonly object _rateLimitLock = new();
 
     private async Task RunInternal(IModel model, ITerminal? terminal, int targetFps)
     {
@@ -123,7 +124,15 @@ public sealed class App
                 if (m is not null) RenderFrame(m);
             }, null, 0, frameMs);
 
-            // Event loop
+            // Event loop.
+            //
+            // Each pass waits for one message, then drains everything already queued
+            // behind it before drawing. Input arrives far faster than a frame can be
+            // drawn — key auto-repeat alone outruns it — and a frame per event throws
+            // away almost all of that work, since only the final state is ever seen.
+            // Draining is self-regulating: while the loop keeps up, each pass handles
+            // a single message and draws immediately; when it falls behind, the queue
+            // batches and the intermediate frames are skipped instead of queueing up.
             IModel currentModel = model;
             while (true)
             {
@@ -139,28 +148,40 @@ public sealed class App
 
                 try
                 {
-                    if (msg is QuitMsg) break;
+                    while (true)
+                    {
+                        if (msg is QuitMsg) goto quit;
 
-                    if (msg is BatchMsg bm)
-                    {
-                        foreach (var m in bm.Messages)
+                        if (!TryHandleLoopMsg(msg))
                         {
-                            if (m is QuitMsg) goto quit;
-                            ProcessMsg(m, ref currentModel);
+                            var inner = msg switch
+                            {
+                                BatchMsg bm => bm.Messages,
+                                SequenceMsg sm => sm.Messages,
+                                _ => null
+                            };
+
+                            if (inner is null)
+                            {
+                                ProcessMsg(msg, ref currentModel);
+                            }
+                            else
+                            {
+                                foreach (var m in inner)
+                                {
+                                    if (m is QuitMsg) goto quit;
+                                    if (TryHandleLoopMsg(m)) continue;
+                                    ProcessMsg(m, ref currentModel);
+                                }
+                            }
                         }
+
+                        // Take whatever else is already waiting — including messages
+                        // the handlers above just queued — so the burst costs one frame.
+                        if (!_channel.Reader.TryRead(out msg!)) break;
                     }
-                    else if (msg is SequenceMsg sm)
-                    {
-                        foreach (var m in sm.Messages)
-                        {
-                            if (m is QuitMsg) goto quit;
-                            ProcessMsg(m, ref currentModel);
-                        }
-                    }
-                    else
-                    {
-                        ProcessMsg(msg, ref currentModel);
-                    }
+
+                    DrawPendingFrame(currentModel, frameMs);
                     continue;
                 quit:
                     break;
@@ -184,8 +205,25 @@ public sealed class App
             _quitting = true;
             _cts.Cancel();
             StopAllSubscriptions();
+            lock (_rateLimitLock)
+            {
+                foreach (var pending in _pendingDebounces.Values) pending.Dispose();
+                _pendingDebounces.Clear();
+                _throttleGates.Clear();
+            }
             if (_terminal is not null)
             {
+                // Remove any pixel graphics before the terminal goes away. They are not
+                // cells, so exiting the alternate screen need not take them with it, and
+                // under tmux they were passed through to the outer terminal, which tmux
+                // will never repaint over. Left behind, they outlive the process.
+                var rawCleanup = _renderer.BuildRawCleanup();
+                if (rawCleanup is not null)
+                {
+                    try { _terminal.Write(rawCleanup); _terminal.Flush(); }
+                    catch { /* teardown is best-effort; never mask the original failure */ }
+                }
+
                 if (_enableMouse) _terminal.DisableMouse();
                 _terminal.SetCursorVisible(true); // Restore cursor before exiting
             }
@@ -202,8 +240,28 @@ public sealed class App
         {
             if (_terminal is null || _quitting) return;
 
-            _renderer.RenderIfDirty(model, _terminal.Width, _terminal.Height, _theme, _colorProfile, _terminal);
+            if (_renderer.RenderIfDirty(model, _terminal.Width, _terminal.Height, _theme, ColorProfile, _terminal))
+                _lastFrameTimestamp = Stopwatch.GetTimestamp();
         }
+    }
+
+    /// <summary>Timestamp of the last frame actually written to the terminal.</summary>
+    private long _lastFrameTimestamp;
+
+    /// <summary>
+    /// Draw the frame the just-drained batch produced, unless the previous frame is
+    /// still younger than the frame budget — in that case the model stays marked
+    /// dirty and the FPS timer picks it up, capping output at the target rate while
+    /// keeping latency below one frame interval.
+    /// </summary>
+    private void DrawPendingFrame(IModel model, int frameMs)
+    {
+        if (_terminal is null || _quitting) return;
+
+        var elapsedMs = (Stopwatch.GetTimestamp() - _lastFrameTimestamp) * 1000.0 / Stopwatch.Frequency;
+        if (elapsedMs < frameMs) return;
+
+        RenderFrame(model);
     }
 
     private void ProcessMsg(IMsg msg, ref IModel model)
@@ -215,23 +273,10 @@ public sealed class App
         if (msg is ThemeChangedMsg themeChange)
             SetTheme(themeChange.NewTheme);
 
-        // Handle Tab for focus traversal, then fall through to model.Update
-        if (msg is KeyMsg { Key: ConsoleKey.Tab } tabKey)
-        {
-            HandleTabFocus(model, tabKey.Shift);
-        }
-
         // Click-to-focus: left-click press moves focus to the clicked widget
         if (msg is MouseMsg { Button: MouseButton.Left, Action: MouseAction.Press } click)
         {
-            HandleMouseFocus(model, click);
-        }
-
-        // Route key events to the focused widget
-        if (msg is KeyMsg keyMsg)
-        {
-            RouteKeyToFocused(model, keyMsg);
-            // Also pass to model for global key handling
+            HandleMouseFocus(click);
         }
 
         var prevModel = model;
@@ -241,13 +286,12 @@ public sealed class App
         DispatchCmd(cmd);
         ReconcileSubscriptions(newModel);
 
-        // Mark dirty whenever model changed or an explicit redraw is requested.
-        // Also render immediately so keystrokes appear without waiting for the timer tick.
+        // Mark dirty whenever the model changed or an explicit redraw is requested.
+        // The frame itself is drawn by DrawPendingFrame once the event loop has
+        // drained the queue, so a burst of input costs one frame rather than one
+        // frame per message.
         if (!ReferenceEquals(newModel, prevModel) || msg is RedrawMsg)
-        {
             _renderer.MarkDirty();
-            RenderFrame(newModel);
-        }
 
         // Force immediate re-render on resize; invalidate prev buffer to force full redraw
         if (msg is WindowResizeMsg && _terminal is not null)
@@ -258,54 +302,41 @@ public sealed class App
                 if (!_quitting && _terminal is not null)
                 {
                     var root = model.View();
-                    _renderer.Render(root, _terminal.Width, _terminal.Height, _theme, _colorProfile);
+                    _renderer.Render(root, _terminal.Width, _terminal.Height, _theme, ColorProfile);
                     _renderer.Flush(_terminal);
                 }
             }
         }
     }
 
-    private void HandleTabFocus(IModel model, bool reverse)
+    private void HandleMouseFocus(MouseMsg click)
     {
-        var rootWidget = model.View();
-        var focusable = FocusManager.CollectFocusable(rootWidget);
-        if (focusable.Count == 0) return;
+        IFocusable? hit;
 
-        if (reverse)
-            _focusIndex = _focusIndex <= 0 ? focusable.Count - 1 : _focusIndex - 1;
-        else
-            _focusIndex = (_focusIndex + 1) % focusable.Count;
+        // Held across the hit test: the layout belongs to a renderer buffer that the
+        // next frame reclaims, so releasing it mid-test would let a frame boundary swap
+        // the regions underneath the lookup.
+        lock (_renderLock)
+        {
+            if (!_renderer.TryGetLastFrame(out var rootWidget, out var layout)) return;
 
-        _channel.Writer.TryWrite(new FocusIndexChangedMsg(_focusIndex));
+            hit = FocusManager.FindFocusableAt(rootWidget, layout, click.Col, click.Row);
+        }
+
+        if (hit?.FocusKey is string key)
+        {
+            _channel.Writer.TryWrite(new FocusRequestedMsg(key));
+        }
     }
 
-    private void HandleMouseFocus(IModel model, MouseMsg click)
+    private bool TryHandleLoopMsg(IMsg msg)
     {
-        var rootWidget = model.View();
-        var layout     = Layout.LayoutEngine.Resolve(
-            rootWidget, _terminal!.Width, _terminal.Height);
-
-        var hit = FocusManager.FindFocusableAt(rootWidget, layout, click.Col, click.Row);
-        if (hit is null) return;
-
-        var focusable = FocusManager.CollectFocusable(rootWidget);
-        var idx = -1;
-        for (var i = 0; i < focusable.Count; i++)
-            if (ReferenceEquals(focusable[i], hit)) { idx = i; break; }
-
-        if (idx < 0 || idx == _focusIndex) return;
-        _focusIndex = idx;
-        _channel.Writer.TryWrite(new FocusIndexChangedMsg(_focusIndex));
-    }
-
-    private void RouteKeyToFocused(IModel model, KeyMsg keyMsg)
-    {
-        // Key routing to focused widget: the widget is owned by the model.
-        // We dispatch the event to the model via the normal Update path.
-        // For widgets that implement IFocusable, their OnKeyEvent is called
-        // by the model's Update handler.
-        // The framework provides the dispatch mechanism via FocusChangedMsg.
-        // Direct OnKeyEvent invocation is available via the FocusManager API.
+        switch (msg)
+        {
+            case BatchDispatchMsg bd: foreach (var c in bd.Cmds) DispatchCmd(c); return true;
+            case RateLimitDispatchMsg rl: HandleRateLimit(rl); return true;
+            default: return false;
+        }
     }
 
     private void DispatchCmd(ICmd? cmd)
@@ -316,15 +347,40 @@ public sealed class App
         // write the result directly to the channel — no Task.Run scheduling delay.
         // This ensures follow-up messages (like ThemeChangedMsg) arrive before the
         // next render timer tick, preventing stale-cache frames.
-        var task = cmd();
+        Task<IMsg> task;
+        try
+        {
+            task = cmd();
+        }
+        catch (Exception ex)
+        {
+            _channel.Writer.TryWrite(new CmdErrorMsg(ex));
+            return;
+        }
+
         if (task.IsCompletedSuccessfully)
         {
             _channel.Writer.TryWrite(task.Result);
             return;
         }
 
-        // Slow path: genuinely async commands go through the thread pool.
-        CmdDispatcher.Dispatch(cmd, _channel.Writer, _cts.Token);
+        // Slow path: await the already-started task — do NOT re-invoke the cmd
+        // (that would execute its side effects twice).
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                _channel.Writer.TryWrite(await task);
+            }
+            catch (OperationCanceledException) when (_cts.IsCancellationRequested)
+            {
+                // Suppress cancellation on clean shutdown.
+            }
+            catch (Exception ex)
+            {
+                _channel.Writer.TryWrite(new CmdErrorMsg(ex));
+            }
+        }, _cts.Token);
     }
 
     private void ReconcileSubscriptions(IModel model)
@@ -381,6 +437,68 @@ public sealed class App
         _activeSubs.Clear();
     }
 
+    private void HandleRateLimit(RateLimitDispatchMsg m)
+    {
+        if (m.Mode == RateLimitMode.Throttle)
+        {
+            var now = _time.GetUtcNow();
+            lock (_rateLimitLock)
+            {
+                if (_throttleGates.TryGetValue(m.Key, out var last) && now - last < m.Interval)
+                {
+                    return;
+                }
+                _throttleGates[m.Key] = now;
+            }
+            _channel.Writer.TryWrite(m.Fn(now));
+            return;
+        }
+
+        CancellationTokenSource cts;
+        lock (_rateLimitLock)
+        {
+            if (_pendingDebounces.TryGetValue(m.Key, out var prior))
+            {
+                prior.Cancel();
+                prior.Dispose();
+            }
+
+            cts = CancellationTokenSource.CreateLinkedTokenSource(_cts.Token);
+            _pendingDebounces[m.Key] = cts;
+        }
+
+        // Not Task.Run: an async method runs inline up to its first await, so the
+        // timer is registered against the clock before this returns. Off the loop
+        // thread the registration would race a caller that advances time.
+        _ = RunWindow();
+
+        async Task RunWindow()
+        {
+            try
+            {
+                await Task.Delay(m.Interval, _time, cts.Token);
+
+                lock (_rateLimitLock)
+                {
+                    if (!_pendingDebounces.TryGetValue(m.Key, out var current) || !ReferenceEquals(current, cts))
+                    {
+                        return;
+                    }
+
+                    _pendingDebounces.Remove(m.Key);
+                }
+
+                _channel.Writer.TryWrite(m.Fn(_time.GetUtcNow()));
+                cts.Dispose();
+            }
+            catch (OperationCanceledException)
+            {
+                // Superseded by a later dispatch, or the app is shutting down.
+                // Either way no message, and disposal belongs to whoever cancelled.
+            }
+        }
+    }
+
     // ── Color profile detection ───────────────────────────────────────
 
     private static ColorProfile DetectColorProfile()
@@ -396,12 +514,8 @@ public sealed class App
             return ColorProfile.TrueColor;
 
         var term = Environment.GetEnvironmentVariable("TERM") ?? "";
-        if (term.Contains("256color", StringComparison.OrdinalIgnoreCase))
-            return ColorProfile.Ansi256;
-
-        if (term.Length > 0 && !term.Equals("dumb", StringComparison.OrdinalIgnoreCase))
-            return ColorProfile.Ansi;
-
-        return ColorProfile.NoColor;
+        return term.Contains("256color", StringComparison.OrdinalIgnoreCase)
+            ? ColorProfile.Ansi256
+            : term.Length > 0 && !term.Equals("dumb", StringComparison.OrdinalIgnoreCase) ? ColorProfile.Ansi : ColorProfile.NoColor;
     }
 }

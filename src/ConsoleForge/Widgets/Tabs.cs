@@ -22,14 +22,17 @@ namespace ConsoleForge.Widgets;
 /// Tab switching does <em>not</em> move keyboard focus to the body — the model
 /// controls focus assignment independently.
 /// </remarks>
-public sealed class Tabs : IFocusable
+public sealed record Tabs : IFocusable
 {
     // ── IFocusable ───────────────────────────────────────────────────────────
     /// <inheritdoc/>
-    public bool HasFocus { get; set; }
+    public bool HasFocus { get; init; }
+
+    /// <inheritdoc/>
+    public string? FocusKey { get; init; }
 
     // ── IWidget ─────────────────────────────────────────────────────────────
-    public SizeConstraint Width  { get; init; } = SizeConstraint.Flex(1);
+    public SizeConstraint Width { get; init; } = SizeConstraint.Flex(1);
     public SizeConstraint Height { get; init; } = SizeConstraint.Flex(1);
 
     // ── Tabs-specific ─────────────────────────────────────────────────────────
@@ -79,11 +82,11 @@ public sealed class Tabs : IFocusable
         Style? activeTabStyle = null,
         Style? inactiveTabStyle = null)
     {
-        Labels         = labels;
-        ActiveIndex    = labels.Count > 0 ? Math.Clamp(activeIndex, 0, labels.Count - 1) : 0;
-        Body           = body;
-        if (style           is not null) Style           = style.Value;
-        if (activeTabStyle   is not null) ActiveTabStyle  = activeTabStyle.Value;
+        Labels = labels;
+        ActiveIndex = labels.Count > 0 ? Math.Clamp(activeIndex, 0, labels.Count - 1) : 0;
+        Body = body;
+        if (style is not null) Style = style.Value;
+        if (activeTabStyle is not null) ActiveTabStyle = activeTabStyle.Value;
         if (inactiveTabStyle is not null) InactiveTabStyle = inactiveTabStyle.Value;
     }
 
@@ -92,36 +95,21 @@ public sealed class Tabs : IFocusable
     /// <summary>
     /// Left/Right arrows cycle tabs. Number keys 1–9 jump to a specific tab.
     /// </summary>
-    public void OnKeyEvent(KeyMsg key, Action<IMsg> dispatch)
+    public (IFocusable Next, ICmd? Cmd) Update(KeyMsg key)
     {
-        if (Labels.Count == 0) return;
+        if (Labels.Count == 0) return (this, null);
 
-        switch (key.Key)
+        var next = key.Key switch
         {
-            case ConsoleKey.LeftArrow:
-            {
-                var next = ActiveIndex <= 0 ? Labels.Count - 1 : ActiveIndex - 1;
-                dispatch(new TabChangedMsg(this, next));
-                break;
-            }
-            case ConsoleKey.RightArrow:
-            {
-                var next = (ActiveIndex + 1) % Labels.Count;
-                dispatch(new TabChangedMsg(this, next));
-                break;
-            }
-            default:
-            {
-                // Number keys 1–9 jump directly
-                if (key.Character is >= '1' and <= '9')
-                {
-                    int idx = key.Character.Value - '1';
-                    if (idx < Labels.Count)
-                        dispatch(new TabChangedMsg(this, idx));
-                }
-                break;
-            }
-        }
+            ConsoleKey.LeftArrow => ActiveIndex <= 0 ? Labels.Count - 1 : ActiveIndex - 1,
+            ConsoleKey.RightArrow => (ActiveIndex + 1) % Labels.Count,
+            _ when key.Character is >= '1' and <= '9'
+                => Math.Min(key.Character.Value - '1', Labels.Count - 1),
+            _ => ActiveIndex
+
+        };
+
+        return next == ActiveIndex ? (this, null) : (this with { ActiveIndex = next }, null);
     }
 
     // ── Render ───────────────────────────────────────────────────────────────
@@ -154,12 +142,12 @@ public sealed class Tabs : IFocusable
                 if (col >= region.Col + region.Width) break;
             }
 
-            var isActive  = i == ActiveIndex;
-            var tabStyle  = isActive
+            var isActive = i == ActiveIndex;
+            var tabStyle = isActive
                 ? ActiveTabStyle.Inherit(HasFocus ? ctx.Theme.FocusedStyle : ctx.Theme.BaseStyle)
                 : InactiveTabStyle.Inherit(ctx.Theme.BaseStyle);
 
-            var label    = $" {Labels[i]} ";
+            var label = $" {Labels[i]} ";
             var maxChars = region.Col + region.Width - col;
             label = TextUtils.TruncateToWidth(label, maxChars);
 

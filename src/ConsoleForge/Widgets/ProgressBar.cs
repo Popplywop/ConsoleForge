@@ -7,7 +7,7 @@ namespace ConsoleForge.Widgets;
 /// A horizontal progress bar widget. Fills a region proportionally based on
 /// <see cref="Value"/> relative to <see cref="Maximum"/>.
 /// </summary>
-public sealed class ProgressBar : IWidget
+public sealed record ProgressBar : IWidget
 {
     // ── IWidget ─────────────────────────────────────────────────────────────
     /// <summary>Horizontal size constraint. Defaults to <see cref="SizeConstraint.Flex(int)"/> weight 1 (fill available width).</summary>
