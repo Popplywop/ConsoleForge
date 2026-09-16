@@ -461,14 +461,28 @@ Requires **.NET 8 SDK**. Single dependency: `System.Reactive`.
 
 ## Performance
 
-Double-buffered cell diff + per-widget render cache. Benchmarks (80×24 terminal):
+Double-buffered cell diff + per-widget render cache. *Cold* is a first frame — full
+layout, render and diff. *Warm* is a steady-state redraw of the same tree, where the
+widget cache and the cell diff do their work.
+
+`RenderBenchmarks`, Release, 80×24. Absolute figures track the machine; the ratios are
+the point.
 
 | Scenario | Time | Allocations |
 |----------|------|-------------|
-| 20-widget cold render | ~20 µs | 68 KB |
-| 20-widget warm (no changes) | ~21 µs | 14 KB |
-| 1,000-row Table (24 visible) | ~30 µs | 67 KB |
-| Dirty-skip (model unchanged) | 3 ns | 0 |
+| 20 widgets, cold | 28.2 µs | 64 KB |
+| 20 widgets, warm | 21.2 µs | 7.8 KB |
+| `BorderBox`, cold | 36.1 µs | 75 KB |
+| `BorderBox`, warm | 29.6 µs | 18 KB |
+| Single `TextBlock`, cold | 1.29 µs | 2.9 KB |
+| Single `TextBlock`, warm | 0.81 µs | 416 B |
+| Dirty-skip (model unchanged) | 3.7 ns | 0 |
+
+Reproduce with:
+
+```bash
+dotnet run --project tests/ConsoleForge.Benchmarks -c Release -- --filter "*RenderBenchmarks*"
+```
 
 ## License
 
