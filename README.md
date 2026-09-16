@@ -11,18 +11,18 @@ Built for developers who want the predictability of [Bubble Tea](https://github.
 ## Features
 
 - **Elm loop** — `Init` → `Update` → `View`. Your model is an immutable record. `Update` returns a new copy. `View` is pure.
-- **14 built-in widgets** — TextBlock, TextInput, TextArea, List, Table, Checkbox, Tabs, ProgressBar, Spinner, BorderBox, Container, Modal, ZStack, ImageWidget
+- **15 built-in widgets** — TextBlock, TextInput, TextArea, List, Table, Checkbox, Tabs, ProgressBar, Spinner, BorderBox, Container, Modal, ZStack, ImageWidget, HorizontalShelf
 - **6 named themes** — Dark, Light, Dracula, Nord, Monokai, Tokyo Night. Switch at runtime with one message.
 - **Mouse support** — SGR 1006 extended mouse tracking. Click-to-focus, scroll wheel, button/motion events.
 - **Unicode-aware layout** — CJK, emoji, and full-width characters render at correct column widths, from a table generated out of the Unicode Character Database.
 - **Inline images** — `ImageWidget` draws PNGs through the Kitty graphics protocol where the terminal supports it, and falls back to half-block cells with 24-bit colour everywhere else.
 - **Composable sub-programs** — `IComponent` / `IComponent<TResult>` for self-contained pages with own state, keymaps, and lifecycle.
-- **Declarative keybindings** — `KeyMap` + `KeyPattern` replace giant switch statements. Composable, context-aware.
+- **Declarative keybindings** — `KeyMap` + `KeyPattern` replace giant switch statements. Composable, context-aware, and layout-independent for printable keys via `KeyPattern.OfChar`.
 - **Virtualized scrolling** — List and Table render only visible rows. 1,000 items costs the same as 20.
 - **Double-buffered renderer** — Cell-level diff with per-widget dirty tracking. Only changed cells hit the terminal.
 - **Margin & padding** — `Style.Padding(1)` and `Style.Margin(1)` enforced by the layout engine.
 - **Content-aware layout** — `SizeConstraint.Auto` sizes to content through `IMeasurable`; `Fixed` and `Flex` cover the rest.
-- **Pure editing reducer** — `TextInputState`: cursor movement, word jumps, and grapheme-aware deletion as a value in your model, not a stateful sub-widget.
+- **Pure state reducers** — `TextInputState`, `TextAreaState`, `ListState`: editing, cursor movement and selection as values in your model, not stateful sub-widgets. The widgets delegate to them, so the two cannot drift.
 - **Async commands** — `Cmd.Run`, `Cmd.Batch`, `Cmd.Sequence`, `Cmd.Tick`, and `Cmd.Debounce` / `Cmd.Throttle`, which rate-limit by key so a cmd built fresh in `Update` still coalesces.
 - **Subscriptions** — `Sub.Interval`, `Sub.FromAsyncEnumerable`, `Sub.FromObservable` for continuous data streams.
 
@@ -67,9 +67,9 @@ await App.Run(new HelloModel(), theme: Theme.Dark);
 | Widget | Description |
 |--------|-------------|
 | `TextBlock` | Text display with word-wrap. Supports `\n`, padding, and alignment. |
-| `TextInput` | Single-line input with cursor, backspace, delete, and arrow keys. |
-| `TextArea` | Multi-line editor with cursor navigation, line splitting, and scroll. |
-| `List` | Scrollable list with selection highlight. Virtualized — only visible rows render. |
+| `TextInput` | Single-line input with cursor, word jumps, and grapheme-aware editing. Delegates to `TextInputState`. |
+| `TextArea` | Multi-line editor with cursor navigation, line splitting, and scroll. Delegates to `TextAreaState`. |
+| `List` | Scrollable list with selection highlight. Virtualized — only visible rows render. Delegates to `ListState`. |
 | `Table` | Columnar data with headers, selection, separators. Virtualized scrolling. |
 | `Checkbox` | Toggle `[✓] Label` / `[ ] Label`. Customizable indicator characters. |
 | `Tabs` | Tab bar + body content. Left/Right arrows, number keys 1–9. |
@@ -80,6 +80,7 @@ await App.Run(new HelloModel(), theme: Theme.Dark);
 | `Modal` | Centered dialog overlay. Compose with `ZStack` for layered UIs. |
 | `ZStack` | Renders layers back-to-front. The foundation for overlays and modals. |
 | `ImageWidget` | Inline image. Kitty graphics protocol when available, half-block cells otherwise. |
+| `HorizontalShelf` | Paged, virtualized strip of cover art for rows wider than the terminal. |
 
 ## Themes
 
@@ -287,10 +288,13 @@ if (next.IsCompleted())
     return (this with { Picker = null, ChosenFile = next.Result }, cmd);
 ```
 
-## Text Editing — `TextInputState`
+## State Reducers — `TextInputState`, `TextAreaState`, `ListState`
 
-Editing rules as a pure value, so a model owns its input state and never needs a
-stateful sub-program to manage it:
+Editing and selection rules as pure values, so a model owns its state and never needs a
+stateful sub-program to manage it. Each widget delegates to its reducer, so storing the
+widget and storing the state behave identically — they cannot drift:
+
+### `TextInputState` — single-line
 
 ```csharp
 sealed record Model(TextInputState Filter) : IModel
@@ -315,8 +319,49 @@ an accented letter moves and deletes as one unit, and a `with` expression that w
 leave the cursor mid-cluster is normalised instead. It is not a column: a wide glyph is
 two columns but one cursor step.
 
-`TextInput.Update` delegates to this type, so storing the widget and storing the state
-behave identically.
+### `TextAreaState` — multi-line
+
+Same editing rules, because every key that stays on one line is handed to
+`TextInputState`. `TextAreaState` owns only what crosses lines: `Up`/`Down`, `Enter`
+splitting a line, `Backspace` at column 0 joining onto the previous line, and `Delete`
+at end-of-line pulling the next one up. `Insert(text)` splits a paste on newlines.
+
+```csharp
+var next = Body.HandleKey(key);          // Lines, CursorRow, CursorCol
+string doc = next.Text();                 // joined with \n
+```
+
+`Lines` is never empty — an empty document is one empty line — and the cursor is
+re-normalised on every `with`, so no copy lands off the end or inside a cluster.
+
+### `ListState` — selection and scroll
+
+Holds the item **count**, not the items, so it serves an array, a filtered view, or
+virtualized pages equally. The model keeps the data and indexes it:
+
+```csharp
+sealed record Model(ListState Rows, string[] Items) : IModel
+{
+    public (IModel, ICmd?) Update(IMsg msg) => msg switch
+    {
+        WindowResizeMsg r => (this with { Rows = Rows.WithViewport(r.Height - Chrome) }, null),
+        KeyMsg k          => (this with { Rows = Rows.HandleKey(k) }, null),
+        _                 => (this, null),
+    };
+}
+```
+
+`HandleKey` covers `Up`/`Down`, `Home`/`End`, and `PageUp`/`PageDown`. Because
+`ViewportHeight` lives in the state, `ScrollOffset` is maintained on every move rather
+than being something you remember to recompute — a selection cannot scroll out of sight,
+and an offset that would hide it is overridden. Set the viewport to 0 when nothing knows
+it yet: scroll is then left alone and paging does nothing, since a page has no size.
+
+`VisibleRange` gives the `(offset, length)` slice a view should draw.
+
+> **Note:** the `List` widget cannot use the viewport half — a widget learns its region
+> only at render time — so it leaves `ScrollOffset` to the model via
+> `List.ComputeScrollOffset`. A model holding a `ListState` gets both.
 
 ## Commands
 
@@ -379,17 +424,24 @@ dotnet run --project samples/ConsoleForge.Gallery
 
 ```
 src/ConsoleForge/
-  Core/       Program, IModel, IMsg, ICmd, IComponent, KeyMap, KeyPattern,
-              Component, Cmd, Sub, FocusManager, Renderer, Messages
-  Layout/     IWidget, IContainer, IFocusable, ISingleBodyWidget, ILayeredContainer,
-              LayoutEngine, RenderContext, TextUtils, SizeConstraint, Region
+  Core/       App, IModel, IMsg, ICmd, IComponent, KeyMap, KeyPattern, Component,
+              Cmd, CmdDispatcher, Sub, FocusManager, Renderer, ViewDescriptor,
+              Messages, TextInputState, TextAreaState, ListState, Attributes
+  Layout/     IWidget, IContainer, IFocusable, IMeasurable, ISingleBodyWidget,
+              ILayeredContainer, IRawEscapePayload, LayoutEngine, LayoutSolver,
+              RenderContext, SubRenderContext, TextUtils, SizeConstraint, Region
   Styling/    Style, Theme, ThemeExtensions, Color, Borders, BorderSpec, ColorProfile
-  Terminal/   ITerminal, AnsiTerminal, Termios (Unix), WindowsConsole
+  Terminal/   ITerminal, AnsiTerminal, TerminalCapabilities, KittyProtocol,
+              Termios (Unix), WindowsConsole
   Widgets/    TextBlock, TextInput, TextArea, List, Table, Checkbox, Tabs,
-              ProgressBar, Spinner, BorderBox, Container, Modal, ZStack
+              ProgressBar, Spinner, BorderBox, Container, Modal, ZStack,
+              ImageWidget, HorizontalShelf
 
-tests/ConsoleForge.Tests/        398 unit tests (xUnit v3)
-tests/ConsoleForge.Benchmarks/   BenchmarkDotNet render + cmd benchmarks
+src/ConsoleForge.SourceGen/      Roslyn incremental generator (netstandard2.0)
+
+tests/ConsoleForge.Tests/          662 unit tests (xUnit v3)
+tests/ConsoleForge.SourceGen.Tests/ 12 generator snapshot tests
+tests/ConsoleForge.Benchmarks/     BenchmarkDotNet render + cmd benchmarks
 
 samples/
   ConsoleForge.Gallery/          Widget browser with IComponent page architecture

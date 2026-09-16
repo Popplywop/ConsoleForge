@@ -71,8 +71,13 @@ it changes, and the helper is a pure function over it.
 
 ### Tests
 
-- Tests live in `tests/ConsoleForge.Tests/`.
-- Use xUnit. No MSTest, no NUnit.
+- Framework tests live in `tests/ConsoleForge.Tests/`; generator tests in
+  `tests/ConsoleForge.SourceGen.Tests/`, which verifies emitted source by snapshot.
+- Use xUnit v3. No MSTest, no NUnit. FsCheck for property tests, Verify.XunitV3 for
+  snapshots.
+- State reducers (`TextInputState`, `TextAreaState`, `ListState`) are the cheapest
+  place to test editing and selection rules — prefer a reducer test to driving a
+  widget, and let the widget test cover only that it delegates.
 - Test file mirrors source path: `src/ConsoleForge/Widgets/Foo.cs` → `tests/ConsoleForge.Tests/Widgets/FooTests.cs`.
 - No `Thread.Sleep` / real timers in tests. Inject time via `DateTimeOffset` params or fake ticks.
 
