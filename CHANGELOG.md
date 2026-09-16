@@ -7,7 +7,7 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 While the major version is 0, breaking changes ship in minor releases and are
 marked **Breaking**.
 
-## [Unreleased]
+## [0.4.0]
 
 ### Added
 
