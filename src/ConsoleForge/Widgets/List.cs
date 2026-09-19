@@ -18,7 +18,9 @@ public sealed record List : IFocusable
     public string? FocusKey { get; init; }
 
     // ── IWidget ─────────────────────────────────────────────────────────────
+    /// <inheritdoc/>
     public SizeConstraint Width { get; init; } = SizeConstraint.Flex(1);
+    /// <inheritdoc/>
     public SizeConstraint Height { get; init; } = SizeConstraint.Flex(1);
 
     // ── List-specific ────────────────────────────────────────────────────────

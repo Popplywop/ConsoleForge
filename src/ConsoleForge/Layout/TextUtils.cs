@@ -9,7 +9,7 @@ namespace ConsoleForge.Layout;
 /// (CJK ideographs, full-width forms, emoji) which occupy 2 terminal columns.
 /// </summary>
 /// <remarks>
-/// <b>Performance</b> — All methods use <see cref="string.IsAscii"/> (SIMD-vectorized in
+/// <b>Performance</b> — All methods use <see cref="Ascii"/>.<c>IsValid</c> (SIMD-vectorized in
 /// .NET 8) as the primary fast-path gate. For pure-ASCII strings (the common case for
 /// widget labels and UI text) the hot path degenerates to a single vectorized scan plus
 /// O(1) arithmetic — no Rune enumeration, no <see cref="StringBuilder"/> allocation.

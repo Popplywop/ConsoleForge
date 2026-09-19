@@ -3,7 +3,14 @@ using System.Buffers;
 namespace ConsoleForge.Layout;
 
 /// <summary>Axis for container layout direction.</summary>
-public enum Axis { Horizontal, Vertical }
+public enum Axis
+{
+    /// <summary>Children are laid out left to right.</summary>
+    Horizontal,
+
+    /// <summary>Children are laid out top to bottom.</summary>
+    Vertical
+}
 
 /// <summary>
 /// Two-pass layout algorithm that resolves widget size constraints
@@ -20,6 +27,16 @@ public static class LayoutEngine
     public static ResolvedLayout Resolve(IWidget root, int w, int h)
         => ResolveInto(new ResolvedLayout(), root, w, h);
 
+    /// <summary>
+    /// Resolve <paramref name="root"/> into <paramref name="target"/>, reusing its
+    /// allocation dictionary instead of allocating a fresh <see cref="ResolvedLayout"/>.
+    /// The render loop calls this every frame to keep layout off the allocation path;
+    /// <paramref name="target"/> is cleared first, so any regions it held are discarded.
+    /// </summary>
+    /// <param name="target">Layout to clear and fill. Returned for convenience.</param>
+    /// <param name="root">Root of the widget tree to resolve.</param>
+    /// <param name="w">Available width in terminal columns.</param>
+    /// <param name="h">Available height in terminal rows.</param>
     public static ResolvedLayout ResolveInto(ResolvedLayout target, IWidget root, int w, int h)
     {
         target.Reset();

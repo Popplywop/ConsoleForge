@@ -1,0 +1,14 @@
+- name: Introduction
+  href: introduction.md
+- name: Getting Started
+  href: getting-started.md
+- name: Widgets
+  href: widgets.md
+- name: Layout
+  href: layout.md
+- name: State Reducers
+  href: state-reducers.md
+- name: Commands & Subscriptions
+  href: commands-and-subscriptions.md
+- name: Source Generators
+  href: ../src/ConsoleForge.SourceGen/README.md

@@ -57,12 +57,16 @@ public sealed class RenderContext : IRenderContext
     private Region[]?   _curRegions;
     private int         _curWidgetCount;
 
+    /// <inheritdoc/>
     public Region         Region       { get; private set; }
     /// <summary>Active theme for style inheritance. Updated by <see cref="Reset"/>.</summary>
     public Theme          Theme        { get; private set; }
+    /// <inheritdoc/>
     public ColorProfile   ColorProfile { get; private set; }
+    /// <inheritdoc/>
     public ResolvedLayout Layout       { get; private set; }
 
+    /// <inheritdoc/>
     public CursorDescriptor? Cursor    { get; private set; }
 
     /// <summary>
@@ -233,7 +237,7 @@ public sealed class RenderContext : IRenderContext
     }
 
     /// <summary>
-    /// Returns true if every character in the string is ASCII (< 128).
+    /// Returns true if every character in the string is ASCII (&lt; 128).
     /// These strings have no surrogate pairs and no wide Unicode characters.
     /// </summary>
     private static bool IsAscii(string text)
@@ -501,6 +505,7 @@ public sealed class RenderContext : IRenderContext
         return sb.ToString();
     }
 
+    /// <inheritdoc/>
     public void SetCursorDescriptor(CursorDescriptor cursor)
         => Cursor = cursor;
 

@@ -4,7 +4,7 @@ namespace ConsoleForge.Core;
 
 /// <summary>
 /// Fires an <see cref="ICmd"/> on the thread pool and writes the resulting
-/// <see cref="IMsg"/> to <paramref name="channel"/>.
+/// <see cref="IMsg"/> to the supplied channel.
 /// </summary>
 internal static class CmdDispatcher
 {

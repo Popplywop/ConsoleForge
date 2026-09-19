@@ -1,0 +1,255 @@
+/* ConsoleForge documentation theme.
+ *
+ * The palette is not invented for the docs: every value below is lifted from
+ * src/ConsoleForge/Styling/Theme.cs, so the site renders in the same colours the
+ * framework hands to a real application. Dark mode is Theme.Dark, light mode is
+ * Theme.Light. If those change, change these.
+ *
+ * The organising idea is focus. Theme.Dark.focusedStyle is a gold border, so gold
+ * means "this is where you are" here too: focus rings, the active table-of-contents
+ * entry, the anchored heading. Teal is structure; gold is attention. Nothing else
+ * gets to use gold.
+ */
+
+:root,
+[data-bs-theme="light"] {
+  --cf-bg:      #F0F0F0;   /* Theme.Light base background */
+  --cf-fg:      #1C1C1C;   /* Theme.Light base foreground */
+  --cf-accent:  #0066CC;   /* Theme.Light borderStyle  */
+  --cf-focus:   #CC0000;   /* Theme.Light focusedStyle */
+  --cf-muted:   #999999;   /* Theme.Light disabledStyle */
+  --cf-rule:    rgba(0, 0, 0, 0.12);
+  --cf-surface: #FFFFFF;
+}
+
+[data-bs-theme="dark"] {
+  --cf-bg:      #1C1C1C;   /* Theme.Dark base background */
+  --cf-fg:      #EBEBEB;   /* Theme.Dark base foreground */
+  --cf-accent:  #4EC9B0;   /* Theme.Dark borderStyle  */
+  --cf-focus:   #FFD700;   /* Theme.Dark focusedStyle */
+  --cf-muted:   #6B6B6B;   /* Theme.Dark disabledStyle */
+  --cf-rule:    rgba(255, 255, 255, 0.12);
+  --cf-surface: #232323;
+}
+
+/* The terminal cell grid is the product's unit of layout, so headings, the brand,
+   and anything tabular are set in the same monospace the framework renders into.
+   Prose stays proportional: it is prose, and it has to be read at length. */
+:root {
+  --cf-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
+             "Liberation Mono", monospace;
+  --cf-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue",
+             Arial, sans-serif;
+}
+
+/* ── Bootstrap surface ──────────────────────────────────────────────────────── */
+
+[data-bs-theme] {
+  --bs-body-bg:          var(--cf-bg);
+  --bs-body-color:       var(--cf-fg);
+  --bs-border-color:     var(--cf-rule);
+  --bs-link-color:       var(--cf-accent);
+  --bs-link-hover-color: var(--cf-accent);
+  --bs-emphasis-color:   var(--cf-fg);
+  --bs-secondary-color:  var(--cf-muted);
+  --bs-code-color:       var(--cf-accent);
+}
+
+body {
+  font-family: var(--cf-sans);
+  background-color: var(--cf-bg);
+  color: var(--cf-fg);
+}
+
+/* ── Type scale ─────────────────────────────────────────────────────────────── */
+
+h1, h2, h3, h4, h5, h6,
+.navbar-brand {
+  font-family: var(--cf-mono);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+h1 { font-size: 1.95rem; }
+h2 { font-size: 1.45rem; }
+h3 { font-size: 1.15rem; }
+
+/* A hairline under section heads, in structure-teal. The rule is the only
+   decoration a heading gets; no markers, no eyebrows. */
+article h2 {
+  padding-bottom: 0.3rem;
+  border-bottom: 1px solid var(--cf-rule);
+  margin-top: 2.4rem;
+}
+
+/* Prose wants a measure it can be read at. */
+article p,
+article li {
+  max-width: 74ch;
+  line-height: 1.65;
+}
+
+/* ── Brand ──────────────────────────────────────────────────────────────────── */
+
+.navbar-brand {
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  gap: 0.5rem;
+  display: inline-flex;
+  align-items: center;
+}
+
+/* Height-constrained, width free: a square mark and a wider wordmark both drop in
+   without being squashed.
+
+   The mark carries its own charcoal ground rather than an alpha cut: the anvil's
+   horn and plinth are the same value as the ground and touch it, so keying the
+   background out takes the silhouette with it. That ground is #1C1C1C, Theme.Dark's
+   background, and the navbar is neither colour in either mode (white in light,
+   Bootstrap's #212529 in dark), so the tile stays a visible square both times. The
+   radius is what makes that read as a mark rather than a cropped screenshot. */
+.navbar-brand > #logo {
+  height: 1.55rem;
+  width: auto;
+  max-width: 10rem;
+  border-radius: 4px;
+}
+
+header .navbar {
+  border-bottom: 1px solid var(--cf-rule);
+}
+
+/* ── Focus is gold ──────────────────────────────────────────────────────────── */
+
+:where(a, button, input, select, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--cf-focus);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* The framework marks the focused widget with a border on the leading edge.
+   The table of contents marks the page you are on the same way. */
+.toc .nav > li > a.active,
+.toc .nav > li.active > a,
+nav#toc .active > a {
+  color: var(--cf-fg);
+  font-weight: 600;
+  border-left: 2px solid var(--cf-focus);
+  padding-left: 0.6rem;
+  margin-left: -0.75rem;
+  background: none;
+}
+
+/* Deep-linked headings light up so you can see what the anchor landed on.
+   Two cautions, both learned the hard way on the API pages:
+   - Anything under <article> can be the target, including the empty <a id> docfx
+     emits before each member, so the paint is restricted to headings.
+   - A generated member heading carries a full signature and wraps over several
+     lines, so a blurless box-shadow paints a slab the height of the heading. A
+     rule on the leading edge stays a rule however tall the heading gets. */
+article [id]:target {
+  scroll-margin-top: 5rem;
+}
+
+article :is(h1, h2, h3, h4, h5, h6):target {
+  border-left: 3px solid var(--cf-focus);
+  padding-left: 0.65rem;
+  margin-left: -0.8rem;
+}
+
+/* ── Code ───────────────────────────────────────────────────────────────────── */
+
+/* Code follows the page theme rather than forcing a terminal ground in both modes:
+   docfx ships highlight.js palettes tuned per theme, and overriding the block
+   background would mean owning a full token palette to keep contrast honest.
+   Only the container is restyled. */
+pre {
+  font-family: var(--cf-mono);
+  border: 1px solid var(--cf-rule);
+  border-radius: 6px;
+  font-size: 0.875rem;
+  line-height: 1.55;
+  overflow: hidden;
+}
+
+pre > code.hljs {
+  padding: 0.9rem 1rem;
+  background: none;
+}
+
+/* Inline code reads as a name in a sentence, so it takes the structure colour. */
+:not(pre) > code {
+  font-family: var(--cf-mono);
+  font-size: 0.875em;
+  color: var(--cf-accent);
+  background-color: var(--cf-surface);
+  border: 1px solid var(--cf-rule);
+  border-radius: 3px;
+  padding: 0.1em 0.35em;
+}
+
+/* ── Tables and notes ───────────────────────────────────────────────────────── */
+
+article table {
+  font-size: 0.925rem;
+}
+
+article table > thead {
+  border-bottom: 2px solid var(--cf-rule);
+}
+
+article table > thead th {
+  font-family: var(--cf-mono);
+  font-weight: 600;
+}
+
+/* Notes get a leading edge rather than a filled card, so a page of them still
+   reads as one page. */
+article .alert,
+article blockquote {
+  background: var(--cf-surface);
+  border: 1px solid var(--cf-rule);
+  border-left: 3px solid var(--cf-accent);
+  border-radius: 0 4px 4px 0;
+  color: var(--cf-fg);
+}
+
+article .alert-warning { border-left-color: var(--cf-focus); }
+article .alert-danger  { border-left-color: var(--cf-focus); }
+
+/* ── Footer ─────────────────────────────────────────────────────────────────── */
+
+footer {
+  border-top: 1px solid var(--cf-rule) !important;
+  font-size: 0.875rem;
+  color: var(--cf-muted);
+}
+
+footer .cf-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1.25rem;
+  align-items: baseline;
+  padding: 0.35rem 0;
+}
+
+footer .cf-footer a { color: var(--cf-accent); text-decoration: none; }
+footer .cf-footer a:hover { text-decoration: underline; }
+footer .cf-footer .cf-mark { font-family: var(--cf-mono); color: var(--cf-muted); }
+
+/* ── Quality floor ──────────────────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@media (max-width: 767.98px) {
+  h1 { font-size: 1.6rem; }
+  h2 { font-size: 1.3rem; }
+  pre { font-size: 0.8rem; }
+  article p, article li { max-width: none; }
+}

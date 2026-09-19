@@ -17,7 +17,9 @@ public sealed record TextInput : IFocusable
     public string? FocusKey { get; init; }
 
     // ── IWidget ─────────────────────────────────────────────────────────────
+    /// <inheritdoc/>
     public SizeConstraint Width { get; init; } = SizeConstraint.Flex(1);
+    /// <inheritdoc/>
     public SizeConstraint Height { get; init; } = SizeConstraint.Fixed(1);
 
     // ── TextInput-specific ───────────────────────────────────────────────────

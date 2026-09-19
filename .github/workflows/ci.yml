@@ -40,3 +40,8 @@ jobs:
 
       - name: Test
         run: dotnet test ConsoleForge.slnx -c Release --no-build
+
+      # docs.yml only runs on main, which is too late: a broken quickstart should
+      # fail the PR that introduces it, not the deploy after it merges.
+      - name: Check doc samples compile
+        run: python3 scripts/check-doc-samples.py

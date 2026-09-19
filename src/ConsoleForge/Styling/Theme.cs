@@ -165,6 +165,7 @@ public sealed record Theme
     /// <summary>Object-initializer constructor (required for <see cref="Default"/>).</summary>
     public Theme() { }
 
+    /// <summary>Identifies the theme. Carried for diagnostics; the renderer does not read it.</summary>
     public required string Name { get; init; }
 
     /// <summary>Default text style. All widgets inherit from this.</summary>

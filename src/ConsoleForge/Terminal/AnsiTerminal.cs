@@ -36,6 +36,7 @@ public sealed class AnsiTerminal : ITerminal
     /// <inheritdoc/>
     public int Height => Console.WindowHeight;
 
+    /// <inheritdoc/>
     public IObservable<InputEvent> Input => _inputSubject;
     /// <summary>Raised when the terminal window is resized (SIGWINCH on Unix).</summary>
     public event EventHandler<TerminalResizedEventArgs>? Resized;

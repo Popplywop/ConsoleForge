@@ -43,8 +43,8 @@ public sealed record ListItemSelectedMsg(int Index, object Item) : IMsg;
 
 /// <summary>
 /// Dispatched to change the active theme at runtime.
-/// <see cref="Program"/> intercepts this message and calls
-/// <see cref="Program.SetTheme"/> before forwarding to the model.
+/// <see cref="App"/> intercepts this message and calls
+/// <see cref="App.SetTheme"/> before forwarding to the model.
 /// The model should update any theme-tracking state in its own Update handler.
 /// </summary>
 public sealed record ThemeChangedMsg(Styling.Theme NewTheme) : IMsg;

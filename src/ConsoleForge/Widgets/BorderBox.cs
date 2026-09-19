@@ -24,10 +24,11 @@ public sealed record BorderBox : IWidget, ISingleBodyWidget, IMeasurable
     public IWidget? Body { get; init; }
     /// <summary>Visual style for the border and title. Defaults to <see cref="Borders.Normal"/>.</summary>
     public Style Style { get; init; } = Style.Default.Border(Borders.Normal);
+    /// <inheritdoc/>
     public SizeConstraint Width { get; init; } = SizeConstraint.Flex(1);
+    /// <inheritdoc/>
     public SizeConstraint Height { get; init; } = SizeConstraint.Flex(1);
 
-    /// <inheritdoc/>
     /// <inheritdoc/>
     /// <remarks>
     /// The body's desired size plus whatever <see cref="ISingleBodyWidget.ComputeBodyRegion"/>
@@ -60,6 +61,7 @@ public sealed record BorderBox : IWidget, ISingleBodyWidget, IMeasurable
             Math.Min(availableHeight, bodyH + insetH));
     }
 
+    /// <inheritdoc/>
     public void Render(IRenderContext ctx)
     {
         var effectiveStyle = Style.Inherit(ctx.Theme.BorderStyle);

@@ -6,7 +6,7 @@ An Elm-architecture TUI framework for .NET 8. Immutable model → pure update �
 **NuGet:** [ConsoleForge](https://www.nuget.org/packages/ConsoleForge) &nbsp;|
 **SourceGen:** [ConsoleForge.SourceGen](https://www.nuget.org/packages/ConsoleForge.SourceGen)
 
-Built for developers who want the predictability of [Bubble Tea](https://github.com/charmbracelet/bubbletea) in C#: no mutable widget state, no hidden side effects, and a render pipeline that only touches the cells that actually changed.
+Built for developers who want the predictability of Bubble Tea in C#: no mutable widget state, no hidden side effects, and a render pipeline that only touches the cells that actually changed.
 
 ## Features
 
@@ -32,11 +32,14 @@ Built for developers who want the predictability of [Bubble Tea](https://github.
 dotnet add package ConsoleForge
 ```
 
+<!-- doccheck: program -->
 ```csharp
 using ConsoleForge.Core;
 using ConsoleForge.Layout;
 using ConsoleForge.Styling;
 using ConsoleForge.Widgets;
+
+await App.Run(new HelloModel(), theme: Theme.Dark);
 
 sealed record HelloModel(int Count = 0) : IModel
 {
@@ -58,8 +61,6 @@ sealed record HelloModel(int Count = 0) : IModel
                     style: Style.Default.Faint(true)),
             ]));
 }
-
-await App.Run(new HelloModel(), theme: Theme.Dark);
 ```
 
 ## Widgets
@@ -232,7 +233,7 @@ Compose maps: `globalKeys.Merge(pageKeys)` — first map takes priority.
 
 ## IComponent — Sub-Programs
 
-Self-contained pages with own state, keybindings, and view. The [Bubble Tea](https://github.com/charmbracelet/bubbletea) `tea.Model`-per-page pattern:
+Self-contained pages with own state, keybindings, and view. The Bubble Tea `tea.Model`-per-page pattern:
 
 ```csharp
 // Pages/CounterPage.cs

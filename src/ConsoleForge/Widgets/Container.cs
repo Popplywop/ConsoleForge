@@ -34,12 +34,15 @@ public sealed record Container : IWidget, IContainer, IMeasurable
     }
 
     // ── IContainer ──────────────────────────────────────────────────────────
+    /// <summary>Axis children are stacked along.</summary>
     public Axis Direction { get; init; }
     /// <summary>Child widgets in declaration order.</summary>
     public IReadOnlyList<IWidget> Children { get; init; } = [];
 
     // ── IWidget ─────────────────────────────────────────────────────────────
+    /// <inheritdoc/>
     public SizeConstraint Width  { get; init; } = SizeConstraint.Flex(1);
+    /// <inheritdoc/>
     public SizeConstraint Height { get; init; } = SizeConstraint.Flex(1);
 
     // ── Container-specific ──────────────────────────────────────────────────
@@ -61,6 +64,8 @@ public sealed record Container : IWidget, IContainer, IMeasurable
     /// <see cref="ResolvedLayout"/> child regions, which are only valid when
     /// the container sits directly at the layout root (not inside a
     /// <see cref="BorderBox"/> or other non-<see cref="IContainer"/> wrapper).
+    /// </summary>
+
     /// <summary>
     /// Returns <see langword="true"/> for composite widgets whose render cost
     /// justifies cache lookup overhead. Leaf widgets (TextBlock, TextInput, etc.)
@@ -71,7 +76,6 @@ public sealed record Container : IWidget, IContainer, IMeasurable
     private static bool IsComposite(IWidget w) =>
         w is IContainer or ISingleBodyWidget or ILayeredContainer;
 
-        /// </summary>
     /// <inheritdoc cref="IMeasurable.Measure"/>
     /// <remarks>
     /// Children are summed along <see cref="Direction"/> and maxed across it, including
@@ -128,6 +132,7 @@ public sealed record Container : IWidget, IContainer, IMeasurable
             Math.Min(availableHeight, (horizontal ? cross : along) + padV));
     }
 
+    /// <inheritdoc/>
     public void Render(IRenderContext ctx)
     {
         var region = ctx.Region;

@@ -23,18 +23,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Doxygen 1.16.1
-        run: |
-          wget -q https://github.com/doxygen/doxygen/releases/download/Release_1_16_1/doxygen-1.16.1.linux.bin.tar.gz
-          tar -xzf doxygen-1.16.1.linux.bin.tar.gz
-          sudo mv doxygen-1.16.1/bin/doxygen /usr/local/bin/doxygen
-          doxygen --version
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Install DocFX
+        run: dotnet tool install -g docfx --version 2.78.5
+
+      - name: Check doc samples compile
+        run: python3 scripts/check-doc-samples.py
 
       - name: Generate docs
-        run: |
-          mkdir -p .doxygen-tmp
-          cp src/ConsoleForge.SourceGen/README.md .doxygen-tmp/sourcegen.md
-          doxygen Doxyfile
+        run: docfx docfx.json --warningsAsErrors
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
@@ -42,7 +43,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ./docs/html
+          path: ./_site
 
       - name: Deploy to GitHub Pages
         id: deploy

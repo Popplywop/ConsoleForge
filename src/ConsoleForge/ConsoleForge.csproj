@@ -5,6 +5,13 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
 
+    <!-- Ship the XML docs: gives consumers IDE tooltips, and makes the compiler
+         validate every cref so a rename cannot silently rot the docs again.
+         Nothing is suppressed, so CS1591/CS1573 hold AGENTS.md's rule that every
+         public member in src/ carries a doc comment: adding an undocumented one
+         warns at build. CI does not yet fail on it. -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+
     <!-- NuGet packaging -->
     <PackageId>ConsoleForge</PackageId>
     <Version>0.4.0</Version>

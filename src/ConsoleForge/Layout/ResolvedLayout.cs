@@ -9,6 +9,10 @@ public sealed class ResolvedLayout
 {
     private static readonly IEqualityComparer<IWidget> Identity = new WidgetIdentity();
 
+    /// <summary>
+    /// Create an empty layout. Widgets are keyed by reference identity, not by value,
+    /// so two equal records still occupy separate entries.
+    /// </summary>
     public ResolvedLayout() => Allocations = new Dictionary<IWidget, Region>(Identity);
 
     /// <summary>Map from each widget to its allocated absolute terminal region.</summary>

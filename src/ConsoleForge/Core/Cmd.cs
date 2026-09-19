@@ -98,6 +98,8 @@ public static class Cmd
     /// </para>
     /// </summary>
     /// <param name="key">Identifies the window. Dispatches sharing it supersede one another.</param>
+    /// <param name="interval">Quiet period that must elapse before <paramref name="fn"/> runs.</param>
+    /// <param name="fn">Builds the message to dispatch, given the time the window elapsed.</param>
     public static ICmd Debounce(string key, TimeSpan interval, Func<DateTimeOffset, IMsg> fn) =>
         () => Task.FromResult<IMsg>(new RateLimitDispatchMsg(key, interval, RateLimitMode.Debounce, fn));
 
@@ -113,6 +115,8 @@ public static class Cmd
     /// </para>
     /// </summary>
     /// <param name="key">Identifies the window. Dispatches sharing it share one rate limit.</param>
+    /// <param name="interval">Minimum time between runs of <paramref name="fn"/>.</param>
+    /// <param name="fn">Builds the message to dispatch, given the time of the leading edge.</param>
     public static ICmd Throttle(string key, TimeSpan interval, Func<DateTimeOffset, IMsg> fn) =>
         () => Task.FromResult<IMsg>(new RateLimitDispatchMsg(key, interval, RateLimitMode.Throttle, fn));
 }

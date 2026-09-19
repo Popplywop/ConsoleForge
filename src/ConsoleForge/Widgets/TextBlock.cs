@@ -23,7 +23,9 @@ public sealed record TextBlock : IWidget, IMeasurable
     public string Text { get; init; } = "";
     /// <summary>Visual style applied to the rendered text. Inherits <see cref="Theme.BaseStyle"/> when no properties are set.</summary>
     public Style Style { get; init; } = Style.Default;
+    /// <inheritdoc/>
     public SizeConstraint Width { get; init; } = SizeConstraint.Auto;
+    /// <inheritdoc/>
     public SizeConstraint Height { get; init; } = SizeConstraint.Auto;
 
     /// <inheritdoc/>

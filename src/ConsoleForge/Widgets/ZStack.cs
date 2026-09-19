@@ -29,7 +29,9 @@ namespace ConsoleForge.Widgets;
 public sealed record ZStack : IWidget, ILayeredContainer, IMeasurable
 {
     // ── IWidget ─────────────────────────────────────────────────────────────
+    /// <inheritdoc/>
     public SizeConstraint Width  { get; init; } = SizeConstraint.Flex(1);
+    /// <inheritdoc/>
     public SizeConstraint Height { get; init; } = SizeConstraint.Flex(1);
     /// <summary>Visual style for the stack. Not rendered directly — ZStack has no visual output of its own.</summary>
     public Style Style { get; init; } = Style.Default;

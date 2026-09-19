@@ -5,7 +5,7 @@ namespace ConsoleForge.Core;
 /// <summary>
 /// A self-contained sub-program: owns its own state, update logic, and view.
 /// Implements <see cref="IModel"/> so it can be run standalone via
-/// <see cref="Program.Run"/> or embedded inside a parent model.
+/// <see cref="App.Run"/> or embedded inside a parent model.
 /// <para>
 /// Use <see cref="IComponent{TResult}"/> when the component needs to signal
 /// completion and return a typed result to its parent.

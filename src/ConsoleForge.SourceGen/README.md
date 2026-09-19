@@ -1,4 +1,4 @@
-# ConsoleForge.SourceGen {#sourcegen}
+# ConsoleForge.SourceGen
 
 Roslyn source generator for [ConsoleForge](https://github.com/Popplywop/ConsoleForge). Eliminates `Update(IMsg)` dispatch boilerplate from your models and components.
 

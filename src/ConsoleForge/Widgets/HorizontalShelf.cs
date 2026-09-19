@@ -37,7 +37,9 @@ namespace ConsoleForge.Widgets;
 public sealed record HorizontalShelf : IWidget, IMeasurable
 {
     // ── IWidget ─────────────────────────────────────────────────────────────
+    /// <inheritdoc/>
     public SizeConstraint Width  { get; init; } = SizeConstraint.Flex(1);
+    /// <inheritdoc/>
     public SizeConstraint Height { get; init; } = SizeConstraint.Auto;
 
     /// <summary>Visual style for the shelf. Inherits the theme's base style when unset.</summary>

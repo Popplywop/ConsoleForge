@@ -34,10 +34,18 @@ public sealed class App
     /// <param name="model">Initial model. <c>Init()</c> is called before the loop starts.</param>
     /// <param name="terminal">
     /// Optional terminal override. If null, a new <see cref="AnsiTerminal"/> is created.
-    /// Pass a <see cref="ConsoleForge.Testing.VirtualTerminal"/> for testing.
+    /// Pass a <c>VirtualTerminal</c> (from the test assembly) for testing.
     /// </param>
     /// <param name="theme">Theme to use. Defaults to <see cref="Theme.Default"/>.</param>
     /// <param name="targetFps">Target frames per second (1–60). Default 30.</param>
+    /// <param name="enableMouse">
+    /// Enable terminal mouse tracking. Off by default: it is not universally supported,
+    /// and while enabled the terminal's own selection and copy are taken over.
+    /// </param>
+    /// <param name="timeProvider">
+    /// Clock backing ticks and rate limits. Defaults to <see cref="TimeProvider.System"/>;
+    /// pass a fake to drive time deterministically in tests.
+    /// </param>
     public static Task Run(
         IModel model,
         ITerminal? terminal = null,

@@ -20,6 +20,7 @@ public sealed class SubRenderContext : IRenderContext
     /// <inheritdoc/>
     public ResolvedLayout Layout => _parent.Layout;
 
+    /// <inheritdoc/>
     public CursorDescriptor? Cursor => _parent.Cursor;
 
     /// <summary>
@@ -48,6 +49,7 @@ public sealed class SubRenderContext : IRenderContext
     public void RegisterWidget(IWidget widget, Region region) =>
         _parent.RegisterWidget(widget, region);
 
+    /// <inheritdoc/>
     public void SetCursorDescriptor(CursorDescriptor cursor)
         => _parent.SetCursorDescriptor(cursor);
 

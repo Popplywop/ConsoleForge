@@ -40,6 +40,6 @@ Thumbs.db
 .env
 .env.*
 
-# Doxygen generated output (built by CI, served via gh-pages)
-docs/
-.doxygen-tmp/
+# DocFX generated output (built by CI, served via gh-pages)
+_site/
+api/

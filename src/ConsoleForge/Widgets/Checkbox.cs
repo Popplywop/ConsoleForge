@@ -20,7 +20,9 @@ public sealed record Checkbox : IFocusable
     public string? FocusKey { get; init; }
 
     // ── IWidget ─────────────────────────────────────────────────────────────
+    /// <inheritdoc/>
     public SizeConstraint Width { get; init; } = SizeConstraint.Flex(1);
+    /// <inheritdoc/>
     public SizeConstraint Height { get; init; } = SizeConstraint.Fixed(1);
 
     // ── Checkbox-specific ────────────────────────────────────────────────────
@@ -92,6 +94,7 @@ public sealed record Checkbox : IFocusable
         }
     }
 
+    /// <inheritdoc/>
     public (IFocusable Next, ICmd? Cmd) Update(KeyMsg key)
     {
         if (key.Key is ConsoleKey.Spacebar or ConsoleKey.Enter)

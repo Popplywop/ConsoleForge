@@ -3,8 +3,15 @@ namespace ConsoleForge.Styling;
 /// <summary>Terminal color capability level.</summary>
 public enum ColorProfile
 {
-    NoColor   = 0,  // no color support
-    Ansi      = 1,  // 16 colors
-    Ansi256   = 2,  // 256-color palette
-    TrueColor = 3   // 24-bit RGB
+    /// <summary>No colour support. Styles render as plain text.</summary>
+    NoColor   = 0,
+
+    /// <summary>The 16 standard ANSI colours.</summary>
+    Ansi      = 1,
+
+    /// <summary>The 256-colour indexed palette.</summary>
+    Ansi256   = 2,
+
+    /// <summary>24-bit RGB.</summary>
+    TrueColor = 3
 }
