@@ -135,6 +135,75 @@ public class ImageMotionTests
         Assert.Matches(@"\x1b_Ga=d,d=i,i=\d+,p=\d+", second);
     }
 
+    // ── Still images under tmux: Refresh ──────────────────────────────────────
+    // The one branch where a stationary image costs anything. tmux's re-render cycles move
+    // the outer terminal's cursor between frames, so a placement left alone drifts; the
+    // renewal answers that. Its unconditional version was 0.4.0's flicker bug, so both
+    // halves are pinned: it happens in tmux, it does not happen outside, and it replaces
+    // the placement rather than stacking another.
+
+    [Fact]
+    public void StationaryImage_InTmux_IsRenewedEveryFrame()
+    {
+        var png = Png(1);
+        var (_, second) = TwoFrames(Row([png], 0, KittyInTmux), Row([png], 0, KittyInTmux));
+
+        Assert.Equal(0, Uploads(second));
+        Assert.Equal(1, Placements(second));
+        Assert.Contains("\x1bPtmux;", second);
+    }
+
+    [Fact]
+    public void StationaryImage_OutsideTmux_IsNotRenewed()
+    {
+        var png = Png(1);
+        var (_, second) = TwoFrames(Row([png], 0), Row([png], 0));
+
+        Assert.Equal(0, Placements(second));
+        Assert.DoesNotContain("\x1b_G", second);
+    }
+
+    [Fact]
+    public void TmuxRenewal_ReplacesThePlacement_InsteadOfStackingOne()
+    {
+        // Same placement id as the frame that first placed it, and no delete in between:
+        // the renewal overwrites the placement in place. A fresh id, or none, would add a
+        // copy per frame.
+        var png = Png(1);
+        var (first, second) = TwoFrames(Row([png], 0, KittyInTmux), Row([png], 0, KittyInTmux));
+
+        string PlacementIdOf(string frame) =>
+            System.Text.RegularExpressions.Regex.Match(frame, @"_Ga=p,i=\d+,p=(\d+),").Groups[1].Value;
+
+        Assert.NotEqual("", PlacementIdOf(first));
+        Assert.Equal(PlacementIdOf(first), PlacementIdOf(second));
+        Assert.DoesNotContain("_Ga=d,", second);
+    }
+
+    [Fact]
+    public void StationaryShelf_InTmux_RenewsEachImageOnce_PerFrame()
+    {
+        byte[] a = Png(1), b = Png(2), c = Png(3);
+
+        var region = new Region(0, 0, Width, Height);
+        var ctx = new RenderContext(
+            region, Theme.Dark, ColorProfile.TrueColor,
+            LayoutEngine.Resolve(Row([a, b, c], 0, KittyInTmux), Width, Height));
+
+        for (int frameNo = 0; frameNo < 4; frameNo++)
+        {
+            var frame = Row([a, b, c], 0, KittyInTmux);
+            ctx.Reset(region, Theme.Dark, ColorProfile.TrueColor, LayoutEngine.Resolve(frame, Width, Height));
+            frame.Render(ctx);
+            string emitted = ctx.ToAnsiFrame();
+
+            if (frameNo == 0) continue;
+            Assert.Equal(0, Uploads(emitted));
+            Assert.Equal(3, Placements(emitted));
+            Assert.DoesNotContain("_Ga=d,", emitted);
+        }
+    }
+
     // ── Motion: the shelf case ────────────────────────────────────────────────
 
     [Fact]
