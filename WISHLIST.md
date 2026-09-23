@@ -26,6 +26,106 @@ reused or renumbered.
 **Every item is resolved** — see the Fixed table. **Done when:** `CHANGELOG.md` has its
 `[Unreleased]` section promoted to `0.4.0`, and the tag is pushed.
 
+## 0.4.1
+
+Found by running PlexTui against a real Plex server on 0.4.0. All three are in the pixel
+path, which 0.4.0 changed more than any other — and which nothing benchmarks, so what its
+frames actually cost has never been measured, only reasoned about.
+
+### 10. A Kitty image uploads at the moment it is meant to appear
+
+`ImageWidget.RenderKitty` builds a payload and hands it to `WriteRawEscape`.
+`RenderContext` sees a payload it did not hold last frame and calls `Encode`, which
+transmits the image (`a=t`) **and** places it (`a=p`). Transmission therefore happens on
+the one frame where its latency is visible: the frame the image is supposed to appear.
+
+Cells under a raw region are never painted — `ToAnsiFrame` skips the `RawRegionSpacer`
+sentinel outright — so whatever was on screen stays until the placement lands. Outside a
+multiplexer that is invisible: the cell diff and the APC go out in one `Flush` and the
+terminal processes both in a single pass. Inside tmux the APC is DCS-wrapped with every
+ESC doubled, tmux parses it, strips it, forwards it, and repaints its own screen on its
+own cycle — so the image reaches the outer terminal after the cells around it do, and
+`HorizontalShelf`'s `░` placeholder is visible for the gap. PlexTui shows this on every
+poster of its home screen, in tmux and not outside it.
+
+Kitty separates transmit from place precisely so this is avoidable. The framework cannot
+use the separation, because `RenderContext` only learns a payload exists when a widget
+calls `WriteRawEscape` during `Render` — and `Render` is the frame that needs it already
+uploaded.
+
+**Proposal:** a way to hand the framework a payload before its first appearance, so the
+upload can happen when the bytes arrive and first draw costs one `a=p`.
+`IRawEscapePayload` already separates `Encode` / `Place` / `Refresh`; this adds the case
+"the terminal holds it but has never placed it". The application already knows the moment
+— PlexTui has it in `OnThumbnailLoaded`.
+
+Worth pricing honestly against doing nothing: the gap is tens of milliseconds, only under
+a multiplexer, and the placeholder it exposes is doing its job.
+
+### 11. The pixel path has no benchmarks, and `Refresh` has no test
+
+Tests are in better shape than the benchmarks. `tests/ConsoleForge.Tests` already carries
+`Rendering/ImageMotionTests.cs` (stationary uploads once, moved is re-placed and not
+re-uploaded, placement ids are per-region, delete targets one placement, a scrolling row
+uploads each image once then only re-places, an image scrolled off is deleted),
+`Layout/RawEscapeTests.cs` (sentinel cells are not emitted as text, same hash and region
+is not re-emitted, a changed hash is, cleanup fires on absence, cursor-move precedes the
+sequence), plus `Widgets/ImageWidgetTests.cs`, `Widgets/HorizontalShelfTests.cs` and
+`Rendering/ImageTeardownTests.cs`. Each of 0.4.0's image fixes has a regression test.
+
+Two real gaps remain.
+
+**`Refresh` is untested.** Of the motion tests only `MovedImage_IsRePlaced_InTmuxToo`
+constructs `KittyInTmux`; every other one uses `KittyNoTmux`, where `Refresh` returns null
+by design. So the branch that re-places a *stationary* image on every frame inside tmux —
+the one renewing against tmux's cursor drift, and the one whose unconditional version was
+0.4.0's flicker bug — has no test asserting it does renew. It is also the branch item 10
+would change, which is the worst moment to be without one.
+
+**Nothing in the pixel path is benchmarked.** `tests/ConsoleForge.Benchmarks` holds
+`RenderBenchmarks`, `FramePathBenchmarks`, `MeasureBenchmarks`, `NewWidgetRenderBenchmarks`,
+`WidgetCacheBenchmarks` and the two `Cmd` suites; none mentions `ImageWidget`,
+`HorizontalShelf`, `KittyProtocol` or `RgbaImageData`. `AGENTS.md`'s performance policy is
+written around `IWidget.Render`, so the widgets emitting by far the largest payloads are the
+ones it never measured. Wanted:
+
+- A shelf of N images across the three frame kinds: steady state with nothing moved (near
+  zero payload bytes outside tmux, N placements inside it), the scrolling frame where every
+  image moved (one `a=p` each, never a re-upload), and the frame where exactly one image is
+  new. The first two differing by protocol *and* by multiplexer is the point.
+- `KittyProtocol.GetEncoded`. That `ConditionalWeakTable` is load-bearing — it is what keeps
+  base64 of a whole image off the per-frame path — and nothing proves it still hits.
+- `ImageWidget.RenderHalfBlock`, which is a per-cell loop with two `GetPixel` calls and a
+  `Style` construction per cell, and is the fallback every non-Kitty terminal takes.
+
+### 12. `f=100` declares PNG for whatever bytes it is handed
+
+`KittyPayload.Encode` writes `a=t,f=100`, and `100` means PNG. Nothing checks that the
+bytes are one. PlexTui feeds it Plex artwork, which is JPEG (`ff d8 ff e0`), and it draws
+correctly — because WezTerm sniffs the content rather than trusting the declaration. That
+is a terminal being lenient, not a contract being met.
+
+The protocol offers no JPEG: `f` takes 24 (RGB), 32 (RGBA) or 100 (PNG), so "send the
+right format code" is not on the table. Either reject what cannot be honoured, or give
+callers a path for pixels they decoded themselves.
+
+**Proposal, smallest first:**
+
+- Check the magic bytes where the payload is built and fail loudly, instead of emitting a
+  declaration the data contradicts. `ImageWidget.PngData` is already named for the
+  contract; it is simply not enforced.
+- Let the Kitty path accept `RgbaImageData` as `f=32`. `ImageWidget` already carries
+  `RgbaData` for half-blocks, so this is a branch in `ResolveMode`, and it lets an
+  application decode whatever it has and hand over pixels.
+
+Decoding JPEG inside the framework is the option to avoid — it buys one format and puts an
+image-codec dependency on every consumer, against a runtime dependency list that is
+currently System.Reactive and nothing else.
+
+Note for a consumer meanwhile: Plex returns a real PNG for `&format=png`, at about 5.6x
+the bytes of its JPEG — 77 KB against 13.7 KB for one 160x240 poster — so "ask the server
+for the format you declared" is a real choice with a real price.
+
 ## Later
 
 Additive, so deferring costs no one a migration.
