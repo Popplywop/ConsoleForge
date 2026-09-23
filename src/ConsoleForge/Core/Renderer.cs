@@ -83,6 +83,18 @@ internal sealed class Renderer
     public string? BuildRawCleanup() => _ctx?.BuildRawCleanup();
 
     /// <summary>
+    /// Transmit <paramref name="payload"/> to <paramref name="terminal"/> ahead of its first
+    /// appearance — see <see cref="RenderContext.Preload"/>. A no-op before the first frame,
+    /// when there is no context yet to record what the terminal holds.
+    /// </summary>
+    public void Preload(IRawEscapePayload payload, ITerminal terminal)
+    {
+        if (_ctx?.Preload(payload) is not { } sequences) return;
+        terminal.Write(sequences);
+        terminal.Flush();
+    }
+
+    /// <summary>
     /// Render only if dirty. Returns true if a frame was produced and flushed.
     /// If clean (model/theme/size unchanged), skips View()+Render() entirely — zero alloc.
     /// </summary>

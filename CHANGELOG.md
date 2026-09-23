@@ -7,6 +7,32 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 While the major version is 0, breaking changes ship in minor releases and are
 marked **Breaking**.
 
+## [Unreleased]
+
+### Added
+
+- `Cmd.Preload(IRawEscapePayload)` — transmit a payload to the terminal when its bytes
+  arrive rather than on the frame it first appears in, which then costs one placement.
+  Under tmux the upload used to reach the outer terminal after the cells drawn around it,
+  so a shelf's placeholder showed for the gap. Best-effort and opt-in: nothing is sent for
+  a payload already on screen or already preloaded, or before the first frame, and the
+  image is then encoded in full on first appearance exactly as before.
+- `IRawEscapePayload.Transmit` — the region-independent upload step, for `Cmd.Preload`.
+  Defaults to null (no separate step), so existing implementations are unaffected.
+  `KittyPayload` implements it as its `a=t` chunks; `Encode` is now `Transmit` + `a=p`,
+  byte-identical to before.
+- Benchmarks for the pixel path: `PixelShelfBenchmarks` (a Kitty shelf across steady,
+  scrolling and one-new frames, in and out of tmux, through `Renderer`),
+  `PixelEncodeBenchmarks` (`KittyProtocol` encoding cache hit against the work it avoids)
+  and `PixelHalfBlockBenchmarks` (the half-block fallback). Run them with
+  `./bench.sh -f '*Pixel*'`.
+
+### Fixed
+
+- `IRawEscapePayload.Refresh` — the tmux renewal of a stationary image — had no test. It
+  is now pinned in both directions: renewed once per frame inside tmux with the same
+  placement id and no delete, and not renewed at all outside it.
+
 ## [0.4.0]
 
 ### Added

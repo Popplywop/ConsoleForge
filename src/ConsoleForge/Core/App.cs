@@ -343,7 +343,19 @@ public sealed class App
         {
             case BatchDispatchMsg bd: foreach (var c in bd.Cmds) DispatchCmd(c); return true;
             case RateLimitDispatchMsg rl: HandleRateLimit(rl); return true;
+            case PreloadMsg p: HandlePreload(p); return true;
             default: return false;
+        }
+    }
+
+    private void HandlePreload(PreloadMsg p)
+    {
+        // Under the render lock: the upload must not interleave with a frame being
+        // written, and the frame state it updates is the renderer's.
+        lock (_renderLock)
+        {
+            if (_terminal is null || _quitting) return;
+            _renderer.Preload(p.Payload, _terminal);
         }
     }
 
@@ -368,6 +380,15 @@ public sealed class App
 
         if (task.IsCompletedSuccessfully)
         {
+            // A preload is sent here rather than queued. ProcessMsg marks the model dirty
+            // only after dispatching its cmd, so doing it now puts the upload ahead of any
+            // frame — the render timer's included — that could show the new model.
+            if (task.Result is PreloadMsg preload)
+            {
+                HandlePreload(preload);
+                return;
+            }
+
             _channel.Writer.TryWrite(task.Result);
             return;
         }

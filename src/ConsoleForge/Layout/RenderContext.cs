@@ -43,6 +43,13 @@ public sealed class RenderContext : IRenderContext
     private List<RawEntry>? _rawRegions;     // current frame
     private List<RawEntry>? _prevRawRegions; // previous frame (cleanup + hash-skip)
 
+    // Hashes of payloads transmitted by Preload and not yet placed: the terminal holds
+    // their content, so their first appearance costs Place, not Encode. An entry is
+    // consumed by that first appearance; from then on the frame-to-frame tracking above
+    // takes over. Dropped on resize, with everything else the terminal is assumed to
+    // hold — the cost of being wrong is one re-upload.
+    private HashSet<int>? _held;
+
     // Widget render cache: flat arrays for widget→region map from previous frame.
     // Used by Container.Render to skip re-rendering unchanged model-stored widgets.
     // Flat arrays are cheaper than Dictionary for typical widget counts (<100).
@@ -114,6 +121,7 @@ public sealed class RenderContext : IRenderContext
             // Force raw regions to re-emit after resize — placed images are
             // cleared by the terminal when the viewport changes.
             _prevRawRegions = null;
+            _held           = null;
         }
         else
         {
@@ -444,7 +452,8 @@ public sealed class RenderContext : IRenderContext
         // 2. Emit current raw regions. Matching on payload identity rather than on region
         //    is what makes motion affordable: a scrolling row changes every region every
         //    frame, and re-uploading each image per frame costs the whole payload again.
-        //    - Not present last frame    → full Encode() (upload + place).
+        //    - Not present last frame    → full Encode() (upload + place), unless it was
+        //      preloaded: the terminal holds it already, so Place() as for a move.
         //    - Present, at a new region  → Place(): step 1 already deleted the placement at
         //      the old region, so this one is mandatory — skipping it leaves nothing on
         //      screen — but it must not re-upload.
@@ -454,7 +463,8 @@ public sealed class RenderContext : IRenderContext
         {
             foreach (var entry in _rawRegions)
             {
-                bool alreadyUploaded = WasRawPayloadPresentLastFrame(entry);
+                bool alreadyUploaded = WasRawPayloadPresentLastFrame(entry)
+                                    || _held?.Contains(entry.Hash) == true;
 
                 // Cursor-move to region top-left (used by both paths below).
                 // For DCS-passthrough payloads (Kitty/tmux) the payload
@@ -494,6 +504,12 @@ public sealed class RenderContext : IRenderContext
             }
         }
 
+        // A preloaded payload that appeared this frame is on screen now; the entry above
+        // served every copy of it, and the frame-to-frame tracking covers it from here.
+        if (_held is { Count: > 0 } && _rawRegions is not null)
+            foreach (var entry in _rawRegions)
+                _held.Remove(entry.Hash);
+
         // Swap buffers: current → previous; old previous → current (reused, cleared by Reset next frame)
         var oldPrev = _prev;
         _prev       = _cells;
@@ -519,6 +535,35 @@ public sealed class RenderContext : IRenderContext
     {
         (_rawRegions ??= new()).Add(new RawEntry(region, payload, payload.ContentHash));
         SentinelFillRegion(region);
+    }
+
+    /// <summary>
+    /// Sequences that transmit <paramref name="payload"/> to the terminal ahead of its
+    /// first appearance, or null when there is nothing to send. Call between frames.
+    /// </summary>
+    /// <remarks>
+    /// Returns null when the payload is on screen already, was already preloaded, or has
+    /// no transmit step (<see cref="IRawEscapePayload.Transmit"/> returned null). Otherwise
+    /// the payload is recorded as held, and the frame it first appears in places it
+    /// instead of encoding it — which is the point: the upload goes out when the bytes
+    /// arrive, not on the frame where its latency is visible.
+    /// </remarks>
+    public string? Preload(IRawEscapePayload payload)
+    {
+        int hash = payload.ContentHash;
+
+        // Between frames _rawRegions holds the frame on screen.
+        if (_rawRegions is not null)
+            foreach (var entry in _rawRegions)
+                if (entry.Hash == hash) return null;
+
+        if (_held?.Contains(hash) == true) return null;
+
+        var sequences = payload.Transmit(ColorProfile);
+        if (sequences is null) return null;
+
+        (_held ??= new()).Add(hash);
+        return string.Concat(sequences);
     }
 
     // ── Raw region helpers ───────────────────────────────────────────────────────

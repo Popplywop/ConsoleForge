@@ -54,6 +54,8 @@ last_updated: 2026-09-22
 ## Raw escape payloads (images)
 - A widget emits pixel graphics by passing an `IRawEscapePayload` to `IRenderContext.WriteRawEscape`; it bypasses the cell buffer. `ImageWidget` + `RgbaImageData` use `KittyProtocol` where supported and fall back to half-block cells with 24-bit colour elsewhere.
 - Payloads are tracked across frames by `ContentHash`, not region. A hash seen last frame is re-positioned via [`Place()`](mex://method:e0bb5b7e46383cb1827217f3f6982d61) (defaults to `Encode`) instead of re-uploaded; a new hash is sent through `Encode`. Change the hash when content changes. `Renderer.BuildRawCleanup` deletes placed graphics on exit.
+- `Cmd.Preload(payload)` uploads ahead of first appearance via `IRawEscapePayload.Transmit` (default null = no separate step). `RenderContext` keeps a held-hash set: first appearance of a held hash goes through `Place()`, the entry is then consumed; dropped on resize. `App.DispatchCmd` handles a sync `PreloadMsg` immediately so the upload beats the frame.
+- Pixel-path benchmarks: `./bench.sh -f '*Pixel*'` (shelf frame kinds in/out of tmux, Kitty encode cache, half-block).
 - Inside tmux, escapes need DCS passthrough and placements are renewed per frame; `TerminalCapabilities.InsideTmux` decides this and `Detect()` fills it from `TMUX`/`TERM`.
 
 ## Text width

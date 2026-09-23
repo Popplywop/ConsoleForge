@@ -32,6 +32,7 @@ pass it down to anything that accepts one.
 | `Cmd.Tick(interval, fn)` | Fires `fn` once, after `interval`. |
 | `Cmd.Debounce(key, interval, fn)` | Fires only after `interval` of quiet, per `key`. |
 | `Cmd.Throttle(key, interval, fn)` | Fires at most once per `interval`, per `key`. |
+| `Cmd.Preload(payload)` | Uploads an image to the terminal now, so its first frame only places it. Produces no message. |
 
 `Cmd.None` is `null` — returning no command is just returning `null`.
 

@@ -50,6 +50,34 @@ public static class Cmd
     }
 
     /// <summary>
+    /// Send a raw-escape payload's content to the terminal now, ahead of the frame it
+    /// first appears in, so that frame only has to place it.
+    /// <para>
+    /// For pixel graphics whose upload latency would otherwise land on the frame the image
+    /// is meant to appear — visible under tmux, which forwards a large upload after the
+    /// cells around it. Issue it from the <c>Update</c> that receives the bytes:
+    /// <code>
+    /// var cmd = caps.SupportsKittyGraphics
+    ///     ? Cmd.Preload(KittyProtocol.CreatePayload(png, caps))
+    ///     : Cmd.None;
+    /// </code>
+    /// The payload must have the same <see cref="Layout.IRawEscapePayload.ContentHash"/> as
+    /// the one the widget will draw; for Kitty that means the same bytes and capabilities
+    /// as the <see cref="Widgets.ImageWidget"/> gets.
+    /// </para>
+    /// <para>
+    /// Best-effort, and never needed for correctness. Nothing is sent when the payload is
+    /// on screen already, was preloaded already, has no transmit step
+    /// (<see cref="Layout.IRawEscapePayload.Transmit"/> returns null), or no frame has been
+    /// drawn yet; the image is then encoded in full when it first appears, as it would be
+    /// without this. Produces no message.
+    /// </para>
+    /// </summary>
+    /// <param name="payload">The payload a widget will later pass to <c>WriteRawEscape</c>.</param>
+    public static ICmd Preload(Layout.IRawEscapePayload payload) =>
+        () => Task.FromResult<IMsg>(new PreloadMsg(payload));
+
+    /// <summary>
     /// Run commands serially: each waits for the previous to complete.
     /// Null commands filtered out.
     /// </summary>

@@ -375,6 +375,7 @@ Cmd.Sequence(cmd1, cmd2, cmd3)                // run serially
 Cmd.Tick(TimeSpan, ts => new TickMsg(ts))     // delayed single fire
 Cmd.Debounce(key, TimeSpan, ts => msg)        // debounced by key (last wins)
 Cmd.Throttle(key, TimeSpan, ts => msg)        // throttled by key (first wins)
+Cmd.Preload(KittyProtocol.CreatePayload(png, caps)) // upload an image ahead of its first frame
 ```
 
 `Debounce` and `Throttle` are keyed because `Update` builds a new command on every

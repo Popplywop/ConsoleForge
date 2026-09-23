@@ -30,6 +30,10 @@ internal sealed record BatchMsg(IMsg[] Messages) : IMsg;
 /// as soon as its command completes (no barrier).</summary>
 internal sealed record BatchDispatchMsg(IReadOnlyList<ICmd> Cmds) : IMsg;
 
+/// <summary>Carries a <see cref="Cmd.Preload"/> request to the event loop, which owns
+/// the terminal and the frame state that records what it holds.</summary>
+internal sealed record PreloadMsg(Layout.IRawEscapePayload Payload) : IMsg;
+
 /// <summary>Internal: aggregates results from Cmd.Sequence serial execution.</summary>
 internal sealed record SequenceMsg(IMsg[] Messages) : IMsg;
 

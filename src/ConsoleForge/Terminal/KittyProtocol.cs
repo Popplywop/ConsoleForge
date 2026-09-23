@@ -166,13 +166,28 @@ public sealed class KittyPayload : IRawEscapePayload
     /// </remarks>
     public IEnumerable<string> Encode(Region region, ColorProfile profile)
     {
+        // Upload (a=t), then place (a=p). The cursor-move goes with the place command, not
+        // the upload: upload is cursor-independent, and emitting the move atomically with
+        // a=p guarantees the position even when tmux render cycles move the outer cursor
+        // between upload chunks. Outside tmux the cursor-move was already emitted by
+        // RenderContext.ToAnsiFrame immediately before this call.
+        foreach (var chunk in Transmit(profile))
+            yield return chunk;
+        yield return PlaceSequence(region);
+    }
+
+    /// <inheritdoc/>
+    /// <remarks>
+    /// The <c>a=t</c> upload, chunked to <see cref="KittyProtocol.MaxChunkBase64Chars"/>.
+    /// Transmit-only: nothing is displayed until a <c>a=p</c> names this image id. Inside
+    /// tmux each chunk is DCS-wrapped so <c>allow-passthrough</c> forwards it.
+    /// </remarks>
+    public IEnumerable<string> Transmit(ColorProfile profile)
+    {
         const int chunkSize = KittyProtocol.MaxChunkBase64Chars;
         int total  = _base64.Length;
         int chunks = Math.Max(1, (total + chunkSize - 1) / chunkSize);
 
-        // ── Step 1: upload chunks (a=t = transmit only, no display) ────────────────
-        // No cursor-move needed here — upload is cursor-independent.
-        // For tmux we still DCS-wrap so allow-passthrough forwards the data.
         for (int i = 0; i < chunks; i++)
         {
             int start   = i * chunkSize;
@@ -189,13 +204,6 @@ public sealed class KittyPayload : IRawEscapePayload
 
             yield return _insideTmux ? WrapForTmux(apc) : apc;
         }
-
-        // ── Step 2: place (a=p) — cursor-move collocated here, not in upload ──
-        // By emitting cursor-move atomically with the place command we guarantee
-        // correct position even when tmux render cycles move the outer cursor
-        // between upload chunks. For non-tmux the cursor-move was already emitted
-        // by RenderContext.ToAnsiFrame immediately before this call.
-        yield return PlaceSequence(region);
     }
 
     /// <summary>

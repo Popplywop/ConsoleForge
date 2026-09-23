@@ -42,6 +42,24 @@ public interface IRawEscapePayload
     IEnumerable<string> Encode(Region region, ColorProfile profile);
 
     /// <summary>
+    /// Optional: send this payload's content to the terminal without displaying it, so a
+    /// later first appearance costs <see cref="Place"/> rather than <see cref="Encode"/>.
+    /// Returning null — the default — means the protocol has no separate transmit step, and
+    /// the payload is encoded in full when it first appears, as before.
+    /// <para>
+    /// Called by <see cref="Core.Cmd.Preload"/>, outside any frame, so it takes no region:
+    /// what it emits must not depend on where the payload will be drawn, nor on the cursor.
+    /// A payload that implements this must also override <see cref="Place"/>, since the
+    /// framework will rely on <see cref="Place"/> to show what was transmitted.
+    /// </para>
+    /// <para>
+    /// <b>Kitty:</b> the <c>a=t</c> upload chunks that <see cref="Encode"/> starts with.
+    /// </para>
+    /// </summary>
+    /// <param name="profile">Active terminal color profile — may influence encoding.</param>
+    IEnumerable<string>? Transmit(ColorProfile profile) => null;
+
+    /// <summary>
     /// Re-position content the terminal already holds, without re-transmitting it. Called
     /// when this payload was present last frame at a <em>different</em> region — the
     /// scrolling case.

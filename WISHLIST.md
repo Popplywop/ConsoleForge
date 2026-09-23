@@ -32,71 +32,7 @@ Found by running PlexTui against a real Plex server on 0.4.0. All three are in t
 path, which 0.4.0 changed more than any other — and which nothing benchmarks, so what its
 frames actually cost has never been measured, only reasoned about.
 
-### 10. A Kitty image uploads at the moment it is meant to appear
-
-`ImageWidget.RenderKitty` builds a payload and hands it to `WriteRawEscape`.
-`RenderContext` sees a payload it did not hold last frame and calls `Encode`, which
-transmits the image (`a=t`) **and** places it (`a=p`). Transmission therefore happens on
-the one frame where its latency is visible: the frame the image is supposed to appear.
-
-Cells under a raw region are never painted — `ToAnsiFrame` skips the `RawRegionSpacer`
-sentinel outright — so whatever was on screen stays until the placement lands. Outside a
-multiplexer that is invisible: the cell diff and the APC go out in one `Flush` and the
-terminal processes both in a single pass. Inside tmux the APC is DCS-wrapped with every
-ESC doubled, tmux parses it, strips it, forwards it, and repaints its own screen on its
-own cycle — so the image reaches the outer terminal after the cells around it do, and
-`HorizontalShelf`'s `░` placeholder is visible for the gap. PlexTui shows this on every
-poster of its home screen, in tmux and not outside it.
-
-Kitty separates transmit from place precisely so this is avoidable. The framework cannot
-use the separation, because `RenderContext` only learns a payload exists when a widget
-calls `WriteRawEscape` during `Render` — and `Render` is the frame that needs it already
-uploaded.
-
-**Proposal:** a way to hand the framework a payload before its first appearance, so the
-upload can happen when the bytes arrive and first draw costs one `a=p`.
-`IRawEscapePayload` already separates `Encode` / `Place` / `Refresh`; this adds the case
-"the terminal holds it but has never placed it". The application already knows the moment
-— PlexTui has it in `OnThumbnailLoaded`.
-
-Worth pricing honestly against doing nothing: the gap is tens of milliseconds, only under
-a multiplexer, and the placeholder it exposes is doing its job.
-
-### 11. The pixel path has no benchmarks, and `Refresh` has no test
-
-Tests are in better shape than the benchmarks. `tests/ConsoleForge.Tests` already carries
-`Rendering/ImageMotionTests.cs` (stationary uploads once, moved is re-placed and not
-re-uploaded, placement ids are per-region, delete targets one placement, a scrolling row
-uploads each image once then only re-places, an image scrolled off is deleted),
-`Layout/RawEscapeTests.cs` (sentinel cells are not emitted as text, same hash and region
-is not re-emitted, a changed hash is, cleanup fires on absence, cursor-move precedes the
-sequence), plus `Widgets/ImageWidgetTests.cs`, `Widgets/HorizontalShelfTests.cs` and
-`Rendering/ImageTeardownTests.cs`. Each of 0.4.0's image fixes has a regression test.
-
-Two real gaps remain.
-
-**`Refresh` is untested.** Of the motion tests only `MovedImage_IsRePlaced_InTmuxToo`
-constructs `KittyInTmux`; every other one uses `KittyNoTmux`, where `Refresh` returns null
-by design. So the branch that re-places a *stationary* image on every frame inside tmux —
-the one renewing against tmux's cursor drift, and the one whose unconditional version was
-0.4.0's flicker bug — has no test asserting it does renew. It is also the branch item 10
-would change, which is the worst moment to be without one.
-
-**Nothing in the pixel path is benchmarked.** `tests/ConsoleForge.Benchmarks` holds
-`RenderBenchmarks`, `FramePathBenchmarks`, `MeasureBenchmarks`, `NewWidgetRenderBenchmarks`,
-`WidgetCacheBenchmarks` and the two `Cmd` suites; none mentions `ImageWidget`,
-`HorizontalShelf`, `KittyProtocol` or `RgbaImageData`. `AGENTS.md`'s performance policy is
-written around `IWidget.Render`, so the widgets emitting by far the largest payloads are the
-ones it never measured. Wanted:
-
-- A shelf of N images across the three frame kinds: steady state with nothing moved (near
-  zero payload bytes outside tmux, N placements inside it), the scrolling frame where every
-  image moved (one `a=p` each, never a re-upload), and the frame where exactly one image is
-  new. The first two differing by protocol *and* by multiplexer is the point.
-- `KittyProtocol.GetEncoded`. That `ConditionalWeakTable` is load-bearing — it is what keeps
-  base64 of a whole image off the per-frame path — and nothing proves it still hits.
-- `ImageWidget.RenderHalfBlock`, which is a per-cell loop with two `GetPixel` calls and a
-  `Style` construction per cell, and is the fallback every non-Kitty terminal takes.
+Items 10 and 11 have landed — see the Fixed table. Item 12 remains.
 
 ### 12. `f=100` declares PNG for whatever bytes it is handed
 
@@ -217,3 +153,5 @@ What each gap turned out to be, and what shipped.
 | 0.4.0 | `Modal.ShowBackdrop` documented itself as "a dark overlay" that "replaces background content" — two readings at once, and everyone takes the first, which is a translucent tint. It is a paint-over: the backdrop fills the modal's entire region with spaces, so the cells beneath are erased, not dimmed. The region is the trap. `Modal` defaults both size constraints to flex and `ZStack` hands every layer the full region, so the fill is normally the whole terminal — a backdrop over a `ZStack` blanks the application behind the dialog, which is what "the application disappeared" was. Both widgets now say so, `ZStack` gaining the general form of it: layers composite by painting, not blending, so a layer that fills its region hides every layer under it. `BackdropStyle`'s "faint text" was wrong too — the fill writes spaces, so only its background colour is visible and the default's `Faint` is inert. Behaviour unchanged, and one characterisation test now pins the erasure, which the existing ZStack test set up and then never asserted. The `BackdropStyle` dim stays unimplemented: restyling cells already in the buffer is a read-modify-write the render context does not offer, since `Write` replaces content and style together — a `RenderContext` capability question, and a feature rather than a correction. |
 | 0.4.0 | `KeyPattern` could only name a `ConsoleKey`, so every printable binding silently assumed a US keyboard: `?` was `WithShift(Oem2)`, which is that glyph's position on that layout and nowhere else. `KeyMsg` already carried the character the terminal produced — layout applied by the OS long before the byte arrives — so the fix was to match on it. `KeyPattern.OfChar(char)` does, with `KeyMap.On(char, ...)` as the shorthand. Case-sensitive bindings (`n` vs `N`) fall out of the same ordinal comparison, and characters with no `ConsoleKey` mapping became bindable at all for the first time. Shift stays a wildcard, because it was already consumed producing the glyph and requiring it would restore the assumption being removed; Ctrl and Alt must be absent, since Ctrl+letter arrives as a control character and Alt+key is a separate binding that would otherwise match — the Alt path preserves `Character`. **Not additive, as the item claimed:** expressing "match the character, whatever key made it" meant `Key` became `ConsoleKey?`, so null is a wildcard as it already was for the modifiers. Construction is unchanged, but reading or deconstructing `.Key` now yields a nullable, and a pattern with no field set matches every key — a usable trailing catch-all, and a trap for a `default` struct reached by accident. The terminal layer needed nothing: printable keys never touch the escape parser, and the CSI/SS3 paths correctly report no character. |
 | 0.4.0 | `Cmd.Debounce` and `Cmd.Throttle` held their state in the closure the factory returned, so they rate-limited only across re-dispatches of one stored instance — and `Update`, which is where you decide to debounce, builds a fresh command every call. The documented usage silently did nothing. Storing an instance was no way out: the captured `fn` varies per item (a different poster URL per row), and a mutable closure in the model breaks immutability. Both now take a key, and the window belongs to that key in the event loop, so re-dispatch supersedes the pending one however many instances were built. The latest `fn` wins, which is what makes a per-item closure safe. Suppressed calls now emit nothing: they used to resolve to a `RedrawMsg` sentinel the model had to discard, which repainted once per suppressed call. Windows are linked to the shutdown token, so none outlives the program. PlexTui's generation-counter-plus-`Cmd.Tick` workaround was the shape of the missing feature. |
+| 0.4.1 | The pixel path was unmeasured and its tmux renewal untested (item 11). Only one motion test built `KittyInTmux`, so `Refresh` — the branch renewing a *stationary* image against tmux's cursor drift, whose unconditional version was 0.4.0's flicker bug — had nothing asserting it renews, or that it replaces rather than stacks. Four tests now pin it both ways: one `a=p` per image per frame in tmux, same placement id, no delete; nothing at all outside tmux. Each fails with `Refresh` returning null. Three benchmark classes cover what `AGENTS.md`'s policy never reached: `PixelShelfBenchmarks` (six Kitty posters through `Renderer`, steady / scrolling / one-new frames, in and out of tmux — Tier 2: 5.9 / 9.5 / 164 KB outside tmux, 10.2 / 13.6 / 245 KB inside), `PixelEncodeBenchmarks` (the `ConditionalWeakTable` hit: 24 ns / 40 B against 19.7 µs / 38 KB uncached for a 14 KB poster) and `PixelHalfBlockBenchmarks` (42 µs / 28 KB for an 18x9 card, 176 µs / 111 KB at 36x18). |
+| 0.4.1 | A Kitty image uploaded on the frame it was meant to appear in (item 10), so under tmux — which forwards a large DCS-wrapped upload after the cells around it — a shelf's `░` placeholder showed for the gap. `Cmd.Preload(payload)` transmits a payload when its bytes arrive, through the new `IRawEscapePayload.Transmit` (Kitty: the `a=t` chunks `Encode` already started with, now factored out); `RenderContext` records it as held, and its first appearance costs one `a=p`. The event loop sends a synchronously-completing preload straight from `DispatchCmd`, before `ProcessMsg` marks the model dirty, so the upload precedes any frame showing the new model — the render timer's included. Deliberately best-effort: nothing is sent for a payload already on screen or already held, a held entry is consumed by its first appearance and dropped on resize, and before the first frame it is a no-op — each case falling back to today's full `Encode`. Priced as the item asked: opt-in, costs an application one line in the `Update` that receives the bytes, and the frame path gains one `HashSet` lookup per new payload. The effect on the tmux gap itself was reasoned about, not measured against a real tmux. |
