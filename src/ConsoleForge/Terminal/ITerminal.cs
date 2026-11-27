@@ -69,6 +69,17 @@ public interface ITerminal : IDisposable
     /// <summary>Disable mouse tracking. No-op if not enabled.</summary>
     void DisableMouse();
 
+    // ── Paste ──────────────────────────────────────────────
+    /// <summary>
+    /// Enable bracketed paste: pasted text arrives as one <see cref="PasteInputEvent"/>
+    /// instead of a key event per character, so a pasted newline cannot press Enter.
+    /// The default does nothing, for terminals that cannot distinguish a paste.
+    /// </summary>
+    void EnableBracketedPaste() { }
+
+    /// <summary>Disable bracketed paste. The default does nothing.</summary>
+    void DisableBracketedPaste() { }
+
     // ── Input stream ─────────────────────────────────────────────────
     /// <summary>
     /// Observable stream of input events (keypresses, resize events).
@@ -94,6 +105,11 @@ public sealed record KeyInputEvent(KeyMsg Key) : InputEvent;
 public sealed record ResizeInputEvent(int Width, int Height) : InputEvent;
 /// <summary>Input event raised by a mouse action.</summary>
 public sealed record MouseInputEvent(MouseMsg Mouse) : InputEvent;
+/// <summary>
+/// Input event carrying text pasted while bracketed paste was enabled
+/// (see <see cref="ITerminal.EnableBracketedPaste"/>). Line breaks are normalised to <c>\n</c>.
+/// </summary>
+public sealed record PasteInputEvent(string Text) : InputEvent;
 
 /// <summary>
 /// Mouse tracking mode passed to <see cref="ITerminal.EnableMouse"/>.

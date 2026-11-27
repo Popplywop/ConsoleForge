@@ -68,21 +68,31 @@ public static class KittyProtocol
     /// </summary>
     public static KittyPayload CreatePayload(byte[] pngBytes, TerminalCapabilities? capabilities = null) => new(pngBytes, capabilities);
 
-    /// <summary>
-    /// Build a Kitty capability-query probe sequence.
-    /// Send this to the terminal before entering raw mode, then read the response
-    /// and pass it to <see cref="ParseDetectResponse"/>.
-    /// </summary>
-    public static string BuildDetectProbe()
-    {
-        const string Pixel1x1Png =
-            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";
-        return $"\x1b_Gi=31,s=1,v=1,a=q,t=d,f=32,q=1;{Pixel1x1Png}\x1b\\";
-    }
+    /// <summary>The image id <see cref="BuildDetectProbe"/> queries with, and its reply carries.</summary>
+    internal const uint ProbeImageId = 31;
 
-    /// <summary>Returns true if <paramref name="response"/> is a Kitty OK reply to the probe.</summary>
+    /// <summary>
+    /// Build a Kitty capability-query probe sequence: a query action (<c>a=q</c>) for a 1x1
+    /// RGB image, which a supporting terminal answers without storing or displaying it.
+    /// <para>
+    /// Send it followed by a primary device attributes request (<c>ESC [ c</c>), which every
+    /// terminal answers: a reply to the query that arrives before the attributes means the
+    /// protocol is supported, and attributes alone mean it is not — no timeout needed to
+    /// decide. <see cref="TerminalCapabilities.Detect()"/> does exactly this.
+    /// </para>
+    /// </summary>
+    public static string BuildDetectProbe() =>
+        // f=24 with s=1,v=1 is three bytes of pixel data: "AAAA" is their base64. No q key:
+        // the OK reply is the answer being asked for, so it must not be suppressed.
+        $"\x1b_Gi={ProbeImageId},s=1,v=1,a=q,t=d,f=24;AAAA\x1b\\";
+
+    /// <summary>
+    /// Returns true if <paramref name="response"/> contains a reply to the probe from
+    /// <see cref="BuildDetectProbe"/>. Any reply counts, error or <c>OK</c>: only a
+    /// terminal that implements the protocol answers a graphics command at all.
+    /// </summary>
     public static bool ParseDetectResponse(string response) =>
-        response.Contains("_Gi=31;OK") || response.Contains("_Gi=31;");
+        response.Contains($"_Gi={ProbeImageId};", StringComparison.Ordinal);
 }
 
 /// <summary>
@@ -199,8 +209,9 @@ public sealed class KittyPayload : IRawEscapePayload
             string apc = i == 0
                 // First chunk: f=100 (PNG), q=2 (suppress response), a=t (transmit only)
                 ? $"\x1b_Ga=t,f=100,i={_imageId},q=2,m={more};{data}\x1b\\"
-                // Continuation chunks: only m= and data
-                : $"\x1b_Gm={more};{data}\x1b\\";
+                // Continuation chunks: only m= and q= are allowed. q=2 here too, since a
+                // terminal may take quietness from the chunk it replies after — the last.
+                : $"\x1b_Gm={more},q=2;{data}\x1b\\";
 
             yield return _insideTmux ? WrapForTmux(apc) : apc;
         }
@@ -252,10 +263,15 @@ public sealed class KittyPayload : IRawEscapePayload
     /// image: the same artwork can legitimately be on screen twice — a show appearing in
     /// two shelves — and removing one must not blank the other. The image data itself stays
     /// in the terminal, so putting it back costs a placement rather than an upload.
+    /// <para>
+    /// <c>q=2</c>, like every other command here. Whether a terminal answers a delete
+    /// varies — Ghostty never answers a successful one — but any answer arrives on stdin,
+    /// once per moved or removed image, so the framework asks for none.
+    /// </para>
     /// </remarks>
     public string? Cleanup(Region region)
     {
-        string apc = $"\x1b_Ga=d,d=i,i={_imageId},p={PlacementId(region)}\x1b\\";
+        string apc = $"\x1b_Ga=d,d=i,i={_imageId},p={PlacementId(region)},q=2\x1b\\";
         return _insideTmux ? WrapForTmux(apc) : apc;
     }
 }

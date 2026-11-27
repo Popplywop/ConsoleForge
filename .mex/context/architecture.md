@@ -25,7 +25,7 @@ grounds_to:
   - node: method:f15e3fea0df2ea590eaf89969a744ebf
     fingerprint: mh:64:7b226d696e68617368223a5b33333830393232392c323737393737382c35373136343434392c34333030313533352c31303332343130332c3134353933393831312c363633363132322c31363137323133332c31303033373637352c32363732353039392c31373931303839362c333135343831372c35333237353337332c373238393137332c333534383631352c34393535323839362c35353736363634342c343931373939362c313739363232322c32363736383734342c34383138303736352c3131363135363934372c313830393030342c34353939323637362c33353934353230322c37313036373638312c323034383432372c32353739333139302c373038383238302c313634363838322c33393532303131302c393032323938382c333031303731342c33323639333630322c34333235323031372c33333939343430362c33323034373138352c32353030313332372c33393632313939382c3131353333383633372c32393734303930392c31303732353631392c34363737363635332c3138313936303338392c32353134353335302c343439393438302c32323031313436312c35313139333435372c36383035383334322c31383735373833302c343538343935362c33313534353734392c31383632323237342c34343337373932322c31333939393539332c33353036333337362c3130323336393631312c33333239313739342c3133323539373539362c32303132343137322c31373433353234322c313938343038352c35303736303330382c31313732363932355d2c226e65696768626f7273223a5b226d6574686f643a3135303261343031653037373933663737333034326431316133316335336233222c226d6574686f643a3933356238373561323762656465613137316463343530396533366465376337225d2c22746f6b656e436f756e74223a3231347d
     bodyHash: 98cecbfaeda1434df92e31b8209ae0409d9e3d79e4689fe382273772295169dd
-last_updated: 2026-09-22
+last_updated: 2026-11-26
 mex:
   id: mx_01M363AX3KJ8JPXRY5W6Z49DY8
   type: architecture
@@ -74,7 +74,8 @@ revision: 1
 - **`KeyMap` / `KeyPattern`** (`Core/`) — declarative key/mouse bindings mapping input to app messages; `[DispatchUpdate]` models with a static `Keys` KeyMap get it wired automatically.
 - **`FocusManager`** (`Core/FocusManager.cs`) — static helpers over `FocusKey`s (collect, next/prev, hit-test). Focus itself is model state, not framework state.
 - **`ConsoleForge.SourceGen`** — `DispatchUpdateGenerator` and `ComponentGenerator` emit `Update(IMsg)` switches, `Init()` and `IComponent<T>.Result` for `partial` types.
-- **Terminal layer** (`Terminal/`) — `AnsiTerminal` (+ `Termios` on Unix, `WindowsConsole`), `TerminalCapabilities.Detect()`, `KittyProtocol`.
+- **Terminal layer** (`Terminal/`) — `AnsiTerminal` (+ `Termios` on Unix, `WindowsConsole`), `TerminalCapabilities.Detect()` (asks the terminal via `TerminalProbe`; `FromEnvironment()` is the env-only fallback), `KittyProtocol`.
+- **Input** — `StdinReader` reads raw characters (Unix `poll`/`read`; Windows `ReadConsoleInputW` with VT input) and the pure `InputDecoder` turns them into `InputEvent`s: keys (legacy, xterm modifiers, Kitty keyboard `CSI u`), SGR/X10 mouse, bracketed paste, and terminal replies (`KittyGraphicsReplyEvent`, `DeviceAttributesEvent`) that `AnsiTerminal` keeps off `Input`. Time enters only through `PendingTimeoutMs` + `Flush`, so decoding is tested with strings. Never read input through `Console.ReadKey`/`Console.In`: they keep their own buffers and would race the reader.
 
 <!-- mex:entity
 id: mx_01M363AX16S0SY2TEPWSDND05N

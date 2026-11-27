@@ -27,8 +27,79 @@ marked **Breaking**.
   and `PixelHalfBlockBenchmarks` (the half-block fallback). Run them with
   `./bench.sh -f '*Pixel*'`.
 
+- Bracketed paste: `App.Run(…, enableBracketedPaste: true)` delivers a paste as one
+  `PasteMsg(Text)` instead of a `KeyMsg` per character, so a pasted line break cannot press
+  Enter. Line breaks are normalised to `\n`. Opt-in, since the model must handle
+  `PasteMsg` for pasting to keep working. `ITerminal` gains `EnableBracketedPaste` /
+  `DisableBracketedPaste` as default no-op members, so other implementations are
+  unaffected; `PasteInputEvent` carries the text from the terminal.
+- Kitty keyboard protocol. `AnsiTerminal` asks for it (flags 1 and 4) while in raw mode
+  and decodes `CSI … u` reports, so on terminals that support it Escape arrives with no
+  timeout, and Ctrl+Enter, Shift+Enter, Ctrl+Tab, Ctrl+Backspace and Ctrl+I (distinct from
+  Tab) arrive with their modifiers. Plain typing is unaffected, and other terminals ignore
+  the request. `AnsiTerminal.KittyKeyboard = false` opts out. xterm's `modifyOtherKeys`
+  reports (`CSI 27 ; m ; code ~`) are decoded too.
+- `TerminalCapabilities.Detect(TimeSpan)` and `TerminalCapabilities.FromEnvironment()` —
+  see the `Detect()` change below. `FromEnvironment` is the old environment-only detection.
+
+### Changed
+
+- **Input is read as raw characters and decoded by the framework**, on Unix and Windows
+  alike, instead of through `Console.ReadKey`. ReadKey decodes the sequences .NET knows
+  and hands back anything else as Escape plus loose characters, which the old loop then
+  re-parsed; it cannot wait with a timeout, cannot see the Kitty keyboard protocol, and
+  cannot tell a terminal's reply from typing. The new `InputDecoder` is pure and
+  unit-tested; `KeyMsg` values for the same bytes match what ReadKey reported on Unix, so
+  bindings carry over.
+- **Breaking (Windows):** Windows now decodes the same VT input as Unix
+  (`ENABLE_VIRTUAL_TERMINAL_INPUT`), so key values match Unix rather than Win32 virtual-key
+  codes: punctuation keeps its `Character` with a default or Unix-style `Key` (`/` is
+  `ConsoleKey.Divide`, not `Oem2`), and number-pad digits arrive as digits. Bind printable
+  keys with `KeyPattern.OfChar`, which is layout-independent and unaffected. Consoles that
+  refuse VT input (before Windows 10 1809) fall back to encoding arrows, function keys and
+  Alt+key from the console's key records. Not yet tried on a real Windows console.
+- `KeyMsg.Character` for Backspace is `'\b'` on every platform (it was `'\x7f'` on Unix).
+- `TerminalCapabilities.Detect()` now asks the terminal whether it supports Kitty graphics
+  — a graphics query followed by a device attributes request, which bounds the wait — and
+  only falls back to environment variables when the terminal cannot be asked (redirected,
+  Windows, inside tmux), is already in raw mode (an app is running and reading stdin), or
+  does not answer within `DefaultProbeTimeout` (1 s; only a terminal that answers nothing
+  waits that long). That finds support in terminals no variable names, and stops
+  reporting support for an inherited `KITTY_WINDOW_ID` over SSH. Call it before `App.Run`,
+  as it already said; `Detect(TimeSpan.Zero)` or `FromEnvironment()` keep the old
+  behaviour.
+- `App.Run` gains a trailing optional parameter. Source-compatible; code compiled against
+  0.4.0 must be rebuilt.
+
 ### Fixed
 
+- A lone Escape waited only microseconds (20 spin-waits) for the rest of a sequence, so
+  under SSH or tmux a key such as ↑ that arrived in two reads was delivered as Escape, `[`,
+  `A`. Escape now waits 50 ms, and a sequence already three characters long waits up to
+  500 ms for its final byte.
+- macOS: raw mode marshalled Linux's 60-byte `struct termios`, and macOS's is 72 bytes, so
+  `tcgetattr` wrote past the end of the buffer. `termios` is now an opaque buffer that only
+  libc reads and writes.
+- Windows: mouse reports should now arrive. Without VT input the console delivers mouse
+  activity as `MOUSE_EVENT` records, which the ReadKey loop skipped; with it they are the
+  same SGR sequences as on Unix. Mouse capture also suspends Quick Edit, which otherwise
+  turns a click into a text selection, and restores it afterwards. Reasoned from the
+  console API, not yet tried on a real Windows console.
+- Kitty graphics replies were decoded as keystrokes: `ESC _ G i=…;OK ESC \` reached the
+  model as Alt+`_`, the characters `Gi=…;OK` and Alt+`\`, typing them into a focused
+  `TextInput`. Replies are now recognised and kept from the model whatever sends them,
+  every command sets `q=2` — the place delete (`a=d`) and continuation chunks did not,
+  though whether a terminal answers those varies (Ghostty never answers a successful
+  delete) — and the probe that `Detect()` sends is well formed: it declared `f=32` for PNG
+  data and set `q=1`, which suppresses the very `OK` it was asking for.
+- stdin was read for as long as the terminal object lived, including after `ExitRawMode`,
+  where it would take keystrokes meant for whatever ran next; and a second `EnterRawMode`
+  started a second reader. Each raw-mode session now has exactly one reader, retired by
+  `ExitRawMode`.
+- Robustness in the new decoder, found in review: a cursor position report
+  (`CSI row ; col R`, sent when anything reads the cursor position) is dropped rather than
+  decoded as a modified F3, and a bracketed paste whose end marker never arrives is ended
+  after 3 s of silence instead of swallowing every later key.
 - `IRawEscapePayload.Refresh` — the tmux renewal of a stationary image — had no test. It
   is now pinned in both directions: renewed once per frame inside tmux with the same
   placement id and no delete, and not renewed at all outside it.

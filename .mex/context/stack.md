@@ -17,7 +17,7 @@ edges:
   - target: patterns/source-generators.md
     condition: when working on the Roslyn generator or its version constraints
 grounds_to: []
-last_updated: 2026-09-22
+last_updated: 2026-11-26
 ---
 
 # Stack
@@ -26,7 +26,7 @@ last_updated: 2026-09-22
 - **C# / .NET 8 (`net8.0`)** — the framework target; `ImplicitUsings` and `Nullable` enabled. No preview language features.
 - **`netstandard2.0` Roslyn incremental generator** — `src/ConsoleForge.SourceGen/`, packed as an analyzer in its own NuGet package.
 - **`ConsoleForge.slnx`** — the XML solution format; build and test through it.
-- **ANSI/VT terminal protocol** — raw mode via `termios` P/Invoke on Unix (`#if !WINDOWS` guards; `WINDOWS` is defined when building on Windows) and the console API on Windows.
+- **ANSI/VT terminal protocol** — raw mode via `termios` P/Invoke on Unix (`#if !WINDOWS` guards; `WINDOWS` is defined when building on Windows; `termios` is an opaque buffer, never a managed struct, because its layout differs by OS) and the console API on Windows, where input is switched to VT sequences so both platforms share one decoder.
 - **DocFX 2.78.5** — docs site from `docs/*.md`, `index.md`, `toc.yml` plus generated API metadata.
 
 ## Key Libraries
