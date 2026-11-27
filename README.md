@@ -459,6 +459,10 @@ public IReadOnlyList<(string Key, ISub Sub)> Subscriptions() =>
 ];
 ```
 
+Nested components declare theirs the same way, and the root composes them —
+`Sub.Batch(own, Component.Subscriptions("page", Page), …)` keys each child's under its
+prefix (`"page/spinner"`).
+
 ## Samples
 
 | Sample | Description |

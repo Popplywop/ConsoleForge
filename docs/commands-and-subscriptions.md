@@ -87,6 +87,30 @@ subscription on every frame.
 | `Sub.Interval(interval, fn)` | A repeating timer. |
 | `Sub.FromAsyncEnumerable(factory)` | An `IAsyncEnumerable<IMsg>`; the token cancels on stop. |
 | `Sub.FromObservable(observable)` | Any `IObservable<IMsg>`. |
+| `Sub.Map(sub, fn)` | Another subscription's messages, transformed. |
+
+### Subscriptions of nested components
+
+Only the root model is asked for subscriptions. A component implements
+`IHasSubscriptions` the same way, and the root includes them — the parent decides what
+runs, as an Elm parent does with `Sub.batch` and `Sub.map`:
+
+```csharp
+public IReadOnlyList<(string Key, ISub Sub)> Subscriptions() => Sub.Batch(
+    [("clock", Sub.Interval(TimeSpan.FromSeconds(1), _ => new TickMsg()))],
+    Component.Subscriptions("prlist", PrList),   // "prlist/spinner" while it loads
+    Component.Subscriptions("modal", Modal));    // nothing while Modal is null
+```
+
+`Component.Subscriptions` prefixes the child's keys (`"prlist/spinner"`), so two children
+cannot collide, and contributes nothing for a null child. `Sub.Batch` concatenates and
+rejects a duplicate key, which would otherwise mean one of the two silently never runs.
+Pass a map function to tag a child's messages when two instances of the same component
+would otherwise both react to them.
+
+This is what a spinner on a page wants: the interval runs exactly while the page is in
+the model and loading. A `Cmd.Tick` that re-arms itself on each tick stops for good the
+first time the tick is routed elsewhere — to an open modal, say.
 
 Subscriptions are built on System.Reactive, the framework's only runtime dependency.
 

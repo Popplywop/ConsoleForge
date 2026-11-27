@@ -61,21 +61,6 @@ can know, and the model decides what it means.
 Letting a widget own its own scroll would also close it, and is the thing to avoid:
 that is the stateful-component mechanism the design target rules out.
 
-### 1. Component-level subscriptions
-
-`IHasSubscriptions` is only consulted on the **root** model
-(`App.ReconcileSubscriptions`). Pages/components can't declare recurring
-timers, so they fall back to self-re-arming `Cmd.Tick` chains — which die
-whenever a message gets routed elsewhere (devo's spinner froze because an
-open modal swallowed the in-flight `TickMsg`; gating the chain on the loading
-flag helped, but the fragility is structural).
-
-**Proposal:** aggregate subscriptions from nested components — e.g.
-`IHasSubscriptions` on any `IComponent`, with the root composing keys like
-`"prlist/spinner"` (explicit `Component.CollectSubs(PageA, PageB)` helper or
-similar). Spinner animation then becomes declarative:
-`("spinner", Sub.Interval(120ms, _ => TickMsg))` active only while loading.
-
 ## Fixed (for the record)
 
 What each gap turned out to be, and what shipped.
@@ -115,3 +100,4 @@ What each gap turned out to be, and what shipped.
 | Unreleased | `f=100` declared PNG for whatever bytes it was handed (item 12). WezTerm sniffs the content, so PlexTui's JPEG artwork drew there; kitty and Ghostty decode only PNG under `f=100` and drew nothing, silently, because of `q=2`. Both proposals landed: `PngData` and `CreatePayload(byte[])` check the PNG signature and throw, naming the fix; and `RgbaImageData` goes to the Kitty path as zlib-compressed `f=32` (`o=z`, RFC 1950 via the BCL's `ZLibStream` — no new dependency), so an application decodes whatever it has. JPEG decoding stays out of the framework. |
 | Unreleased | An image the terminal evicted was never sent again (item 13). The protocol says terminals delete older images past their quota (kitty: 320 MB per screen), preferring images without placements — preloaded ones. Uploads and placements now use `q=1`; `InputDecoder` already decoded the `ENOENT` reply, and it now reaches `App`, which tells `Renderer.ForgetRawPayload` so the next frame encodes the image in full. Bounded: an image whose upload was rejected (any non-`ENOENT` error) is never retried, and recoveries stop after three per image. Tier 1 tests count uploads through `RenderContext` and through `App`; Tier 3 not run (no NuGet access where it was written). Under tmux replies generally do not return, so nothing changes there. |
 | Unreleased | `KeyMap` carried no help text, so applications kept a second hand-synced list for their help bar (item 2). `KeyBinding` (patterns + `HelpKey` + `HelpDescription` + `Enabled`) is now in `ConsoleForge.Core`, `KeyMap.On(KeyBinding, …)` registers it and lists it in `KeyMap.Bindings`, and `HelpBar` renders that list. Taken from `bubbles`' `key.WithHelp` + `help.Model` as the goal, not the mechanism: bubbles toggles a binding with `SetEnabled` on a pointer, here `Enabled` is an immutable property the model derives per state with `with`, and a map is built per state. Short help only; a multi-column full help can follow if wanted. |
+| Unreleased | Components could not declare subscriptions (item 1): only the root's `IHasSubscriptions` was consulted, so pages fell back to self-re-arming `Cmd.Tick` chains that died when a modal swallowed a tick. The proposal's explicit-composition variant landed, shaped on Elm's `Sub.batch`/`Sub.map` and Elmish's `Sub.map "prefix"`: `Component.Subscriptions(prefix, child, map?)`, `Sub.Batch`, `Sub.Map`. The framework still asks only the root — it does not walk the model looking for components — so what runs stays the parent's decision and visible in one method. |

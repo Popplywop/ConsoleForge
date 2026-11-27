@@ -82,4 +82,54 @@ public static class Component
         var initCmd = component.Init();
         return (component, Cmd.Batch([initCmd, .. extraCmds]));
     }
+
+    // ── Subscriptions ─────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// The subscriptions of a nested component, keyed under <paramref name="prefix"/> —
+    /// <c>"prefix/key"</c> — for the parent to include in its own
+    /// <see cref="IHasSubscriptions.Subscriptions"/>. Empty when <paramref name="child"/> is
+    /// null or declares none.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The framework asks only the root model for subscriptions, and the root composes its
+    /// children's, the way an Elm parent writes
+    /// <c>Sub.batch [ Sub.map PageMsg (Page.subscriptions page) ]</c>. That keeps them
+    /// declarative: a child's interval runs exactly while the child is part of the model
+    /// and its state asks for it, however its messages are routed meanwhile — unlike a
+    /// self-re-arming <see cref="Cmd.Tick"/> chain, which stops for good the first time a
+    /// tick is delivered somewhere else.
+    /// </para>
+    /// <code>
+    /// public IReadOnlyList&lt;(string Key, ISub Sub)&gt; Subscriptions() => Sub.Batch(
+    ///     [("clock", Sub.Interval(TimeSpan.FromSeconds(1), t => new ClockMsg(t)))],
+    ///     Component.Subscriptions("prlist", PrList),   // "prlist/spinner" while it loads
+    ///     Component.Subscriptions("modal", Modal));    // nothing while Modal is null
+    /// </code>
+    /// <para>
+    /// The prefix keeps two children's keys apart, and stays stable for as long as a child
+    /// does: a subscription is restarted only when its full key appears or disappears.
+    /// Pass <paramref name="map"/> to tag the child's messages — when two instances of one
+    /// component type would otherwise both act on the same message.
+    /// </para>
+    /// </remarks>
+    /// <param name="prefix">Key prefix for this child, unique among its siblings.</param>
+    /// <param name="child">The child model; null contributes nothing.</param>
+    /// <param name="map">Optional transform applied to each message the child's subscriptions produce.</param>
+    public static IReadOnlyList<(string Key, ISub Sub)> Subscriptions(
+        string prefix, IModel? child, Func<IMsg, IMsg>? map = null)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(prefix);
+        if (child is not IHasSubscriptions hasSubs) return [];
+
+        var subs = hasSubs.Subscriptions();
+        var result = new (string Key, ISub Sub)[subs.Count];
+        for (int i = 0; i < subs.Count; i++)
+        {
+            var (key, sub) = subs[i];
+            result[i] = ($"{prefix}/{key}", map is null ? sub : Sub.Map(sub, map));
+        }
+        return result;
+    }
 }

@@ -34,6 +34,13 @@ marked **Breaking**.
   New: `KittyProtocol.CreatePayload(RgbaImageData, …)` (cached against the pixel array, as
   PNG payloads are), `KittyProtocol.IsPng`, and an
   `ImageWidget(RgbaImageData, TerminalCapabilities?)` constructor.
+- Subscriptions of nested components: `Component.Subscriptions(prefix, child, map?)`
+  returns a child's subscriptions keyed `"prefix/key"` (nothing for a null child or one
+  without `IHasSubscriptions`), `Sub.Batch(...)` concatenates keyed lists and rejects a
+  duplicate key, and `Sub.Map(sub, fn)` transforms a subscription's messages — Elm's
+  `Sub.batch`/`Sub.map`, keyed. The root composes its children's subscriptions, so a
+  page's spinner can be an interval that runs while the page is loading rather than a
+  `Cmd.Tick` chain that dies the first time a tick is routed elsewhere.
 - `KeyBinding` — patterns plus the help text that describes them (`new KeyBinding("q",
   "quit", KeyPattern.OfChar('q'))`), with an `Enabled` flag derived from model state via
   `with`. `KeyMap.On(KeyBinding, …)` registers every pattern and records the binding in
