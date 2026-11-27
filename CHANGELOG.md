@@ -68,6 +68,8 @@ marked **Breaking**.
   reports (`CSI 27 ; m ; code ~`) are decoded too.
 - `TerminalCapabilities.Detect(TimeSpan)` and `TerminalCapabilities.FromEnvironment()` —
   see the `Detect()` change below. `FromEnvironment` is the old environment-only detection.
+- `ResolvedLayout.GetVisibleRegion(widget)` — the part of a widget's region on screen,
+  which differs from `GetRegion` only inside a scrolling `Container`.
 
 ### Changed
 
@@ -167,6 +169,20 @@ marked **Breaking**.
 - Text past a widget's region was drawn over its neighbours: `SubRenderContext` checked
   only where a write started. Writes are now clipped to the region (intersected with
   every enclosing one), and a wide glyph cut by an edge is drawn as a blank.
+- `SizeConstraint.Min` and `Max` over a `Flex` inner did not bound the flex share: `Min`
+  made the child a fixed child of its minimum (`Min(10, Flex(1))` beside `Flex(1)` came out
+  10/90, not 50/50) and `Max` was ignored. They now clamp the share, flexbox-style —
+  children pushed to a bound are frozen there and the rest share the remainder — and an
+  `Auto` container measuring such a child across its axis gets the bounded size.
+- `Container(scrollable: true)` did not scroll. Children were laid out as if it did not
+  scroll — squeezed into the viewport, or, when fixed and too long, making layout throw
+  `LayoutConstraintException` — and then shifted by the offset, so there was little or
+  nothing to scroll to. A child half out of view drew its top half in the space left, and
+  hit-testing let a child scrolled out of view take clicks meant for the widget its region
+  now overlapped. Children now keep their own sizes (`Auto` measured without an along-axis
+  limit), render at their full region clipped to the viewport, `ScrollOffset` is clamped
+  to the content, and only the visible part of a scrolled child answers a click
+  (`ResolvedLayout.GetVisibleRegion`).
 
 ### Performance
 

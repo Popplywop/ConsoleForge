@@ -24,10 +24,18 @@ public abstract record SizeConstraint
     /// </summary>
     public static SizeConstraint Auto { get; } = new AutoConstraint();
 
-    /// <summary>Apply a minimum bound to an inner constraint.</summary>
+    /// <summary>
+    /// Apply a minimum bound to an inner constraint. Over <c>Fixed</c> or <c>Auto</c> it
+    /// raises the size; over <c>Flex</c> it raises the child's share of the free space, and
+    /// the other flex children share what remains.
+    /// </summary>
     public static SizeConstraint Min(int min, SizeConstraint inner) => new MinConstraint(min, inner);
 
-    /// <summary>Apply a maximum bound to an inner constraint.</summary>
+    /// <summary>
+    /// Apply a maximum bound to an inner constraint. Over <c>Fixed</c> or <c>Auto</c> it caps
+    /// the size; over <c>Flex</c> it caps the child's share of the free space, and the other
+    /// flex children take the difference.
+    /// </summary>
     public static SizeConstraint Max(int max, SizeConstraint inner) => new MaxConstraint(max, inner);
 
     // ── Subtypes ──────────────────────────────────────────────────────
