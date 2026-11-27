@@ -20,6 +20,7 @@ public sealed class App
 {
     private Theme _theme = Theme.Default;
     private bool _enableMouse;
+    private bool _enableBracketedPaste;
 
     /// <summary>Detected color capability of the current terminal.</summary>
     public ColorProfile ColorProfile { get; private set; } = ColorProfile.TrueColor;
@@ -46,19 +47,26 @@ public sealed class App
     /// Clock backing ticks and rate limits. Defaults to <see cref="TimeProvider.System"/>;
     /// pass a fake to drive time deterministically in tests.
     /// </param>
+    /// <param name="enableBracketedPaste">
+    /// Deliver pastes as one <see cref="PasteMsg"/> instead of a <see cref="KeyMsg"/> per
+    /// character, so a pasted line break cannot press Enter. Off by default because the
+    /// model must handle <see cref="PasteMsg"/> for pasting to keep working.
+    /// </param>
     public static Task Run(
         IModel model,
         ITerminal? terminal = null,
         Theme? theme = null,
         int targetFps = 30,
         bool enableMouse = false,
-        TimeProvider? timeProvider = null)
+        TimeProvider? timeProvider = null,
+        bool enableBracketedPaste = false)
     {
         var program = new App
         {
             _theme = theme ?? Theme.Default,
             ColorProfile = DetectColorProfile(),
             _enableMouse = enableMouse,
+            _enableBracketedPaste = enableBracketedPaste,
             _time = timeProvider ?? TimeProvider.System
         };
         return program.RunInternal(model, terminal, targetFps);
@@ -99,6 +107,7 @@ public sealed class App
             // Hide cursor once for the whole session — shown again in finally
             _terminal.SetCursorVisible(false);
             if (_enableMouse) _terminal.EnableMouse();
+            if (_enableBracketedPaste) _terminal.EnableBracketedPaste();
 
             // Send initial resize
             _channel.Writer.TryWrite(new WindowResizeMsg(_terminal.Width, _terminal.Height));
@@ -116,6 +125,8 @@ public sealed class App
                     _channel.Writer.TryWrite(new WindowResizeMsg(r.Width, r.Height));
                 else if (ev is MouseInputEvent m)
                     _channel.Writer.TryWrite(m.Mouse);
+                else if (ev is PasteInputEvent p)
+                    _channel.Writer.TryWrite(new PasteMsg(p.Text));
             });
 
             // Init model
@@ -233,6 +244,7 @@ public sealed class App
                 }
 
                 if (_enableMouse) _terminal.DisableMouse();
+                if (_enableBracketedPaste) _terminal.DisableBracketedPaste();
                 _terminal.SetCursorVisible(true); // Restore cursor before exiting
             }
             if (ownTerminal)

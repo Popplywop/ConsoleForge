@@ -147,6 +147,15 @@ public sealed class VirtualTerminal : ITerminal
     /// <summary>No-op.</summary>
     public void DisableMouse() { }
 
+    /// <summary>True between <see cref="EnableBracketedPaste"/> and <see cref="DisableBracketedPaste"/>.</summary>
+    public bool BracketedPasteEnabled { get; private set; }
+
+    /// <summary>Records that bracketed paste was requested.</summary>
+    public void EnableBracketedPaste() => BracketedPasteEnabled = true;
+
+    /// <summary>Records that bracketed paste was turned off.</summary>
+    public void DisableBracketedPaste() => BracketedPasteEnabled = false;
+
     // ── ITerminal: Input stream ───────────────────────────────────────
     /// <summary>Observable stream of input events. Inject events via <see cref="EnqueueKey"/> or <see cref="SimulateResize"/>.</summary>
     public IObservable<InputEvent> Input => _input;
@@ -267,6 +276,13 @@ public sealed class VirtualTerminal : ITerminal
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         _input.OnNext(new KeyInputEvent(key));
+    }
+
+    /// <summary>Enqueue a synthetic bracketed paste to be delivered to the Input observable.</summary>
+    public void EnqueuePaste(string text)
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        _input.OnNext(new PasteInputEvent(text));
     }
 
     /// <summary>Trigger a synthetic resize event.</summary>

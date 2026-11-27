@@ -18,7 +18,7 @@ edges:
   - target: patterns/release-and-docs.md
     condition: when publishing a release or changing the docs site
 grounds_to: []
-last_updated: 2026-09-22
+last_updated: 2026-11-26
 mex:
   id: mx_01M363AXKGBNYSM6ST8T0SKZ6V
   type: guide
@@ -66,7 +66,7 @@ revision: 1
 
 ## Environment Variables
 - None required to build or test.
-- `TMUX` / `TERM` (read, not set) — `TerminalCapabilities.Detect()` uses them to decide tmux DCS passthrough and colour/graphics support. Running samples inside tmux changes image behaviour.
+- `TMUX` / `TERM` (read, not set) — `TerminalCapabilities.Detect()` uses them to decide tmux DCS passthrough and colour/graphics support (graphics only as a fallback: outside tmux it asks the terminal). Running samples inside tmux changes image behaviour.
 
 <!-- mex:entity
 id: mx_01M363AXGEFFR7Z1Q7C8P0Q5RY

@@ -97,7 +97,7 @@ public sealed class ImageWidget : IWidget
     /// <summary>
     /// Terminal capabilities detected at startup. Used by
     /// <see cref="ImageRenderMode.Auto"/> to decide between Kitty and HalfBlock.
-    /// Inject via <see cref="TerminalCapabilities.Detect"/> at application start.
+    /// Inject via <see cref="TerminalCapabilities.Detect()"/> at application start.
     /// </summary>
     public TerminalCapabilities? Capabilities { get; init; }
 

@@ -34,7 +34,7 @@ grounds_to:
   - node: method:e0bb5b7e46383cb1827217f3f6982d61
     fingerprint: mh:64:7b226d696e68617368223a5b3238353535373238372c3136313032313630362c3237353439323430352c3234333834363135342c38313435333432382c3132383630333531352c3135313431343531372c3234343932303331302c39303235313630362c3835303032313332382c3134313532313138362c3132353037333139332c3330333538313539392c35323931303230312c31373030383434372c39373733353238392c39383738353432322c3237383535333638392c3538303735343334312c33353335323837352c3238353831303430332c3338373436333434332c313830393030342c3132373934313331392c3435353135303937392c3739383636353631342c3437383039333731322c3233313633303837332c3234363138323738352c3233323731323139302c3233363636323836372c39373836343637332c3135353930343837362c3233323038303338342c3433373230343038312c3637343439383835322c3332393136303739392c3133343234363133322c3230323637373836312c3232323637313730362c3133343935383538332c3131393739313638342c34383834343735332c3131323438383332382c36343939383735382c32353338303437322c3339383634353135382c3330363630323430372c3430313032333634352c33393733303833372c3539363137363036362c3535343134343432302c3232303632373034382c3432363132333339312c3138333439363635372c3134343334343835372c33393632343339312c3236343834373238322c3233363834313433372c38373831373638332c3235343936383536382c3433363031363039322c3539323731323334302c31313732363932355d2c226e65696768626f7273223a5b226d6574686f643a6536313836303231396462643036633235363737343439303662323030666364225d2c22746f6b656e436f756e74223a32307d
     bodyHash: 290ee75547ff9121463afd662290131062d82414df7fbf1435f2bde1d004068d
-last_updated: 2026-09-22
+last_updated: 2026-11-26
 ---
 
 # Rendering and Layout
@@ -56,7 +56,7 @@ last_updated: 2026-09-22
 - Payloads are tracked across frames by `ContentHash`, not region. A hash seen last frame is re-positioned via [`Place()`](mex://method:e0bb5b7e46383cb1827217f3f6982d61) (defaults to `Encode`) instead of re-uploaded; a new hash is sent through `Encode`. Change the hash when content changes. `Renderer.BuildRawCleanup` deletes placed graphics on exit.
 - `Cmd.Preload(payload)` uploads ahead of first appearance via `IRawEscapePayload.Transmit` (default null = no separate step). `RenderContext` keeps a held-hash set: first appearance of a held hash goes through `Place()`, the entry is then consumed; dropped on resize. `App.DispatchCmd` handles a sync `PreloadMsg` immediately so the upload beats the frame.
 - Pixel-path benchmarks: `./bench.sh -f '*Pixel*'` (shelf frame kinds in/out of tmux, Kitty encode cache, half-block).
-- Inside tmux, escapes need DCS passthrough and placements are renewed per frame; `TerminalCapabilities.InsideTmux` decides this and `Detect()` fills it from `TMUX`/`TERM`.
+- Inside tmux, escapes need DCS passthrough and placements are renewed per frame; `TerminalCapabilities.InsideTmux` decides this and `Detect()` fills it from `TMUX`/`TERM`. Every Kitty command sets `q=2`; a reply that arrives anyway is decoded by `InputDecoder` and dropped by `AnsiTerminal`, never delivered as keys.
 
 ## Text width
 - Column width comes from `TextUtils`, backed by a table generated from the Unicode Character Database (East_Asian_Width). CJK/emoji take two columns; combining marks take zero. Never use `string.Length` as a column count.

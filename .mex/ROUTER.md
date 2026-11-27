@@ -18,7 +18,7 @@ edges:
     condition: when working on layout, the renderer, widget rendering or raw escape payloads
   - target: patterns/INDEX.md
     condition: when starting a task — check the pattern index for a matching pattern file
-last_updated: 2026-09-22
+last_updated: 2026-11-26
 ---
 
 # Session Bootstrap
@@ -37,6 +37,7 @@ Version 0.4.0 (both packages) — the release that finished the Elm-purity migra
 - Double-buffered cell-diff renderer with a working widget render cache (guarded by counting tests)
 - Pure reducers `TextInputState`, `TextAreaState`, `ListState`; model-owned focus with `FocusKey` + `FocusRequestedMsg`
 - 0.4.1 (unreleased, branch `release/0.4.1`): `Cmd.Preload` + `IRawEscapePayload.Transmit` (WISHLIST item 10), tmux `Refresh` tests and `Pixel*Benchmarks` (item 11). Item 12 (`f=100` on non-PNG bytes) still open
+- Unreleased: input decoded by the framework (`StdinReader` + pure `InputDecoder`, Kitty keyboard protocol, opt-in bracketed paste → `PasteMsg`), Kitty graphics replies kept from the model, `TerminalCapabilities.Detect()` probes the terminal. Item 13 (re-send an image the terminal evicted) open
 - `[DispatchUpdate]` / `[Component]` source generators; DocFX site deployed from `main`; CI runs build, tests and doc-sample compile on every push/PR
 
 **Not yet built (WISHLIST "Later"):**

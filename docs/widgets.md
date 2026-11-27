@@ -109,6 +109,14 @@ it, and falls back to half-block cells with 24-bit colour everywhere else. It ta
 `PngData` or `RgbaData`, and you can pin the `RenderMode` rather than letting
 `TerminalCapabilities` decide.
 
+Get the capabilities once at startup, before `App.Run`, with `TerminalCapabilities.Detect()`.
+It asks the terminal directly — a Kitty graphics query followed by a device attributes
+request, which every terminal answers — so it finds support in terminals no environment
+variable identifies, and finds none when a variable such as `KITTY_WINDOW_ID` was inherited
+by an SSH session into a terminal without it. Inside tmux, on Windows, or when the terminal
+does not answer, it falls back to the environment variables, which is all
+`TerminalCapabilities.FromEnvironment()` consults.
+
 On a Kitty terminal the image is uploaded the first time it is drawn, which puts the upload's
 latency on the frame it is meant to appear in. Under tmux that shows: the frame's cells arrive
 before the image does. Return `Cmd.Preload` from the `Update` that receives the bytes to

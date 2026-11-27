@@ -7,7 +7,7 @@ namespace ConsoleForge.Terminal;
 /// adapt their rendering strategy at runtime (e.g. <c>ImageWidget</c> choosing between
 /// Kitty graphics and half-block Unicode fallback).
 /// <para>
-/// Obtain an instance via <see cref="Detect"/> at application startup (before entering
+/// Obtain an instance via <see cref="Detect()"/> at application startup (before entering
 /// raw mode and the alternate screen), or construct a known configuration with
 /// <see cref="None"/> / <see cref="WithKitty"/> for tests or explicit overrides.
 /// </para>
@@ -25,7 +25,7 @@ public sealed class TerminalCapabilities
     /// be wrapped in DCS passthrough blocks and stationary placements renewed each frame
     /// against tmux's re-render cursor drift.
     /// <para>
-    /// <see cref="Detect"/> sets this from <c>TMUX</c> and <c>TERM</c>. Set it explicitly
+    /// <see cref="Detect()"/> sets this from <c>TMUX</c> and <c>TERM</c>. Set it explicitly
     /// to state the mode rather than inherit it from the ambient environment — which is
     /// what tests should do, so a suite does not pass or fail according to whether the
     /// developer happens to be running inside tmux.
@@ -63,8 +63,82 @@ public sealed class TerminalCapabilities
     // ── Detection ─────────────────────────────────────────────────────────────
 
     /// <summary>
-    /// Probe the environment and return a <see cref="TerminalCapabilities"/> instance
-    /// reflecting what the current terminal supports.
+    /// How long <see cref="Detect()"/> waits for the terminal to answer its probe. Only a
+    /// terminal that answers nothing at all costs this much: every other one answers the
+    /// device attributes request that bounds the probe, usually within a millisecond or two
+    /// locally and one round trip over SSH. Generous on purpose: an answer that arrives
+    /// after the wait is over lands in a terminal back in normal mode, which echoes it
+    /// onto the screen.
+    /// </summary>
+    public static readonly TimeSpan DefaultProbeTimeout = TimeSpan.FromSeconds(1);
+
+    /// <summary>
+    /// Return a <see cref="TerminalCapabilities"/> instance reflecting what the current
+    /// terminal supports, asking the terminal itself where it can.
+    /// <para>
+    /// <b>Kitty graphics</b> are detected by asking: a graphics query
+    /// (<see cref="KittyProtocol.BuildDetectProbe"/>) followed by a device attributes request,
+    /// both of which a supporting terminal answers in order. That finds support in terminals
+    /// no environment variable identifies, and correctly finds none when a variable such as
+    /// <c>KITTY_WINDOW_ID</c> was inherited by a session that is now somewhere else — over
+    /// SSH, say. When the terminal cannot be asked (input or output redirected, Windows) or
+    /// does not answer within <see cref="DefaultProbeTimeout"/>, and always inside tmux,
+    /// which does not answer for the terminal outside it, the result falls back to
+    /// <see cref="FromEnvironment"/>.
+    /// </para>
+    /// <para>
+    /// <b>tmux pane offsets:</b> When inside tmux the method runs <c>tmux display</c>
+    /// once to determine the pane's absolute position in the terminal window, including
+    /// status-bar height. These offsets correct Kitty image placement when the status
+    /// bar is positioned above the pane.
+    /// </para>
+    /// <para>
+    /// Call once at startup, before <see cref="Core.App.Run"/> — before
+    /// <see cref="ITerminal.EnterRawMode"/> and <see cref="ITerminal.EnterAlternateScreen"/>.
+    /// The probe reads the terminal's answer from stdin, so it must not run while
+    /// something else is reading it: when the terminal is already in raw mode — an app is
+    /// running — it does not ask, and returns <see cref="FromEnvironment"/>.
+    /// </para>
+    /// </summary>
+    public static TerminalCapabilities Detect() => Detect(DefaultProbeTimeout);
+
+    /// <summary>
+    /// <see cref="Detect()"/> with an explicit wait for the terminal's answer.
+    /// <see cref="TimeSpan.Zero"/> skips asking, which is the same as <see cref="FromEnvironment"/>.
+    /// </summary>
+    /// <param name="probeTimeout">Longest wait for the terminal to answer.</param>
+    public static TerminalCapabilities Detect(TimeSpan probeTimeout)
+    {
+        var env = FromEnvironment();
+
+        // Inside tmux the probe would reach tmux, not the terminal displaying it.
+        if (probeTimeout <= TimeSpan.Zero || env.InsideTmux || OperatingSystem.IsWindows())
+            return env;
+
+        var probe = TerminalProbe.QueryKittyGraphics(probeTimeout);
+        return new TerminalCapabilities
+        {
+            SupportsKittyGraphics = ResolveKittyGraphics(env.SupportsKittyGraphics, probe),
+            InsideTmux            = env.InsideTmux,
+            TmuxPaneRowOffset     = env.TmuxPaneRowOffset,
+            TmuxPaneColOffset     = env.TmuxPaneColOffset,
+        };
+    }
+
+    /// <summary>
+    /// Combine what the environment suggests with what the terminal answered: an answer
+    /// either way wins, and no answer leaves the environment's guess standing.
+    /// </summary>
+    internal static bool ResolveKittyGraphics(bool fromEnvironment, KittyProbeResult probe) => probe switch
+    {
+        KittyProbeResult.Supported   => true,
+        KittyProbeResult.Unsupported => false,
+        _                            => fromEnvironment,
+    };
+
+    /// <summary>
+    /// Capabilities from environment variables alone, without writing to or reading from
+    /// the terminal. This is what <see cref="Detect()"/> returned before it learned to ask.
     /// <para>
     /// <b>Kitty detection</b> checks a prioritised set of well-known environment
     /// variables. Variables that propagate through tmux sessions are tried first
@@ -77,17 +151,11 @@ public sealed class TerminalCapabilities
     ///   <item>foot: <c>TERM=foot</c> or <c>TERM=foot-extra</c></item>
     /// </list>
     /// <para>
-    /// <b>tmux pane offsets:</b> When inside tmux the method runs <c>tmux display</c>
-    /// once to determine the pane's absolute position in the terminal window, including
-    /// status-bar height. These offsets correct Kitty image placement when the status
-    /// bar is positioned above the pane.
-    /// </para>
-    /// <para>
-    /// Call before <see cref="ITerminal.EnterRawMode"/> and
-    /// <see cref="ITerminal.EnterAlternateScreen"/>.
+    /// Inside tmux this also runs <c>tmux display</c> once for the pane offsets, as
+    /// <see cref="Detect()"/> describes.
     /// </para>
     /// </summary>
-    public static TerminalCapabilities Detect()
+    public static TerminalCapabilities FromEnvironment()
     {
         var term        = Environment.GetEnvironmentVariable("TERM")        ?? "";
         var termProgram = Environment.GetEnvironmentVariable("TERM_PROGRAM") ?? "";

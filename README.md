@@ -14,6 +14,7 @@ Built for developers who want the predictability of Bubble Tea in C#: no mutable
 - **15 built-in widgets** — TextBlock, TextInput, TextArea, List, Table, Checkbox, Tabs, ProgressBar, Spinner, BorderBox, Container, Modal, ZStack, ImageWidget, HorizontalShelf
 - **6 named themes** — Dark, Light, Dracula, Nord, Monokai, Tokyo Night. Switch at runtime with one message.
 - **Mouse support** — SGR 1006 extended mouse tracking. Click-to-focus, scroll wheel, button/motion events.
+- **Keyboard input decoded by the framework** — modified keys (Ctrl+PageUp, Shift+F5, …), the Kitty keyboard protocol where the terminal offers it (instant Escape, Ctrl+Enter, Shift+Enter, Ctrl+I distinct from Tab), and opt-in bracketed paste. Replies the terminal sends to queries never reach your model as keystrokes.
 - **Unicode-aware layout** — CJK, emoji, and full-width characters render at correct column widths, from a table generated out of the Unicode Character Database.
 - **Inline images** — `ImageWidget` draws PNGs through the Kitty graphics protocol where the terminal supports it, and falls back to half-block cells with 24-bit colour everywhere else.
 - **Composable sub-programs** — `IComponent` / `IComponent<TResult>` for self-contained pages with own state, keymaps, and lifecycle.
@@ -197,6 +198,32 @@ Handle in your model:
 
 ```csharp
 case MouseMsg { Button: MouseButton.ScrollDown } => // scroll handler
+```
+
+## Keyboard and Paste
+
+Input is read as raw bytes and decoded by ConsoleForge on every platform, so the same
+`KeyMsg` arrives for the same key on Linux, macOS and Windows, including modified keys
+such as Ctrl+PageUp or Shift+F5. Where the terminal supports the
+[Kitty keyboard protocol](https://sw.kovidgoyal.net/kitty/keyboard-protocol/) (Kitty,
+Ghostty, foot, Alacritty, WezTerm with `enable_kitty_keyboard`, …) it is turned on automatically: Escape arrives
+without a timeout, and chords legacy terminals cannot express — Ctrl+Enter, Shift+Enter,
+Ctrl+Tab, Ctrl+I as distinct from Tab — arrive as ordinary `KeyMsg`s with the right
+modifiers. Everywhere else the legacy encodings are decoded as before. To opt out, pass
+your own terminal — and dispose it, since `App.Run` only restores a terminal it created:
+
+```csharp
+using var terminal = new AnsiTerminal { KittyKeyboard = false };
+await App.Run(model, terminal);
+```
+
+Bracketed paste is opt-in, because your model has to handle the message:
+
+```csharp
+await App.Run(model, enableBracketedPaste: true);
+
+// In Update — one message for the whole paste, so a pasted newline cannot press Enter:
+case PasteMsg paste => (this with { Input = Input.Insert(paste.Text) }, null),
 ```
 
 ## KeyMap — Declarative Keybindings
@@ -433,8 +460,8 @@ src/ConsoleForge/
               ILayeredContainer, IRawEscapePayload, LayoutEngine, LayoutSolver,
               RenderContext, SubRenderContext, TextUtils, SizeConstraint, Region
   Styling/    Style, Theme, ThemeExtensions, Color, Borders, BorderSpec, ColorProfile
-  Terminal/   ITerminal, AnsiTerminal, TerminalCapabilities, KittyProtocol,
-              Termios (Unix), WindowsConsole
+  Terminal/   ITerminal, AnsiTerminal, InputDecoder, StdinReader, TerminalCapabilities,
+              TerminalProbe, KittyProtocol, Termios (Unix), WindowsConsole
   Widgets/    TextBlock, TextInput, TextArea, List, Table, Checkbox, Tabs,
               ProgressBar, Spinner, BorderBox, Container, Modal, ZStack,
               ImageWidget, HorizontalShelf

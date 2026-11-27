@@ -13,6 +13,19 @@ public sealed record KeyMsg(
     bool Alt = false,
     bool Ctrl = false) : IMsg;
 
+/// <summary>
+/// Text pasted into the terminal, delivered whole. Sent only when the app runs with
+/// bracketed paste enabled (<c>App.Run(…, enableBracketedPaste: true)</c>); otherwise a paste
+/// arrives as one <see cref="KeyMsg"/> per character, as typing does.
+/// </summary>
+/// <remarks>
+/// Line breaks are normalised to <c>\n</c>. Feed the text to the focused editor's reducer,
+/// e.g. <c>TextInputState.Insert(paste.Text)</c> — a single-line input will usually want
+/// the line breaks removed first.
+/// </remarks>
+/// <param name="Text">The pasted text.</param>
+public sealed record PasteMsg(string Text) : IMsg;
+
 /// <summary>Terminal was resized.</summary>
 public sealed record WindowResizeMsg(int Width, int Height) : IMsg;
 

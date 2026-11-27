@@ -73,7 +73,8 @@ await App.Run(
     new HelloModel(),
     theme: Theme.Dracula,   // Dark, Light, Dracula, Nord, Monokai, TokyoNight
     targetFps: 30,          // 1–60
-    enableMouse: true);     // SGR 1006 tracking: click-to-focus, scroll wheel
+    enableMouse: true,      // SGR 1006 tracking: click-to-focus, scroll wheel
+    enableBracketedPaste: true); // a paste arrives as one PasteMsg, not as keystrokes
 ```
 
 ## Dropping the switch statement

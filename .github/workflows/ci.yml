@@ -45,3 +45,25 @@ jobs:
       # fail the PR that introduces it, not the deploy after it merges.
       - name: Check doc samples compile
         run: python3 scripts/check-doc-samples.py
+
+  # The library compiles differently on Windows (WINDOWS is defined there, which swaps out
+  # the termios and poll/read input path), so a Linux-only build never compiles the code
+  # Windows users run. macOS shares the Unix path but not its libc struct layouts.
+  build-library:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.x'
+
+      - name: Build library (Release)
+        run: dotnet build src/ConsoleForge/ConsoleForge.csproj -c Release

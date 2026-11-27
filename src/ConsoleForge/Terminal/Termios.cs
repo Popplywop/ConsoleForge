@@ -2,73 +2,74 @@ using System.Runtime.InteropServices;
 
 namespace ConsoleForge.Terminal;
 
+#if !WINDOWS
 /// <summary>
 /// P/Invoke shim for Unix terminal control (tcgetattr / tcsetattr / cfmakeraw).
 /// Only compiled on non-Windows platforms.
-/// Used exclusively by <see cref="AnsiTerminal.EnterRawMode"/> and
-/// <see cref="AnsiTerminal.ExitRawMode"/>.
+/// Used by <see cref="AnsiTerminal.EnterRawMode"/>, <see cref="AnsiTerminal.ExitRawMode"/>
+/// and the capability probe.
 /// </summary>
-#if !WINDOWS
+/// <remarks>
+/// <c>struct termios</c> is treated as an opaque block of bytes. Its layout differs by
+/// platform — 60 bytes on Linux, 72 on macOS, where the flag fields are 64-bit and
+/// <c>c_cc</c> has 20 entries — and a managed mirror of the Linux layout let
+/// <c>tcgetattr</c> write past the end of its buffer on macOS. Nothing here needs to read
+/// a field: libc fills the block, <c>cfmakeraw</c> edits it, libc reads it back. So the
+/// block only has to be large enough, never laid out correctly.
+/// </remarks>
 internal static class Termios
 {
-    // termios struct layout for Linux (x86-64 / arm64)
-    // Matches <asm/termbits.h>: c_iflag, c_oflag, c_cflag, c_lflag, c_line, c_cc[32], c_ispeed, c_ospeed
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct Termios_t
-    {
-        public uint c_iflag;
-        public uint c_oflag;
-        public uint c_cflag;
-        public uint c_lflag;
-        public byte c_line;
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 32)]
-        public byte[] c_cc;
-        public uint c_ispeed;
-        public uint c_ospeed;
+    // Comfortably larger than struct termios on every Unix .NET runs on.
+    private const int BufferSize = 256;
 
-        public Termios_t() { c_cc = new byte[32]; }
-    }
-
-    // TCSANOW = 0 on Linux
+    // TCSANOW is 0 on Linux, macOS and the BSDs.
     private const int TCSANOW = 0;
 
-    [DllImport("libc", EntryPoint = "tcgetattr", SetLastError = true)]
-    private static extern int tcgetattr(int fd, out Termios_t termios);
-
-    [DllImport("libc", EntryPoint = "tcsetattr", SetLastError = true)]
-    private static extern int tcsetattr(int fd, int optional_actions, ref Termios_t termios);
-
-    [DllImport("libc", EntryPoint = "cfmakeraw", SetLastError = false)]
-    private static extern void cfmakeraw(ref Termios_t termios);
-
-    // stdin fd = 0
     private const int STDIN_FD = 0;
 
+    [DllImport("libc", EntryPoint = "tcgetattr", SetLastError = true)]
+    private static extern int tcgetattr(int fd, [Out] byte[] termios);
+
+    [DllImport("libc", EntryPoint = "tcsetattr", SetLastError = true)]
+    private static extern int tcsetattr(int fd, int optional_actions, [In] byte[] termios);
+
+    [DllImport("libc", EntryPoint = "cfmakeraw", SetLastError = false)]
+    private static extern void cfmakeraw([In, Out] byte[] termios);
+
     /// <summary>
-    /// Read the current terminal attributes from stdin.
-    /// Returns true on success.
+    /// Read the current attributes of stdin, or null when stdin is not a terminal.
     /// </summary>
-    internal static bool GetAttr(out Termios_t result)
+    internal static byte[]? GetAttr()
     {
-        result = new Termios_t();
-        return tcgetattr(STDIN_FD, out result) == 0;
+        var termios = new byte[BufferSize];
+        return tcgetattr(STDIN_FD, termios) == 0 ? termios : null;
     }
 
     /// <summary>
-    /// Apply raw mode to the saved attributes and set them on stdin.
+    /// Apply raw mode, derived from <paramref name="saved"/>, to stdin.
+    /// <paramref name="saved"/> itself is left untouched so it can be restored.
     /// </summary>
-    internal static bool MakeRaw(ref Termios_t termios)
+    internal static bool MakeRaw(byte[] saved)
     {
-        cfmakeraw(ref termios);
-        return tcsetattr(STDIN_FD, TCSANOW, ref termios) == 0;
+        var raw = (byte[])saved.Clone();
+        cfmakeraw(raw);
+        return tcsetattr(STDIN_FD, TCSANOW, raw) == 0;
     }
 
     /// <summary>
-    /// Restore previously saved attributes to stdin.
+    /// True when <paramref name="attrs"/> are already raw mode. Read without knowing the
+    /// layout: <c>cfmakeraw</c> of raw attributes changes nothing, so a copy put through it
+    /// comes back identical exactly when the original was raw.
     /// </summary>
-    internal static bool Restore(ref Termios_t termios)
+    internal static bool IsRaw(byte[] attrs)
     {
-        return tcsetattr(STDIN_FD, TCSANOW, ref termios) == 0;
+        var raw = (byte[])attrs.Clone();
+        cfmakeraw(raw);
+        return raw.AsSpan().SequenceEqual(attrs);
     }
+
+    /// <summary>Restore previously saved attributes to stdin.</summary>
+    internal static bool Restore(byte[] saved) =>
+        tcsetattr(STDIN_FD, TCSANOW, saved) == 0;
 }
 #endif

@@ -17,7 +17,7 @@ edges:
     condition: when a widget needs to start delegating to the reducer
   - target: context/decisions.md
     condition: for why rules live in reducers rather than widgets
-last_updated: 2026-09-22
+last_updated: 2026-11-26
 mex:
   id: mx_01M363AXMCYE8RX75CSZ3JVBR9
   type: pattern
@@ -67,7 +67,7 @@ Reducers are pure value types in `src/ConsoleForge/Core/`. A model stores the re
 - Public members documented; `CHANGELOG.md` updated.
 
 ## Debug
-- Key does nothing: check `KeyMsg.Key` vs `KeyMsg.KeyChar` and modifiers — `AnsiTerminal` decodes Ctrl+letter as a control character.
+- Key does nothing: check `KeyMsg.Key` vs `KeyMsg.Character` and modifiers — `InputDecoder` decodes Ctrl+letter as a control character (from legacy bytes and Kitty `CSI u` alike). `InputDecoderTests` shows the exact `KeyMsg` for a given byte sequence.
 - Widget and model disagree: find a second copy of the rule outside the reducer.
 
 ## Update Scaffold
