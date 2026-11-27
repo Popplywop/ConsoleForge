@@ -164,6 +164,32 @@ Required before committing a change to `Renderer`, `RenderContext`, `LayoutEngin
 - `--filter '*RenderBenchmarks*'` also matches `NewWidgetRenderBenchmarks`. Narrow the
   filter to what the change can actually touch.
 
+## Releasing
+
+Pushing a `v*.*.*` tag runs `.github/workflows/publish.yml`: a Release build, the full test
+run, `dotnet pack` of `src/ConsoleForge` and `src/ConsoleForge.SourceGen` with
+`-p:Version=<tag without the v>`, a push to nuget.org through OIDC trusted publishing
+(`NuGet/login`), and a GitHub Release carrying the `.nupkg` files.
+
+1. Every item scheduled for the release is resolved in `WISHLIST.md` — moved to the Fixed
+   table.
+2. Promote `CHANGELOG.md` `[Unreleased]` to `[X.Y.Z]`. Mark breaking changes **Breaking**;
+   while the major version is 0, they ship in minor releases.
+3. Bump `<Version>` and `<PackageReleaseNotes>` in both
+   `src/ConsoleForge/ConsoleForge.csproj` and
+   `src/ConsoleForge.SourceGen/ConsoleForge.SourceGen.csproj`.
+4. `dotnet build ConsoleForge.slnx -c Release && dotnet test ConsoleForge.slnx -c Release`.
+5. Tag `vX.Y.Z` on `main` and push the tag — **only with the maintainer's explicit
+   go-ahead**, since it publishes publicly.
+
+Gotchas:
+
+- The tag, not the csproj, sets the published version. Keep them equal anyway, so a local
+  `dotnet pack` produces the same version.
+- The push uses `--skip-duplicate`, so re-pushing a version that already exists silently
+  does nothing. Bump the version instead.
+- A published NuGet version cannot be replaced, only unlisted.
+
 ## Definition of Done
 
 A change is finished when every line below is true, not when the code works. The
