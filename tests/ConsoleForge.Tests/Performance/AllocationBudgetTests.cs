@@ -101,6 +101,27 @@ public class AllocationBudgetTests
     }
 
     [Fact]
+    public void SteadyStateFrame_OfNonAsciiText_StaysWithinBudget()
+    {
+        // Each non-ASCII cell went through Style.Render: a rune string and a styled
+        // concatenation per cell, per frame, where an ASCII cell hit the per-char cache,
+        // and wrapping allocated a string per rune. ~62 KB a frame on this tree before,
+        // ~14 KB after: BMP glyphs now share the per-char cache.
+        var root = new Container(Axis.Vertical, [.. Enumerable.Range(0, 20)
+            .Select(i => (IWidget)new TextBlock($"項目 {i:D2} — café ▀▀▀"))]);
+        var ctx  = Primed(root);
+
+        long perFrame = AllocatedPerCall(() =>
+        {
+            ctx.Reset(ctx.Region, Theme.Dark, ColorProfile.TrueColor, ctx.Layout);
+            root.Render(ctx);
+            ctx.ToAnsiFrame();
+        });
+
+        AssertUnder(20_000, perFrame, "20 non-ASCII TextBlocks, nothing changed");
+    }
+
+    [Fact]
     public void Layout_OfAutoChildren_DoesNotAllocatePerMeasure()
     {
         // Resolving a layout allocates its Dictionary; the measure pass on top of it must

@@ -268,4 +268,33 @@ public class TextUtilsTests
         // Ａ U+FF21
         Assert.Equal(2, TextUtils.RuneDisplayWidth(new Rune('Ａ')));
     }
+
+    // ── Control characters ────────────────────────────────────────────────────
+    // The renderer draws no column for a control character and one for a tab; the
+    // ASCII fast paths counted one column for every char, so "ab\r" measured 3.
+
+    [Theory]
+    [InlineData("ab\r", 2)]
+    [InlineData("a\tb", 3)]
+    [InlineData("a\u001bb", 2)]
+    [InlineData("\u007f", 0)]
+    public void VisualWidth_ControlCharacters(string text, int expected)
+    {
+        Assert.Equal(expected, TextUtils.VisualWidth(text));
+        Assert.Equal(expected, TextUtils.VisualWidth(text.AsSpan()));
+    }
+
+    [Fact]
+    public void TruncateToWidth_DoesNotCountACarriageReturn()
+    {
+        Assert.Equal("ab\rc", TextUtils.TruncateToWidth("ab\rcd", 3));
+    }
+
+    [Fact]
+    public void WrapToWidth_DoesNotCountACarriageReturn()
+    {
+        Assert.Equal(["ab\r", "cd"], TextUtils.WrapToWidth("ab\r\ncd", 2));
+        Assert.Equal(1, TextUtils.MeasureWrapped("ab\r", 2, out int widest));
+        Assert.Equal(2, widest);
+    }
 }

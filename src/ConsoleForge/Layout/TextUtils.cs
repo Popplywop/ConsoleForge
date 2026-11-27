@@ -47,20 +47,32 @@ public static class TextUtils
 
     // ── Visual width ──────────────────────────────────────────────────────────
 
+    // The fast paths below count one column per char, which holds for printable ASCII
+    // only. A control character occupies no column (a tab, one), so text holding any
+    // takes the rune path, where RuneDisplayWidth says so — otherwise "ab\r" measures
+    // three columns here and draws two.
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static bool IsPrintableAscii(char c) => c is >= ' ' and < '\x7F';
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static bool IsPrintableAscii(ReadOnlySpan<char> text) =>
+        text.IndexOfAnyExceptInRange(' ', '~') < 0;
+
+
     /// <summary>
     /// Returns the number of terminal columns occupied by <paramref name="text"/>.
-    /// Pure ASCII strings return <c>text.Length</c> via a single SIMD scan.
+    /// Printable ASCII strings return <c>text.Length</c> via a single SIMD scan.
     /// Wide characters (CJK, emoji, full-width) count as 2 columns.
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int VisualWidth(string text)
     {
-        if (System.Text.Ascii.IsValid(text)) return text.Length;
+        if (IsPrintableAscii(text)) return text.Length;
 
         // Non-ASCII: find the first non-ASCII boundary, count prefix as-is,
         // then Rune-enumerate the remainder.
         int i = 0;
-        while (i < text.Length && text[i] < 128) i++;
+        while (i < text.Length && IsPrintableAscii(text[i])) i++;
 
         int width = i;
         var walker = new WidthWalker();
@@ -74,7 +86,7 @@ public static class TextUtils
     {
         // Span overload: manual ASCII scan (no string.IsAscii overload for spans in net8).
         int i = 0;
-        while (i < text.Length && text[i] < 128) i++;
+        while (i < text.Length && IsPrintableAscii(text[i])) i++;
         if (i == text.Length) return text.Length;
 
         int width = i;
@@ -96,12 +108,12 @@ public static class TextUtils
     {
         if (maxWidth <= 0) return string.Empty;
 
-        if (System.Text.Ascii.IsValid(text))
+        if (IsPrintableAscii(text))
             return text.Length <= maxWidth ? text : text[..maxWidth];
 
         // Non-ASCII: scan ASCII prefix char-by-char, then Rune-enumerate remainder.
         int i = 0;
-        while (i < text.Length && text[i] < 128)
+        while (i < text.Length && IsPrintableAscii(text[i]))
         {
             if (i >= maxWidth) return text[..maxWidth];
             i++;
@@ -133,7 +145,7 @@ public static class TextUtils
     {
         if (targetWidth <= 0) return string.Empty;
 
-        if (System.Text.Ascii.IsValid(text))
+        if (IsPrintableAscii(text))
         {
             if (text.Length == targetWidth) return text;
             if (text.Length  > targetWidth) return text[..targetWidth];
@@ -157,12 +169,19 @@ public static class TextUtils
                 }
                 break;
             }
-            sb.Append(r.ToString());
+            AppendRune(sb, r);
             width += rw;
         }
 
         while (width < targetWidth) { sb.Append(' '); width++; }
         return sb.ToString();
+    }
+
+    // StringBuilder has no Append(Rune) on net8; Rune.ToString would allocate per rune.
+    private static void AppendRune(StringBuilder sb, Rune r)
+    {
+        if (r.IsBmp) sb.Append((char)r.Value);
+        else { Span<char> pair = stackalloc char[2]; sb.Append(pair[..r.EncodeToUtf16(pair)]); }
     }
 
     // ── Wrap ─────────────────────────────────────────────────────────────────
@@ -180,7 +199,7 @@ public static class TextUtils
         {
             if (rawLine.Length == 0) { result.Add(""); continue; }
 
-            if (System.Text.Ascii.IsValid(rawLine))
+            if (IsPrintableAscii(rawLine))
             {
                 // Pure ASCII fast path.
                 var rem = rawLine.AsSpan();
@@ -206,7 +225,7 @@ public static class TextUtils
                     sb.Clear();
                     col = 0;
                 }
-                sb.Append(r.ToString());
+                AppendRune(sb, r);
                 col += rw;
             }
             if (sb.Length > 0 || col == 0) result.Add(sb.ToString());
@@ -250,7 +269,7 @@ public static class TextUtils
                 // An empty source line still occupies a row.
                 lines++;
             }
-            else if (System.Text.Ascii.IsValid(rawLine))
+            else if (IsPrintableAscii(rawLine))
             {
                 // ASCII is one column per char, so the chunk count is arithmetic:
                 // WrapToWidth emits a chunk per full width, then the remainder.
@@ -484,6 +503,8 @@ public static class TextUtils
     ///   character rather than advancing the cursor.</description></item>
     ///   <item><description><c>2</c> — East_Asian_Width Wide or Fullwidth: CJK,
     ///   Hangul, fullwidth forms, and emoji that have default emoji presentation.</description></item>
+    ///   <item><description><c>1</c> — a tab, which the renderer draws as one blank
+    ///   (a tab stop depends on where the text lands, which a widget cannot know).</description></item>
     ///   <item><description><c>1</c> — everything else, including pictographs with
     ///   default *text* presentation such as U+1F39E FILM FRAMES or U+2699 GEAR.
     ///   Those widen to 2 columns only when followed by
@@ -497,7 +518,7 @@ public static class TextUtils
         int v = rune.Value;
 
         // Printable ASCII — the overwhelmingly common case.
-        if (v < 0x7F) return v < 0x20 ? 0 : 1;
+        if (v < 0x7F) return v >= 0x20 || v == '\t' ? 1 : 0;
 
         // Below U+0300 the only non-narrow codepoints are the C1 controls and
         // U+00AD SOFT HYPHEN, so Latin-1 and Latin Extended never reach the table.
