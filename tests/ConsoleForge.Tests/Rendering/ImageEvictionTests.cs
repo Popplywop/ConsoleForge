@@ -100,13 +100,14 @@ public class ImageEvictionTests
 
     // ── Through App ───────────────────────────────────────────────────────────
 
-    private sealed record ImageModel(ConcurrentQueue<IMsg> Seen) : IModel
+    private sealed record ImageModel(ConcurrentQueue<IMsg> Seen, TaskCompletionSource Resized) : IModel
     {
         public ICmd? Init() => null;
 
         public (IModel Model, ICmd? Cmd) Update(IMsg msg)
         {
             Seen.Enqueue(msg);
+            if (msg is WindowResizeMsg) Resized.TrySetResult();
             return msg switch
             {
                 KeyMsg { Key: ConsoleKey.Q }   => (this, Cmd.Quit()),
@@ -120,28 +121,47 @@ public class ImageEvictionTests
 
     private static int TotalUploads(VirtualTerminal t) => t.WriteHistory.Sum(Uploads);
 
-    private static async Task Reply(VirtualTerminal terminal, string message)
+    /// <summary>One frame after both of the inputs before it, in order.</summary>
+    private static async Task NextFrame(VirtualTerminal terminal)
     {
         int baseline = terminal.FramesFlushed;
-        terminal.EnqueueInput(new KittyGraphicsReplyEvent(ImageId, message));
-        // A key that changes the model follows the reply into the same drain of the queue,
-        // so exactly one frame comes after both, whether or not the reply caused one.
+        // A key that changes the model follows whatever was queued before it into the same
+        // drain of the queue, so exactly one frame comes after both.
         terminal.EnqueueKey(new KeyMsg(ConsoleKey.F24, null));
         await terminal.WaitForFrames(baseline + 1);
+    }
+
+    private static async Task Reply(VirtualTerminal terminal, string message)
+    {
+        terminal.EnqueueInput(new KittyGraphicsReplyEvent(ImageId, message));
+        await NextFrame(terminal);
+    }
+
+    /// <summary>
+    /// Start the app and wait until startup is over. The startup resize redraws the frame
+    /// from scratch — and re-sends the image with it — either before or after the first
+    /// timer frame, so the upload count is only stable once it has been handled.
+    /// </summary>
+    private static async Task<(VirtualTerminal Terminal, Task Run, ConcurrentQueue<IMsg> Seen)> Start()
+    {
+        var seen     = new ConcurrentQueue<IMsg>();
+        var resized  = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var terminal = new VirtualTerminal(Width, Height);
+        var run      = App.Run(new ImageModel(seen, resized), terminal, Theme.Dark);
+        await resized.Task.WaitAsync(TimeSpan.FromSeconds(10));
+        await NextFrame(terminal);
+        return (terminal, run, seen);
     }
 
     [Fact]
     public async Task EnoentReply_ReuploadsThroughApp_AndNeverReachesTheModel()
     {
-        var seen     = new ConcurrentQueue<IMsg>();
-        var terminal = new VirtualTerminal(Width, Height);
-        var run      = App.Run(new ImageModel(seen), terminal, Theme.Dark);
-
-        await terminal.WaitForFrames(1);
-        Assert.Equal(1, TotalUploads(terminal));
+        var (terminal, run, seen) = await Start();
+        int before = TotalUploads(terminal);
+        Assert.True(before >= 1);
 
         await Reply(terminal, "ENOENT:image evicted");
-        Assert.Equal(2, TotalUploads(terminal));
+        Assert.Equal(before + 1, TotalUploads(terminal));
 
         terminal.EnqueueKey(new KeyMsg(ConsoleKey.Q, 'q'));
         await run;
@@ -154,14 +174,13 @@ public class ImageEvictionTests
     {
         // The terminal refused the upload itself (q=1 reports that too); the placement's
         // ENOENT that follows must not start an upload every frame.
-        var terminal = new VirtualTerminal(Width, Height);
-        var run      = App.Run(new ImageModel(new()), terminal, Theme.Dark);
-        await terminal.WaitForFrames(1);
+        var (terminal, run, _) = await Start();
+        int before = TotalUploads(terminal);
 
         await Reply(terminal, "EBADPNG:bad png data");
         await Reply(terminal, "ENOENT:no such image");
         await Reply(terminal, "ENOENT:no such image");
-        Assert.Equal(1, TotalUploads(terminal));
+        Assert.Equal(before, TotalUploads(terminal));
 
         terminal.EnqueueKey(new KeyMsg(ConsoleKey.Q, 'q'));
         await run;
@@ -170,14 +189,13 @@ public class ImageEvictionTests
     [Fact]
     public async Task Recoveries_AreBounded()
     {
-        var terminal = new VirtualTerminal(Width, Height);
-        var run      = App.Run(new ImageModel(new()), terminal, Theme.Dark);
-        await terminal.WaitForFrames(1);
+        var (terminal, run, _) = await Start();
+        int before = TotalUploads(terminal);
 
         for (int i = 0; i < 6; i++)
             await Reply(terminal, "ENOENT:no such image");
 
-        Assert.Equal(4, TotalUploads(terminal)); // the first upload plus three recoveries
+        Assert.Equal(before + 3, TotalUploads(terminal)); // three recoveries, then no more
 
         terminal.EnqueueKey(new KeyMsg(ConsoleKey.Q, 'q'));
         await run;
