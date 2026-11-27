@@ -112,6 +112,16 @@ marked **Breaking**.
   (`CSI row ; col R`, sent when anything reads the cursor position) is dropped rather than
   decoded as a modified F3, and a bracketed paste whose end marker never arrives is ended
   after 3 s of silence instead of swallowing every later key.
+- A Kitty image the terminal evicted was never sent again. Kitty and Ghostty keep uploaded
+  images within a storage quota (320 MB) and delete the oldest past it — images without
+  placements first, which is what `Cmd.Preload` leaves behind — while the frame tracking
+  assumed everything it uploaded was still held, and re-placed it into nothing. Uploads
+  and placements now set `q=1` (errors only, where they set `q=2`); a placement answered
+  `ENOENT` makes the renderer forget the image, and the next frame uploads it in full. An
+  image whose upload the terminal rejected is not retried, and recoveries are capped at
+  three per image so a terminal that keeps failing cannot cost an upload every frame.
+  Replies under tmux generally do not come back through it, so there the old behaviour
+  stands.
 - `IRawEscapePayload.Refresh` — the tmux renewal of a stationary image — had no test. It
   is now pinned in both directions: renewed once per frame inside tmux with the same
   placement id and no delete, and not renewed at all outside it.

@@ -93,18 +93,6 @@ flag (disabled = skipped by `Handle`, hidden from help), a
 `q quit · esc back · ? help` from `IReadOnlyList<KeyBinding>` in the theme's
 muted style.
 
-### 13. An image the terminal evicted is never sent again
-
-Kitty keeps uploaded images in a storage quota and discards old ones when it fills. The
-frame tracking assumes that whatever it uploaded is still held, so an evicted image is
-re-*placed* — and the placement fails silently, because every command sets `q=2`.
-
-**Proposal:** place with `q=1` (errors only), and route a `KittyGraphicsReplyEvent` with
-`ENOENT` for image id *n* to the renderer, which forgets content hash *n* so the next frame
-encodes it in full. `InputDecoder` already decodes the reply; what is missing is the path
-from `AnsiTerminal` to `RenderContext` — which is a render-path change, so it comes with a
-Tier 3 run.
-
 ## Fixed (for the record)
 
 What each gap turned out to be, and what shipped.
@@ -142,3 +130,4 @@ What each gap turned out to be, and what shipped.
 | Unreleased | Input went through `Console.ReadKey`, which had already decoded the bytes, so escape sequences were rebuilt from its `KeyChar`s. That rebuild waited microseconds for the rest of a sequence (↑ split by SSH became Escape, `[`, `A`), could not see the Kitty keyboard protocol, and could not tell a terminal's reply from typing. Input is now raw characters from `poll`/`read` (Unix) or `ReadConsoleInputW` with VT input (Windows) into a pure `InputDecoder`, tested with strings, with the timeout as an input to it rather than a spin loop inside it. Windows should get SGR mouse, which the ReadKey loop could not receive (not yet tried on Windows); macOS stops overflowing a Linux-shaped `termios`. |
 | Unreleased | Kitty graphics replies reached the model as keystrokes — `ESC _ G i=…;OK ESC \` became Alt+`_`, `Gi=…;OK`, Alt+`\` — and the place delete (`a=d`) and continuation chunks did not set `q=2`, so they were left to each terminal's habits. `Detect()` relied on environment variables while `BuildDetectProbe` sat unused: it could not be, as ReadKey could not read the answer, and the probe itself declared `f=32` for PNG bytes and set `q=1`, which suppresses the `OK` it asks for. Replies are now decoded and kept from the model, every command is quiet, and `Detect()` sends a well-formed probe bounded by a device attributes request, falling back to the environment only when the terminal cannot be asked or does not answer. |
 | Unreleased | `f=100` declared PNG for whatever bytes it was handed (item 12). WezTerm sniffs the content, so PlexTui's JPEG artwork drew there; kitty and Ghostty decode only PNG under `f=100` and drew nothing, silently, because of `q=2`. Both proposals landed: `PngData` and `CreatePayload(byte[])` check the PNG signature and throw, naming the fix; and `RgbaImageData` goes to the Kitty path as zlib-compressed `f=32` (`o=z`, RFC 1950 via the BCL's `ZLibStream` — no new dependency), so an application decodes whatever it has. JPEG decoding stays out of the framework. |
+| Unreleased | An image the terminal evicted was never sent again (item 13). The protocol says terminals delete older images past their quota (kitty: 320 MB per screen), preferring images without placements — preloaded ones. Uploads and placements now use `q=1`; `InputDecoder` already decoded the `ENOENT` reply, and it now reaches `App`, which tells `Renderer.ForgetRawPayload` so the next frame encodes the image in full. Bounded: an image whose upload was rejected (any non-`ENOENT` error) is never retried, and recoveries stop after three per image. Tier 1 tests count uploads through `RenderContext` and through `App`; Tier 3 not run (no NuGet access where it was written). Under tmux replies generally do not return, so nothing changes there. |

@@ -47,6 +47,12 @@ internal sealed record BatchDispatchMsg(IReadOnlyList<ICmd> Cmds) : IMsg;
 /// the terminal and the frame state that records what it holds.</summary>
 internal sealed record PreloadMsg(Layout.IRawEscapePayload Payload) : IMsg;
 
+/// <summary>
+/// A Kitty graphics error reply from the terminal, for the event loop. Never reaches the
+/// model: the loop handles it (see <c>App.HandleGraphicsReply</c>).
+/// </summary>
+internal sealed record GraphicsReplyMsg(uint ImageId, string Message) : IMsg;
+
 /// <summary>Internal: aggregates results from Cmd.Sequence serial execution.</summary>
 internal sealed record SequenceMsg(IMsg[] Messages) : IMsg;
 

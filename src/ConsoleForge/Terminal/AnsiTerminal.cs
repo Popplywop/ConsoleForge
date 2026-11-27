@@ -306,9 +306,11 @@ public sealed class AnsiTerminal : ITerminal
 
             foreach (var ev in events)
             {
-                // Replies to terminal queries are the framework's business; nothing that
-                // subscribes to Input expects them, and a model must never see one as keys.
-                if (ev is KittyGraphicsReplyEvent or DeviceAttributesEvent) continue;
+                // Replies to terminal queries are the framework's business; a model must
+                // never see one as keys. Graphics errors go on to App, which acts on an
+                // evicted image (ENOENT); OK replies and device attributes go nowhere.
+                if (ev is DeviceAttributesEvent) continue;
+                if (ev is KittyGraphicsReplyEvent { Message: "OK" }) continue;
                 if (_disposed) break;
                 _inputSubject.OnNext(ev);
             }

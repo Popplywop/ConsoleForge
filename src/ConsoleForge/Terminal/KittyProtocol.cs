@@ -323,15 +323,25 @@ public sealed class KittyPayload : IRawEscapePayload
             string data = len > 0 ? _base64.Substring(start, len) : string.Empty;
 
             string apc = i == 0
-                // First chunk: the format keys, q=2 (suppress response), a=t (transmit only)
-                ? $"\x1b_Ga=t,{_format},i={_imageId},q=2,m={more};{data}\x1b\\"
-                // Continuation chunks: only m= and q= are allowed. q=2 here too, since a
+                // First chunk: the format keys, q=1 (errors only — see Quiet), a=t (transmit only)
+                ? $"\x1b_Ga=t,{_format},i={_imageId},{Quiet},m={more};{data}\x1b\\"
+                // Continuation chunks: only m= and q= are allowed. q=1 here too, since a
                 // terminal may take quietness from the chunk it replies after — the last.
-                : $"\x1b_Gm={more},q=2;{data}\x1b\\";
+                : $"\x1b_Gm={more},{Quiet};{data}\x1b\\";
 
             yield return _insideTmux ? WrapForTmux(apc) : apc;
         }
     }
+
+    /// <summary>
+    /// <c>q=1</c>: suppress <c>OK</c> replies, keep errors. Uploads and placements report
+    /// failure because one failure is actionable — a placement answered <c>ENOENT</c> names
+    /// an image the terminal no longer holds (it evicts the oldest images past its storage
+    /// quota, 320 MB in kitty and Ghostty, images without placements first), which the
+    /// framework then uploads again. Replies never reach the model: <c>InputDecoder</c>
+    /// recognises them on stdin. Deletes keep <c>q=2</c>; nothing follows from their failure.
+    /// </summary>
+    private const string Quiet = "q=1";
 
     /// <summary>
     /// The <c>a=p</c> command that displays the already-uploaded image at
@@ -340,7 +350,7 @@ public sealed class KittyPayload : IRawEscapePayload
     /// </summary>
     private string PlaceSequence(Region region)
     {
-        string apc = $"\x1b_Ga=p,i={_imageId},p={PlacementId(region)},q=2," +
+        string apc = $"\x1b_Ga=p,i={_imageId},p={PlacementId(region)},{Quiet}," +
                      $"c={region.Width},r={region.Height}\x1b\\";
         return _insideTmux ? BuildTmuxSequence(region, apc) : apc;
     }
@@ -380,9 +390,9 @@ public sealed class KittyPayload : IRawEscapePayload
     /// two shelves — and removing one must not blank the other. The image data itself stays
     /// in the terminal, so putting it back costs a placement rather than an upload.
     /// <para>
-    /// <c>q=2</c>, like every other command here. Whether a terminal answers a delete
-    /// varies — Ghostty never answers a successful one — but any answer arrives on stdin,
-    /// once per moved or removed image, so the framework asks for none.
+    /// <c>q=2</c>: whether a terminal answers a delete varies — Ghostty never answers a
+    /// successful one — but any answer arrives on stdin, once per moved or removed image,
+    /// and nothing follows from one, so the framework asks for none.
     /// </para>
     /// </remarks>
     public string? Cleanup(Region region)

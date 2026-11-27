@@ -278,6 +278,16 @@ public sealed class VirtualTerminal : ITerminal
         _input.OnNext(new KeyInputEvent(key));
     }
 
+    /// <summary>
+    /// Enqueue any <see cref="InputEvent"/> on the Input observable — for events no
+    /// keyboard or mouse produces, such as a terminal's reply to a graphics command.
+    /// </summary>
+    public void EnqueueInput(InputEvent ev)
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        _input.OnNext(ev);
+    }
+
     /// <summary>Enqueue a synthetic bracketed paste to be delivered to the Input observable.</summary>
     public void EnqueuePaste(string text)
     {

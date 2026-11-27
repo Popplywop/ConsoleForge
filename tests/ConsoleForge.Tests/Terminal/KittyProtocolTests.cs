@@ -44,16 +44,18 @@ public class KittyProtocolTests
     }
 
     [Fact]
-    public void EveryCommand_IsQuiet()
+    public void UploadsAndPlacements_ReportOnlyErrors()
     {
-        // A PNG large enough to need continuation chunks.
+        // q=1: no OK replies, but an ENOENT for a placement of an evicted image comes back,
+        // and is what makes the framework upload it again (WISHLIST 13).
         var big = new byte[KittyProtocol.MaxChunkBase64Chars * 2];
         Png.CopyTo(big, 0);
         var payload = KittyProtocol.CreatePayload(big, TerminalCapabilities.WithKitty);
 
         var sequences = payload.Encode(new Region(0, 0, 4, 2), ColorProfile.TrueColor).ToList();
         Assert.True(sequences.Count >= 3);
-        Assert.All(sequences, s => Assert.Contains("q=2", s));
+        Assert.All(sequences, s => Assert.Contains("q=1", s));
+        Assert.All(sequences, s => Assert.DoesNotContain("q=2", s));
     }
 
     // ── Format declaration (WISHLIST 12) ────────────────────────────────────────
@@ -83,7 +85,7 @@ public class KittyProtocolTests
         var payload = KittyProtocol.CreatePayload(new RgbaImageData(pixels, 3, 2), TerminalCapabilities.WithKitty);
 
         var transmit = string.Concat(payload.Transmit(ColorProfile.TrueColor)!);
-        Assert.Matches(@"^\x1b_Ga=t,f=32,s=3,v=2,o=z,i=\d+,q=2,m=0;[A-Za-z0-9+/=]+\x1b\\$", transmit);
+        Assert.Matches(@"^\x1b_Ga=t,f=32,s=3,v=2,o=z,i=\d+,q=1,m=0;[A-Za-z0-9+/=]+\x1b\\$", transmit);
 
         // The payload is the RFC 1950 zlib stream o=z declares, inflating to the pixels.
         var base64 = transmit[(transmit.IndexOf(';') + 1)..^2];

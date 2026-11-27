@@ -50,6 +50,11 @@ public sealed class RenderContext : IRenderContext
     // hold — the cost of being wrong is one re-upload.
     private HashSet<int>? _held;
 
+    // Hashes of payloads the terminal reported it no longer holds — evicted past its
+    // storage quota. The next frame encodes them in full, wherever the tracking above
+    // says they were already uploaded. Cleared by that frame.
+    private HashSet<int>? _forgotten;
+
     // Widget render cache: flat arrays for widget→region map from previous frame.
     // Used by Container.Render to skip re-rendering unchanged model-stored widgets.
     // Flat arrays are cheaper than Dictionary for typical widget counts (<100).
@@ -463,8 +468,9 @@ public sealed class RenderContext : IRenderContext
         {
             foreach (var entry in _rawRegions)
             {
-                bool alreadyUploaded = WasRawPayloadPresentLastFrame(entry)
-                                    || _held?.Contains(entry.Hash) == true;
+                bool alreadyUploaded = (WasRawPayloadPresentLastFrame(entry)
+                                        || _held?.Contains(entry.Hash) == true)
+                                    && _forgotten?.Contains(entry.Hash) != true;
 
                 // Cursor-move to region top-left (used by both paths below).
                 // For DCS-passthrough payloads (Kitty/tmux) the payload
@@ -509,6 +515,10 @@ public sealed class RenderContext : IRenderContext
         if (_held is { Count: > 0 } && _rawRegions is not null)
             foreach (var entry in _rawRegions)
                 _held.Remove(entry.Hash);
+
+        // A forgotten payload on screen was just re-encoded; one that is not will be when
+        // it next appears, since it is then new to the frame-to-frame tracking anyway.
+        _forgotten = null;
 
         // Swap buffers: current → previous; old previous → current (reused, cleared by Reset next frame)
         var oldPrev = _prev;
@@ -564,6 +574,17 @@ public sealed class RenderContext : IRenderContext
 
         (_held ??= new()).Add(hash);
         return string.Concat(sequences);
+    }
+
+    /// <summary>
+    /// Record that the terminal no longer holds the payload with
+    /// <paramref name="contentHash"/> — it evicted the image — so the next frame encodes it
+    /// in full rather than placing data that is gone. Call between frames.
+    /// </summary>
+    internal void ForgetRawPayload(int contentHash)
+    {
+        _held?.Remove(contentHash);
+        (_forgotten ??= new()).Add(contentHash);
     }
 
     // ── Raw region helpers ───────────────────────────────────────────────────────
