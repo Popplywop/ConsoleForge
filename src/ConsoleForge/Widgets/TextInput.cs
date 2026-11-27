@@ -89,24 +89,45 @@ public sealed record TextInput : IFocusable
         int textWidth = Math.Max(0, region.Width - padL - padR);
         if (textWidth <= 0) return;
 
-        var display = Value.Length > 0 ? Value : Placeholder;
-        // Clip to region width (visual-width-aware for wide chars)
-        display = TextUtils.TruncateToWidth(display, textWidth);
-
-        ctx.Write(textCol, region.Row, display, effectiveStyle);
-
-        // Draw cursor when focused. CursorPosition indexes UTF-16 units, but the terminal
-        // cursor is placed in columns, so the offset is the visual width of the text
-        // before it — a wide glyph or an emoji is one index step and two columns. It
-        // measures Value, not display, which may be the placeholder or truncated.
-        if (HasFocus)
+        // Scroll sideways to keep the cursor in view. CursorPosition indexes UTF-16 units,
+        // but the terminal cursor is placed in columns, so the offset is the visual width
+        // of the text before it — a wide glyph or an emoji is one index step and two
+        // columns. The text used to be cut at the box's width and the cursor pinned to its
+        // edge, so typing past the width went on invisibly.
+        int cursorCol = 0, scroll = 0;
+        if (HasFocus && Value.Length > 0)
         {
             int pos = Math.Clamp(CursorPosition, 0, Value.Length);
-            int cursorCol = TextUtils.VisualWidth(Value.AsSpan(0, pos));
-            ctx.SetCursorDescriptor(
-                new(true, textCol + Math.Min(cursorCol, textWidth), region.Row));
+            cursorCol = TextUtils.VisualWidth(Value.AsSpan(0, pos));
+            scroll    = HorizontalScroll(cursorCol, textWidth);
         }
+
+        var display = Value.Length > 0 ? Value : Placeholder;
+        if (scroll == 0)
+        {
+            // Clip to region width (visual-width-aware for wide chars)
+            ctx.Write(textCol, region.Row, TextUtils.TruncateToWidth(display, textWidth), effectiveStyle);
+        }
+        else
+        {
+            // Shifted left past the box's edge; the clip cuts it (a wide glyph split by
+            // the edge is drawn as a blank) and stops it at the right.
+            var textRegion = new Region(textCol, region.Row, textWidth, 1);
+            new SubRenderContext(ctx, textRegion).Write(textCol - scroll, region.Row, display, effectiveStyle);
+        }
+
+        if (HasFocus)
+            ctx.SetCursorDescriptor(new(true, textCol + cursorCol - scroll, region.Row));
     }
+
+    /// <summary>
+    /// Columns to scroll so a cursor at <paramref name="cursorCol"/> is inside a box
+    /// <paramref name="width"/> columns wide: none while it fits, otherwise just enough to
+    /// put it in the last column. A pure function of the two, so it needs no state — the
+    /// text simply slides as the cursor passes the right edge.
+    /// </summary>
+    internal static int HorizontalScroll(int cursorCol, int width) =>
+        width <= 0 ? 0 : Math.Max(0, cursorCol - (width - 1));
 }
 
 /// <summary>

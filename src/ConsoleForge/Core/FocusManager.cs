@@ -113,24 +113,58 @@ public static class FocusManager
     /// <paramref name="layout"/> contains the point (<paramref name="col"/>,
     /// <paramref name="row"/>), or null if none.
     /// When multiple widgets overlap (e.g. inside a ZStack), the last one
-    /// in depth-first order wins (topmost layer).
+    /// in depth-first order wins (topmost layer) — unless a layer above covers the
+    /// point, as a <see cref="Widgets.Modal"/> covers its dialog box (and with a backdrop,
+    /// everything): then nothing beneath it can be hit.
     /// </summary>
     public static IFocusable? FindFocusableAt(
         IWidget root, ResolvedLayout layout, int col, int row)
+        => Find(root, layout, col, row, out _);
+
+    // Searches topmost first — children and layers in reverse, a widget's descendants
+    // before itself — so the first hit is the last match in depth-first order.
+    // `blocked` reports a pointer-opaque widget covering the point, which ends the search
+    // of every layer below the one that holds it.
+    private static IFocusable? Find(IWidget widget, ResolvedLayout layout, int col, int row, out bool blocked)
     {
-        var all = CollectFocusable(root);
-        IFocusable? best = null;
-        foreach (var f in all)
+        blocked = false;
+
+        if (widget is IContainer container)
         {
-            // The visible part only: a widget scrolled out of view keeps a region that
-            // reaches outside its container, over whatever is drawn there.
-            var region = layout.GetVisibleRegion(f);
-            if (region is null) continue;
-            var r = region.Value;
-            if (col >= r.Col && col < r.Col + r.Width &&
-                row >= r.Row && row < r.Row + r.Height)
-                best = f; // last match wins (topmost layer)
+            var children = container.Children;
+            for (int i = children.Count - 1; i >= 0; i--)
+            {
+                var hit = Find(children[i], layout, col, row, out blocked);
+                if (hit is not null || blocked) return hit;
+            }
         }
-        return best;
+        else if (widget is ILayeredContainer layered)
+        {
+            var layers = layered.Layers;
+            for (int i = layers.Count - 1; i >= 0; i--)
+            {
+                var hit = Find(layers[i], layout, col, row, out blocked);
+                if (hit is not null || blocked) return hit;
+            }
+        }
+        else if (widget is ISingleBodyWidget wrapper && wrapper.Body is not null)
+        {
+            var hit = Find(wrapper.Body, layout, col, row, out blocked);
+            if (hit is not null) return hit;
+        }
+
+        if (widget is IFocusable f && Contains(layout.GetVisibleRegion(f), col, row))
+            return f;
+
+        if (widget is IPointerOpaque opaque && layout.GetVisibleRegion(widget) is { } region
+            && Contains(region, col, row) && opaque.BlocksPointerAt(layout.GetRegion(widget)!.Value, col, row))
+            blocked = true;
+
+        return null;
     }
+
+    // The visible part only: a widget scrolled out of view keeps a region that reaches
+    // outside its container, over whatever is drawn there.
+    private static bool Contains(Region? region, int col, int row) =>
+        region is { } r && col >= r.Col && col < r.Col + r.Width && row >= r.Row && row < r.Row + r.Height;
 }

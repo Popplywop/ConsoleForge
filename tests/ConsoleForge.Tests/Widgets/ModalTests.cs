@@ -1,3 +1,4 @@
+using ConsoleForge.Styling;
 using ConsoleForge.Core;
 using ConsoleForge.Layout;
 using ConsoleForge.Widgets;
@@ -179,5 +180,66 @@ public class ModalTests
     {
         IMsg msg = new ModalDismissedMsg();
         Assert.NotNull(msg);
+    }
+
+    // ── Opacity ───────────────────────────────────────────────────────────────
+
+    private static string[] SimScreen(IWidget root, int width, int height)
+    {
+        var sim = new ConsoleForge.Tests.Rendering.TerminalSim(width, height);
+        sim.Apply(new Renderer().Render(root, width, height, Theme.Dark, ColorProfile.TrueColor).Content);
+        return [.. sim.Lines];
+    }
+
+    [Fact]
+    public void DialogWithoutBackdrop_HidesWhatIsBeneathIt()
+    {
+        // The box was drawn as a border and a body over whatever was there, so the screen
+        // beneath showed through every cell the body left blank.
+        var under = new TextBlock(string.Join("\n", Enumerable.Repeat(new string('a', 20), 8)));
+        var modal = new Modal("M", new TextBlock("hi"), dialogWidth: 10, dialogHeight: 4);
+        var lines = SimScreen(new ZStack([under, modal]), 20, 8);
+
+        // Dialog occupies columns 5..14, rows 2..5; its inside is rows 3..4, columns 6..13.
+        Assert.Equal("hi      ", lines[3][6..14]);
+        Assert.Equal("        ", lines[4][6..14]);
+        Assert.Equal("aaaaa", lines[3][..5]); // outside the box is untouched
+    }
+
+    // ── Hit-testing ───────────────────────────────────────────────────────────
+
+    private static (IWidget Root, TextInput Under, TextInput Inside) ModalOverInput(bool backdrop)
+    {
+        var under  = new TextInput { FocusKey = "under", Height = SizeConstraint.Flex(1) }; // the whole screen
+        var inside = new TextInput { FocusKey = "inside", Height = SizeConstraint.Fixed(1) };
+        var modal  = new Modal("M", new Container(Axis.Vertical, [inside]), dialogWidth: 10, dialogHeight: 5, showBackdrop: backdrop);
+        return (new ZStack([new Container(Axis.Vertical, [under]), modal]), under, inside);
+    }
+
+    [Fact]
+    public void ClickOnTheDialog_DoesNotFocusTheWidgetBeneath()
+    {
+        var (root, _, inside) = ModalOverInput(backdrop: false);
+        var layout = LayoutEngine.Resolve(root, 20, 9);
+
+        // Row 2 is the dialog's top border: inside the box, but on no focusable.
+        Assert.Null(FocusManager.FindFocusableAt(root, layout, col: 8, row: 2));
+        Assert.Same(inside, FocusManager.FindFocusableAt(root, layout, col: 8, row: 3));
+    }
+
+    [Fact]
+    public void ClickOutsideADialogWithoutBackdrop_ReachesTheWidgetBeneath()
+    {
+        var (root, under, _) = ModalOverInput(backdrop: false);
+        var layout = LayoutEngine.Resolve(root, 20, 9);
+        Assert.Same(under, FocusManager.FindFocusableAt(root, layout, col: 1, row: 0));
+    }
+
+    [Fact]
+    public void ClickOnTheBackdrop_DoesNotFocusTheWidgetBeneath()
+    {
+        var (root, _, _) = ModalOverInput(backdrop: true);
+        var layout = LayoutEngine.Resolve(root, 20, 9);
+        Assert.Null(FocusManager.FindFocusableAt(root, layout, col: 1, row: 0));
     }
 }

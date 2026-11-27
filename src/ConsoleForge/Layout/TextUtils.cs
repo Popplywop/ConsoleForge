@@ -45,6 +45,27 @@ public static class TextUtils
         }
     }
 
+    // ── Blanks ────────────────────────────────────────────────────────────────
+
+    private const int MaxCachedSpaces = 512;
+    private static readonly string?[] SpaceStrings = new string?[MaxCachedSpaces + 1];
+
+    /// <summary>
+    /// A string of <paramref name="count"/> spaces, shared rather than allocated: widgets
+    /// fill their background a row at a time on every frame they render.
+    /// </summary>
+    /// <remarks>
+    /// Cached per length up to 512 columns, which is wider than any real terminal row; a
+    /// longer request allocates. The cache only ever holds immutable strings, so a race
+    /// that builds the same one twice is harmless.
+    /// </remarks>
+    public static string Spaces(int count)
+    {
+        if (count <= 0) return string.Empty;
+        if (count > MaxCachedSpaces) return new string(' ', count);
+        return SpaceStrings[count] ??= new string(' ', count);
+    }
+
     // ── Visual width ──────────────────────────────────────────────────────────
 
     // The fast paths below count one column per char, which holds for printable ASCII

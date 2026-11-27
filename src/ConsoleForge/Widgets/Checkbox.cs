@@ -89,7 +89,7 @@ public sealed record Checkbox : IFocusable
         // Pad remainder of row with spaces so background fills edge-to-edge
         if (textVisualWidth < region.Width)
         {
-            var pad = new string(' ', region.Width - textVisualWidth);
+            var pad = TextUtils.Spaces(region.Width - textVisualWidth);
             ctx.Write(region.Col + textVisualWidth, region.Row, pad, baseStyle);
         }
     }

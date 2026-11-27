@@ -134,16 +134,19 @@ public sealed record List : IFocusable
             ? SelectedItemStyle.Inherit(ctx.Theme.FocusedStyle)
             : SelectedItemStyle.Inherit(ctx.Theme.BaseStyle);
 
-        var fill = new string(' ', region.Width);
+        var fill = TextUtils.Spaces(region.Width);
         var padLeft = Math.Max(0, PaddingLeft);
         var padRight = Math.Max(0, PaddingRight);
         // Width available for item text after subtracting horizontal padding
         var textWidth = Math.Max(0, region.Width - padLeft - padRight);
 
-        var maxRows = Math.Min(Items.Count - ScrollOffset, region.Height);
+        // Clamp as ListState does once it knows the viewport. An offset left past the end
+        // — the list was filtered down under it — used to draw no rows at all.
+        int scroll = Math.Clamp(ScrollOffset, 0, Math.Max(0, Items.Count - region.Height));
+        var maxRows = Math.Min(Items.Count - scroll, region.Height);
         for (var i = 0; i < maxRows; i++)
         {
-            var itemIdx = ScrollOffset + i;
+            var itemIdx = scroll + i;
             var rowStyle = itemIdx == SelectedIndex ? selectedStyle : baseStyle;
 
             // 1. Fill the entire row so the background colour covers edge-to-edge

@@ -1,3 +1,5 @@
+using ConsoleForge.Layout;
+using ConsoleForge.Styling;
 using ConsoleForge.Core;
 using ConsoleForge.Widgets;
 
@@ -267,5 +269,53 @@ public class TextInputTests
         var cursor = ViewDescriptor.From(input, width: 20, height: 1).Cursor;
 
         Assert.Equal(0, cursor.Col);
+    }
+
+    // ── Horizontal scroll ─────────────────────────────────────────────────────
+
+    private static string[] SimScreen(IWidget root, int width, int height)
+    {
+        var sim = new ConsoleForge.Tests.Rendering.TerminalSim(width, height);
+        sim.Apply(new Renderer().Render(root, width, height, Theme.Dark, ColorProfile.TrueColor).Content);
+        return [.. sim.Lines];
+    }
+
+    private static (string Line, CursorDescriptor Cursor) Typed(TextInput input, int width)
+    {
+        var root = new Container(Axis.Horizontal, [input with { Width = SizeConstraint.Fixed(width) }, new TextBlock("|")]);
+        var view = new Renderer().Render(root, width + 1, 1, Theme.Dark, ColorProfile.TrueColor);
+        var sim = new ConsoleForge.Tests.Rendering.TerminalSim(width + 1, 1);
+        sim.Apply(view.Content);
+        return (sim.Lines[0], view.Cursor);
+    }
+
+    [Fact]
+    public void TypingPastTheWidth_ScrollsToKeepTheCursorInView()
+    {
+        // The text was cut at the box's width and the cursor pinned to its edge, so
+        // everything typed past the width went in unseen.
+        var (line, cursor) = Typed(new TextInput("abcdefghijkl", cursorPosition: 12) { HasFocus = true }, 6);
+        Assert.Equal("hijkl |", line);
+        Assert.Equal(5, cursor.Col); // the box's last column, never the neighbour's
+    }
+
+    [Fact]
+    public void CursorInsideTheWidth_DoesNotScroll()
+    {
+        var (line, cursor) = Typed(new TextInput("abcdefghijkl", cursorPosition: 2) { HasFocus = true }, 6);
+        Assert.Equal("abcdef|", line);
+        Assert.Equal(2, cursor.Col);
+    }
+
+    [Fact]
+    public void Unfocused_ShowsTheStart()
+        => Assert.Equal("abcdef|", Typed(new TextInput("abcdefghijkl", cursorPosition: 12), 6).Line);
+
+    [Fact]
+    public void WideText_ScrollsByColumns()
+    {
+        var (line, cursor) = Typed(new TextInput("中文中文中文", cursorPosition: 6) { HasFocus = true }, 6);
+        Assert.Equal(" 中文 |", line); // 中文中文中文 is 12 columns; the window is the last 5 + cursor
+        Assert.Equal(5, cursor.Col);
     }
 }

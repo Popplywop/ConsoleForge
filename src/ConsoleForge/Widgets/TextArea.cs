@@ -152,7 +152,19 @@ public sealed record TextArea : IFocusable
         if (region.Width <= 0 || region.Height <= 0) return;
 
         var effectiveStyle = Style.Inherit(ctx.Theme.BaseStyle);
-        var fill = new string(' ', region.Width);
+        var fill = TextUtils.Spaces(region.Width);
+
+        // One sideways scroll for every line, as an editor does, chosen to keep the
+        // cursor in view. CursorCol indexes UTF-16 units, but the terminal cursor is
+        // placed in columns, so the offset is the visual width of the text before it.
+        int cursorCol = 0, scroll = 0;
+        if (HasFocus && CursorRow >= 0 && CursorRow < Lines.Count)
+        {
+            var cursorLine = Lines[CursorRow];
+            cursorCol = TextUtils.VisualWidth(cursorLine.AsSpan(0, Math.Clamp(CursorCol, 0, cursorLine.Length)));
+            scroll    = TextInput.HorizontalScroll(cursorCol, region.Width);
+        }
+        var clipped = scroll > 0 ? new SubRenderContext(ctx, region) : ctx;
 
         for (var rowOffset = 0; rowOffset < region.Height; rowOffset++)
         {
@@ -165,23 +177,16 @@ public sealed record TextArea : IFocusable
             if (lineIdx >= Lines.Count) continue; // past end of document — blank row
 
             var line = Lines[lineIdx];
-
-            // Clip / truncate to visible width (visual-width-aware)
-            var visible = TextUtils.TruncateToWidth(line, region.Width);
-            if (visible.Length > 0)
-                ctx.Write(region.Col, absRow, visible, effectiveStyle);
-
-            // Draw cursor when focused and this is the cursor row.
-            // CursorCol indexes UTF-16 units, but the terminal cursor is placed in
-            // columns, so the offset is the visual width of the text before it — a wide
-            // glyph or an emoji is one index step and two columns.
-            if (HasFocus && lineIdx == CursorRow)
+            if (line.Length > 0)
             {
-                int col = Math.Clamp(CursorCol, 0, line.Length);
-                int cursorCol = TextUtils.VisualWidth(line.AsSpan(0, col));
-                ctx.SetCursorDescriptor(
-                    new(true, region.Col + Math.Min(cursorCol, region.Width - 1), absRow));
+                if (scroll == 0)
+                    ctx.Write(region.Col, absRow, TextUtils.TruncateToWidth(line, region.Width), effectiveStyle);
+                else
+                    clipped.Write(region.Col - scroll, absRow, line, effectiveStyle);
             }
+
+            if (HasFocus && lineIdx == CursorRow)
+                ctx.SetCursorDescriptor(new(true, region.Col + cursorCol - scroll, absRow));
         }
     }
 }

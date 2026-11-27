@@ -48,7 +48,11 @@ public static class LayoutEngine
     // may have scrolled part of it out of view; null everywhere else.
     private static void Allocate(IWidget widget, Region region, ResolvedLayout target, Region? clip)
     {
-        target.Allocations[widget] = region;
+        if (!target.Allocations.TryAdd(widget, region))
+        {
+            target.Allocations[widget] = region;
+            target.HasDuplicates = true;
+        }
         if (clip is { } c) target.SetClip(widget, Intersect(region, c));
 
         if (widget is IContainer container)

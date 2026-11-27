@@ -131,4 +131,61 @@ public class ContainerTests
         Assert.Same(above, FocusManager.FindFocusableAt(root, layout, col: 1, row: 0));
         Assert.Same(shown, FocusManager.FindFocusableAt(root, layout, col: 1, row: 1));
     }
+
+    // ── Reading the layout instead of solving again ───────────────────────────
+
+    [Fact]
+    public void SameInstanceTwice_RendersInBothPlaces()
+    {
+        // The layout keys regions by instance, so it holds only one of these two; the
+        // container must not take its children's places from it.
+        var shared = new TextBlock("dup") { Height = SizeConstraint.Fixed(1) };
+        var root = new Container(Axis.Vertical, [shared, new TextBlock("mid") { Height = SizeConstraint.Fixed(1) }, shared]);
+        Assert.Equal(["dup", "mid", "dup"], Screen(root, 6, 3));
+    }
+
+    [Fact]
+    public void ContainerRenderedOutsideTheLayoutPass_StillPlacesItsChildren()
+    {
+        // A container the layout never saw (built inside another widget's Render) has no
+        // regions to read back and must solve for itself.
+        var inner = new Container(Axis.Vertical, [new TextBlock("a") { Height = SizeConstraint.Fixed(1) }, new TextBlock("b") { Height = SizeConstraint.Fixed(1) }]);
+        var host = new Hosting(inner);
+        Assert.Equal(["a", "b"], Screen(host, 4, 2));
+    }
+
+    private sealed record Hosting(IWidget Inner) : IWidget
+    {
+        public SizeConstraint Width => SizeConstraint.Flex(1);
+        public SizeConstraint Height => SizeConstraint.Flex(1);
+        public Style Style => Style.Default;
+        public void Render(IRenderContext ctx) => Inner.Render(new SubRenderContext(ctx, ctx.Region));
+    }
+
+    [Fact]
+    public void AFrame_MeasuresEachAutoChildOnlyDuringLayout()
+    {
+        // Container.Render re-ran the solver, measuring every Auto child a second time
+        // per frame — and once per level of Auto nesting on top of that.
+        var probe = new CountingWidget();
+        IWidget root = new Container(Axis.Vertical,
+            [new Container(Axis.Horizontal, [probe, new TextBlock("x")], height: SizeConstraint.Auto)]);
+
+        LayoutEngine.Resolve(root, 20, 5);
+        int layoutOnly = probe.Calls;
+        probe.Calls = 0;
+
+        new Renderer().Render(root, 20, 5, Theme.Dark, ColorProfile.TrueColor);
+        Assert.Equal(layoutOnly, probe.Calls);
+    }
+
+    private sealed class CountingWidget : IWidget, IMeasurable
+    {
+        public int Calls;
+        public SizeConstraint Width => SizeConstraint.Auto;
+        public SizeConstraint Height => SizeConstraint.Auto;
+        public Style Style => Style.Default;
+        public void Render(IRenderContext ctx) { }
+        public Size Measure(int availableWidth, int availableHeight) { Calls++; return new Size(3, 1); }
+    }
 }
