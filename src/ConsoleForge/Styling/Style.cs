@@ -268,6 +268,19 @@ public readonly struct Style : IEquatable<Style>
         return result;
     }
 
+    /// <summary>
+    /// Wrap one cell's text — a grapheme cluster — in this style's colours and
+    /// attributes, without <see cref="Render"/>'s padding, width and height transforms.
+    /// Those shape a whole block of text; applied to a single cell they would pad every
+    /// glyph on its own.
+    /// </summary>
+    internal string RenderCell(string cell, ColorProfile colorProfile)
+    {
+        if (_props == 0) return cell;
+        var (open, close) = GetCachedAnsiSequences(colorProfile);
+        return open.Length == 0 ? cell : string.Concat(open, cell, close);
+    }
+
     // Pre-interned single-char strings for ASCII 0-127. Avoids alloc for unstyled cells.
     private static readonly string[] _asciiStrings = Enumerable.Range(0, 128)
         .Select(i => ((char)i).ToString())

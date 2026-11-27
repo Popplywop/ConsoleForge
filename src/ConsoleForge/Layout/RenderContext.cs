@@ -55,19 +55,56 @@ public sealed class RenderContext : IRenderContext
     // says they were already uploaded. Cleared by that frame.
     private HashSet<int>? _forgotten;
 
-    // Widget render cache: flat arrays for widget→region map from previous frame.
+    // Write stamps: _stamps[i] is the sequence number of the write that last touched
+    // cell i this frame (0 = untouched). Every Write, raw-escape fill and cursor
+    // placement takes the next number. A widget's cached cells are the ones stamped
+    // inside the span of its own render, so the cache can tell what the widget drew
+    // from what was drawn under it before, or over it afterwards — an overlay that
+    // was open last frame, or a neighbour that overflowed. Reset rewinds _seq.
+    private int[]? _stamps; // allocated by the first cache lookup; null while nothing asks
+    private int[]? _prevStamps;
+    private int _seq;
+    private int _cursorStamp;
+
+    // Whether any wide glyph is in the buffer this frame (and was, last frame). Until
+    // one is, no write can land on half of one, so Displace has nothing to do — which
+    // keeps it off the per-cell cost of the common all-narrow screen.
+    private bool _anyWide, _prevAnyWide;
+
+    // One widget the cache may serve next frame: where it rendered, the stamps its own
+    // render took, the raw payloads it registered and the cursor it placed. The last
+    // two are side channels outside the cell buffer, replayed on a hit — copying the
+    // cells alone would drop the cursor and let the frame delete the widget's images.
+    private struct CacheEntry
+    {
+        public IWidget Widget;
+        public Region Region;
+        public int SeqStart, SeqEnd;   // SeqStart < 0: render span unknown, never served
+        public int RawStart, RawEnd;   // range in that frame's _rawRegions
+        public CursorDescriptor? Cursor;
+    }
+
+    // Renders in progress: pushed by a cache miss, popped by the RegisterWidget that
+    // follows it, so a registration knows where its widget's render began.
+    private struct PendingRender
+    {
+        public IWidget Widget;
+        public int SeqStart, RawStart;
+    }
+
+    // Widget render cache: flat arrays for widget→entry map from previous frame.
     // Used by Container.Render to skip re-rendering unchanged model-stored widgets.
     // Flat arrays are cheaper than Dictionary for typical widget counts (<100).
     // Two buffers that ping-pong in Reset. The previous frame's map must stay
     // readable for the whole frame, so RegisterWidget may never consume it.
-    private IWidget?[]? _prevWidgets;
-    private Region[]?   _prevRegions;
-    private int         _prevWidgetCount;
+    private CacheEntry[]? _prevEntries;
+    private int           _prevWidgetCount;
     // Lazy-allocated on first RegisterWidget call — leaf widgets (TextBlock,
     // TextInput, ProgressBar, etc.) never call Register so they pay nothing.
-    private IWidget?[]? _curWidgets;
-    private Region[]?   _curRegions;
-    private int         _curWidgetCount;
+    private CacheEntry[]? _curEntries;
+    private int           _curWidgetCount;
+    private PendingRender[] _pending = new PendingRender[8];
+    private int             _pendingCount;
 
     /// <inheritdoc/>
     public Region         Region       { get; private set; }
@@ -121,8 +158,10 @@ public sealed class RenderContext : IRenderContext
 
         if (sizeChanged)
         {
-            _cells = new string[region.Width * region.Height];
-            _prev  = null;
+            _cells  = new string[region.Width * region.Height];
+            _stamps = null;
+            _prev   = null;
+            _prevStamps = null;
             // Force raw regions to re-emit after resize — placed images are
             // cleared by the terminal when the viewport changes.
             _prevRawRegions = null;
@@ -131,14 +170,19 @@ public sealed class RenderContext : IRenderContext
         else
         {
             Array.Clear(_cells, 0, _cells.Length);
+            if (_stamps is not null) Array.Clear(_stamps, 0, _stamps.Length);
         }
+        _seq          = 0;
+        _cursorStamp  = 0;
+        _prevAnyWide  = _anyWide && _prev is not null;
+        _anyWide      = false;
+        _pendingCount = 0;
 
         // Swap widget maps: this frame writes into the array the previous frame read
         // from, and vice versa. Both stay allocated, so steady-state frames allocate
-        // nothing here and _prevWidgets survives the whole frame — RegisterWidget used
+        // nothing here and _prevEntries survives the whole frame — RegisterWidget used
         // to steal it, which switched the cache off for every widget after the first.
-        (_prevWidgets, _curWidgets) = (_curWidgets, _prevWidgets);
-        (_prevRegions, _curRegions) = (_curRegions, _prevRegions);
+        (_prevEntries, _curEntries) = (_curEntries, _prevEntries);
         _prevWidgetCount = _curWidgetCount;
         _curWidgetCount  = 0;
 
@@ -163,26 +207,55 @@ public sealed class RenderContext : IRenderContext
     /// ASCII fast path skips grapheme cluster logic entirely.
     /// </summary>
     public void Write(int col, int row, string text, Style style)
+        => WriteClipped(col, row, text, style, Region.Col, Region.Col + Region.Width);
+
+    /// <summary>
+    /// <see cref="Write"/>, clipped to columns <c>[clipLeft, clipRight)</c> as well as to
+    /// <see cref="Region"/>. <see cref="SubRenderContext"/> writes through this, so text
+    /// longer than a widget's region stops at its edge instead of drawing over the
+    /// neighbouring widget.
+    /// </summary>
+    internal void WriteClipped(int col, int row, string text, Style style, int clipLeft, int clipRight)
     {
         if (row < Region.Row || row >= Region.Row + Region.Height) return;
-        if (col >= Region.Col + Region.Width) return;
         if (text.Length == 0) return;
 
-        int cellRow = row - Region.Row;
+        // Clip window in cell columns within this context's row.
+        int minC = Math.Max(0, clipLeft - Region.Col);
+        int maxC = Math.Min(Region.Width, clipRight - Region.Col);
+        if (minC >= maxC) return;
+
+        int cellRow    = row - Region.Row;
+        int rowStart   = cellRow * Region.Width;
+        int baseCol    = col - Region.Col;
+        if (baseCol >= maxC) return;
         int cellOffset = 0; // column offset within the string
+        int stamp      = ++_seq;
 
         // ASCII fast path: no surrogate pairs, no wide chars — tight inner loop
         if (IsAscii(text))
         {
             for (int i = 0; i < text.Length; i++)
             {
-                int cellCol = col - Region.Col + cellOffset;
-                if (cellCol < 0) { cellOffset++; continue; }
-                if (cellCol >= Region.Width) break;
+                char ch = text[i];
+                // C0 controls and DEL draw nothing (VisualWidth counts them as zero),
+                // and passed through they would move the terminal's cursor — a CR
+                // returns to column 0, a tab jumps ahead, an ESC starts a sequence the
+                // text never meant to send. A tab is shown as one blank.
+                if (ch < 0x20 || ch == 0x7F)
+                {
+                    if (ch != '\t') continue;
+                    ch = ' ';
+                }
 
-                int idx = cellRow * Region.Width + cellCol;
-                _cells[idx] = style.RenderChar(text[i], ColorProfile);
-                cellOffset++;
+                int cellCol = baseCol + cellOffset++;
+                if (cellCol < minC) continue;
+                if (cellCol >= maxC) break;
+
+                int idx = rowStart + cellCol;
+                if (_anyWide) Displace(idx, rowStart, stamp);
+                _cells[idx]  = style.RenderChar(ch, ColorProfile);
+                if (_stamps is not null) _stamps[idx] = stamp;
             }
             return;
         }
@@ -193,59 +266,134 @@ public sealed class RenderContext : IRenderContext
         // combining mark its own cell would shift the rest of the line one column
         // right of where the terminal actually puts it, and the frame diff would
         // never notice the drift.
-        string clusterText = string.Empty;
+        int clusterStart   = 0;  // the cluster's first char in text
+        int pos            = 0;  // char index of the current rune in text
         int clusterIdx     = -1; // cell holding the current cluster, -1 when none
         int clusterCol     = -1; // that cell's column within the region
         int clusterWidth   = 0;
 
         foreach (Rune rune in text.EnumerateRunes())
         {
-            int width = RuneDisplayWidth(rune);
+            int runeStart = pos;
+            pos += rune.Utf16SequenceLength;
+
+            Rune r = rune;
+            if (Rune.IsControl(r))
+            {
+                // Same rule as the ASCII path. C1 controls (U+0080–U+009F) matter just
+                // as much: U+009B is a one-byte CSI to a terminal reading 8-bit controls.
+                // Dropping one also ends the cluster, which must stay a contiguous run.
+                if (r.Value != '\t') { clusterIdx = -1; continue; }
+                r = new Rune(' ');
+            }
+
+            int width = RuneDisplayWidth(r);
 
             if (width == 0)
             {
                 if (clusterIdx < 0) continue; // no base character to attach to
 
                 // U+FE0F selects emoji presentation, widening the base from 1 to 2.
-                if (rune.Value == TextUtils.VariationSelector16 && clusterWidth == 1)
+                if (r.Value == TextUtils.VariationSelector16 && clusterWidth == 1)
                 {
+                    if (clusterCol + 1 >= maxC)
+                    {
+                        // No room for the right half: drop the selector, keep it narrow,
+                        // and close the cluster so a later mark cannot bring it back.
+                        clusterIdx = -1;
+                        continue;
+                    }
                     clusterWidth = 2;
                     cellOffset++;
-                    if (clusterCol + 1 < Region.Width)
-                        _cells[clusterIdx + 1] = WideCharSpacer;
+                    Displace(clusterIdx + 1, rowStart, stamp);
+                    _anyWide = true;
+                    _cells[clusterIdx + 1]  = WideCharSpacer;
+                    if (_stamps is not null) _stamps[clusterIdx + 1] = stamp;
                 }
 
-                clusterText = clusterText + rune.ToString();
-                _cells[clusterIdx] = style.Render(clusterText, ColorProfile);
+                _cells[clusterIdx] = style.RenderCell(text[clusterStart..pos], ColorProfile);
                 continue;
             }
 
-            int cellCol = col - Region.Col + cellOffset;
+            int cellCol = baseCol + cellOffset;
+            cellOffset += width;
             clusterIdx = -1;
 
-            // Wide character straddles the left edge: write a space in the first visible cell
-            if (cellCol == -1 && width == 2)
+            if (cellCol + width <= minC) continue;
+            if (cellCol >= maxC) break;
+
+            // A wide glyph cut by either clip edge shows as a blank in its visible half:
+            // the terminal cannot draw half a glyph, and drawing all of it would paint a
+            // column outside the clip.
+            if (width == 2 && (cellCol < minC || cellCol + 1 >= maxC))
             {
-                _cells[cellRow * Region.Width] = style.RenderChar(' ', ColorProfile);
-                cellOffset += width;
+                int blankCol = cellCol < minC ? minC : cellCol;
+                int bIdx = rowStart + blankCol;
+                Displace(bIdx, rowStart, stamp);
+                _cells[bIdx]  = style.RenderChar(' ', ColorProfile);
+                if (_stamps is not null) _stamps[bIdx] = stamp;
                 continue;
             }
 
-            if (cellCol < 0) { cellOffset += width; continue; }
-            if (cellCol >= Region.Width) break;
+            int idx = rowStart + cellCol;
+            Displace(idx, rowStart, stamp);
+            clusterStart = runeStart;
+            _cells[idx]  = r.IsBmp
+                ? style.RenderChar((char)r.Value, ColorProfile)
+                : style.RenderCell(r.ToString(), ColorProfile);
+            if (_stamps is not null) _stamps[idx] = stamp;
 
-            int idx = cellRow * Region.Width + cellCol;
-            clusterText = rune.ToString();
-            _cells[idx] = style.Render(clusterText, ColorProfile);
-
-            clusterIdx   = idx;
+            // A tab drawn as a blank takes no marks: the cluster text would still be a tab.
+            clusterIdx   = r.Value == rune.Value ? idx : -1;
             clusterCol   = cellCol;
             clusterWidth = width;
 
-            if (width == 2 && cellCol + 1 < Region.Width)
-                _cells[idx + 1] = WideCharSpacer; // sentinel: right half of wide glyph
+            if (width == 2)
+            {
+                Displace(idx + 1, rowStart, stamp);
+                _anyWide = true;
+                _cells[idx + 1]  = WideCharSpacer; // sentinel: right half of wide glyph
+                if (_stamps is not null) _stamps[idx + 1] = stamp;
+            }
+        }
+    }
 
-            cellOffset += width;
+    private static bool AnyAbove(ReadOnlySpan<int> stamps, int limit)
+    {
+        foreach (int s in stamps) if (s > limit) return true;
+        return false;
+    }
+
+    private static bool AnyAtOrBelow(ReadOnlySpan<int> stamps, int limit)
+    {
+        foreach (int s in stamps) if (s <= limit) return true;
+        return false;
+    }
+
+    /// <summary>
+    /// Prepare cell <paramref name="idx"/> to be overwritten without leaving half a wide
+    /// glyph behind. A terminal erases the whole glyph when either half is overwritten;
+    /// the buffer must agree, or the other half keeps a glyph (or spacer) the screen no
+    /// longer shows, and every later cell on the row is emitted one column off.
+    /// </summary>
+    private void Displace(int idx, int rowStart, int stamp)
+    {
+        if (!_anyWide) return;
+        int rowEnd = rowStart + Region.Width;
+        if (ReferenceEquals(_cells[idx], WideCharSpacer))
+        {
+            // Overwriting a right half: the glyph to its left is erased.
+            if (idx - 1 >= rowStart && !ReferenceEquals(_cells[idx - 1], WideCharSpacer))
+            {
+                _cells[idx - 1]  = null!;
+                if (_stamps is not null) _stamps[idx - 1] = stamp;
+            }
+        }
+        else if (idx + 1 < rowEnd && ReferenceEquals(_cells[idx + 1], WideCharSpacer))
+        {
+            // Overwriting a wide glyph's left half: its right half goes blank.
+            _cells[idx + 1]  = null!;
+            if (_stamps is not null) _stamps[idx + 1] = stamp;
         }
     }
 
@@ -277,27 +425,51 @@ public sealed class RenderContext : IRenderContext
     /// Record that <paramref name="widget"/> was rendered at <paramref name="region"/> this frame.
     /// Called by <see cref="Widgets.Container"/> after rendering each child.
     /// </summary>
+    /// <remarks>
+    /// Only a widget whose render began with a <see cref="TryReuseWidget"/> miss can be
+    /// served next frame: the miss marks where its render started, and without that the
+    /// cache cannot tell the widget's own cells from what was beneath it.
+    /// </remarks>
     public void RegisterWidget(IWidget widget, Region region)
     {
-        // Lazy-allocate on first use. Never take _prevWidgets: TryReuseWidget reads it
+        // Find the miss that opened this render. Normally it is on top; a render that
+        // missed without registering (a custom container) is discarded on the way down.
+        int seqStart = -1, rawStart = 0;
+        for (int i = _pendingCount - 1; i >= 0; i--)
+        {
+            if (!ReferenceEquals(_pending[i].Widget, widget)) continue;
+            seqStart = _pending[i].SeqStart;
+            rawStart = _pending[i].RawStart;
+            _pending[i] = default;
+            _pendingCount = i;
+            break;
+        }
+
+        int seqEnd = _seq;
+        AddEntry(new CacheEntry
+        {
+            Widget   = widget,
+            Region   = region,
+            SeqStart = seqStart,
+            SeqEnd   = seqEnd,
+            RawStart = rawStart,
+            RawEnd   = _rawRegions?.Count ?? 0,
+            Cursor   = seqStart >= 0 && _cursorStamp > seqStart && _cursorStamp <= seqEnd ? Cursor : null,
+        });
+    }
+
+    private void AddEntry(in CacheEntry entry)
+    {
+        // Lazy-allocate on first use. Never take _prevEntries: TryReuseWidget reads it
         // for the rest of the frame, and every widget registered after this one would
         // miss. Reset recycles the buffers instead, so this allocates once, not
         // per frame.
-        if (_curWidgets is null)
-        {
-            _curWidgets = new IWidget?[32];
-            _curRegions = new Region[32];
-        }
-        else if (_curWidgetCount >= _curWidgets.Length)
-        {
-            int newLen = _curWidgets.Length * 2;
-            Array.Resize(ref _curWidgets, newLen);
-            Array.Resize(ref _curRegions, newLen);
-        }
+        if (_curEntries is null)
+            _curEntries = new CacheEntry[32];
+        else if (_curWidgetCount >= _curEntries.Length)
+            Array.Resize(ref _curEntries, _curEntries.Length * 2);
 
-        _curWidgets[_curWidgetCount]  = widget;
-        _curRegions![_curWidgetCount] = region;
-        _curWidgetCount++;
+        _curEntries[_curWidgetCount++] = entry;
     }
 
     /// <summary>
@@ -306,37 +478,104 @@ public sealed class RenderContext : IRenderContext
     /// copy those cells into the current buffer and return <see langword="true"/>
     /// (caller should skip rendering). Otherwise return <see langword="false"/>.
     /// </summary>
+    /// <remarks>
+    /// Only the cells the widget drew itself are copied, and only when nothing drew over
+    /// them later that frame — an overlay that has since closed, or a neighbour that
+    /// overflowed, would otherwise be copied back with them and stay on screen. The
+    /// cursor the widget placed and the raw payloads it registered are replayed too.
+    /// </remarks>
     public bool TryReuseWidget(IWidget widget, Region region)
     {
-        if (_prev is null || _prevWidgets is null) return false;
+        // Stamps start with the first lookup. Writes before it are unstamped, which reads
+        // as "drawn beneath": correct, since no cached widget's render can enclose them.
+        _stamps ??= new int[_cells.Length];
 
-        // Linear scan — typical widget count < 100, faster than Dictionary for small N.
-        for (int i = 0; i < _prevWidgetCount; i++)
+        if (_prev is not null && _prevStamps is not null && _prevEntries is not null)
         {
-            if (!ReferenceEquals(_prevWidgets[i], widget)) continue;
-            if (_prevRegions![i] != region) continue;
-
-            // Match! Copy cells from previous buffer.
-            int w = Region.Width;
-            int rStart = region.Row - Region.Row;
-            int rEnd   = rStart + region.Height;
-            int cStart = region.Col - Region.Col;
-            int cEnd   = Math.Min(cStart + region.Width, w);
-            for (int r = rStart; r < rEnd; r++)
+            // Linear scan — typical widget count < 100, faster than Dictionary for small N.
+            for (int i = 0; i < _prevWidgetCount; i++)
             {
-                if (r < 0 || r >= Region.Height) continue;
-                for (int c = cStart; c < cEnd; c++)
+                ref readonly var e = ref _prevEntries[i];
+                if (!ReferenceEquals(e.Widget, widget) || e.Region != region) continue;
+                if (e.SeqStart < 0 || !ReplayCells(e)) break;
+
+                for (int k = e.RawStart; k < e.RawEnd; k++)
+                    (_rawRegions ??= new()).Add(_prevRawRegions![k]);
+                if (e.Cursor is { } cursor) SetCursorDescriptor(cursor);
+
+                AddEntry(new CacheEntry
                 {
-                    int idx = r * w + c;
-                    if ((uint)idx < (uint)_cells.Length)
-                        _cells[idx] = _prev[idx];
-                }
+                    Widget   = widget,
+                    Region   = region,
+                    SeqStart = _replayStamp - 1,
+                    SeqEnd   = _seq,
+                    RawStart = (_rawRegions?.Count ?? 0) - (e.RawEnd - e.RawStart),
+                    RawEnd   = _rawRegions?.Count ?? 0,
+                    Cursor   = e.Cursor,
+                });
+                return true;
+            }
+        }
+
+        // Miss: the caller renders the widget now. Note where that render begins.
+        if (_pendingCount == _pending.Length)
+            Array.Resize(ref _pending, _pending.Length * 2);
+        _pending[_pendingCount++] = new PendingRender
+        {
+            Widget   = widget,
+            SeqStart = _seq,
+            RawStart = _rawRegions?.Count ?? 0,
+        };
+        return false;
+    }
+
+    private int _replayStamp;
+
+    /// <summary>
+    /// Copy <paramref name="e"/>'s own cells from the previous frame, unless something
+    /// drew over its region after it. Returns false, copying nothing, in that case.
+    /// </summary>
+    private bool ReplayCells(in CacheEntry e)
+    {
+        int w      = Region.Width;
+        int rStart = Math.Max(0, e.Region.Row - Region.Row);
+        int rEnd   = Math.Min(Region.Height, e.Region.Row - Region.Row + e.Region.Height);
+        int cStart = Math.Max(0, e.Region.Col - Region.Col);
+        int cEnd   = Math.Min(w, e.Region.Col - Region.Col + e.Region.Width);
+        if (rStart >= rEnd || cStart >= cEnd) return true;
+        int len = cEnd - cStart;
+        var prevStamps = _prevStamps!;
+
+        // Plain loops: the generic span searches box their arguments until tiered up.
+        for (int r = rStart; r < rEnd; r++)
+            if (AnyAbove(prevStamps.AsSpan(r * w + cStart, len), e.SeqEnd))
+                return false;
+
+        // One stamp for the whole replay; the new entry spans exactly it.
+        int stamp = _replayStamp = ++_seq;
+        var stamps = _stamps!;
+        for (int r = rStart; r < rEnd; r++)
+        {
+            int rowIdx = r * w + cStart;
+            var rowStamps = prevStamps.AsSpan(rowIdx, len);
+
+            // The usual case: the widget drew every cell of the row. Copy it whole.
+            if (!AnyAtOrBelow(rowStamps, e.SeqStart))
+            {
+                _prev.AsSpan(rowIdx, len).CopyTo(_cells.AsSpan(rowIdx, len));
+                stamps.AsSpan(rowIdx, len).Fill(stamp);
+                continue;
             }
 
-            RegisterWidget(widget, region);
-            return true;
+            for (int c = 0; c < len; c++)
+            {
+                if (rowStamps[c] <= e.SeqStart) continue; // drawn beneath the widget, not by it
+                _cells[rowIdx + c]  = _prev![rowIdx + c];
+                stamps[rowIdx + c] = stamp;
+            }
         }
-        return false;
+        if (_prevAnyWide) _anyWide = true; // the copied cells may hold wide glyphs
+        return true;
     }
 
     /// <summary>
@@ -523,6 +762,7 @@ public sealed class RenderContext : IRenderContext
         // Swap buffers: current → previous; old previous → current (reused, cleared by Reset next frame)
         var oldPrev = _prev;
         _prev       = _cells;
+        (_prevStamps, _stamps) = (_stamps, _prevStamps);
         _prevWidth  = w;
         _prevHeight = h;
         // Reuse the old prev array as next frame's current buffer (Reset() will clear it)
@@ -533,7 +773,10 @@ public sealed class RenderContext : IRenderContext
 
     /// <inheritdoc/>
     public void SetCursorDescriptor(CursorDescriptor cursor)
-        => Cursor = cursor;
+    {
+        Cursor = cursor;
+        _cursorStamp = ++_seq;
+    }
 
     /// <summary>
     /// Register a raw escape payload for <paramref name="region"/>.
@@ -544,7 +787,7 @@ public sealed class RenderContext : IRenderContext
     public void WriteRawEscape(Region region, IRawEscapePayload payload)
     {
         (_rawRegions ??= new()).Add(new RawEntry(region, payload, payload.ContentHash));
-        SentinelFillRegion(region);
+        SentinelFillRegion(region, ++_seq);
     }
 
     /// <summary>
@@ -590,7 +833,7 @@ public sealed class RenderContext : IRenderContext
     // ── Raw region helpers ───────────────────────────────────────────────────────
 
     /// <summary>Fill every cell in <paramref name="region"/> with <see cref="RawRegionSpacer"/>.</summary>
-    private void SentinelFillRegion(Region region)
+    private void SentinelFillRegion(Region region, int stamp)
     {
         int w      = Region.Width;
         int rStart = region.Row - Region.Row;
@@ -606,7 +849,10 @@ public sealed class RenderContext : IRenderContext
                 if (c < 0 || c >= w) continue;
                 int idx = r * w + c;
                 if ((uint)idx < (uint)_cells.Length)
-                    _cells[idx] = RawRegionSpacer;
+                {
+                    _cells[idx]  = RawRegionSpacer;
+                    if (_stamps is not null) _stamps[idx] = stamp;
+                }
             }
         }
     }

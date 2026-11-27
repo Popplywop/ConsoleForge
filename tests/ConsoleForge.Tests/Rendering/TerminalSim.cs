@@ -63,6 +63,11 @@ internal sealed class TerminalSim
 
             if (_row >= 0 && _row < Height && _col >= 0 && _col < Width)
             {
+                // Overwriting either half of a wide glyph erases the whole glyph, as a
+                // real terminal does; without this, stale halves would hide drift.
+                EraseWideAt(_col);
+                if (w == 2 && _col + 1 < Width) EraseWideAt(_col + 1);
+
                 _screen[_row, _col] = rune.ToString();
                 if (w == 2 && _col + 1 < Width)
                     _screen[_row, _col + 1] = Continuation;
@@ -119,6 +124,19 @@ internal sealed class TerminalSim
         }
         while (k < ansi.Length && ansi[k] < '@') k++;
         return k + 1;
+    }
+
+    private void EraseWideAt(int col)
+    {
+        if (_screen[_row, col] == Continuation)
+        {
+            if (col > 0) _screen[_row, col - 1] = " ";
+            _screen[_row, col] = " ";
+        }
+        else if (col + 1 < Width && _screen[_row, col + 1] == Continuation)
+        {
+            _screen[_row, col + 1] = " ";
+        }
     }
 
     private void EraseLine(string param)

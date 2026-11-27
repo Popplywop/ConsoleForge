@@ -11,6 +11,13 @@ public sealed class SubRenderContext : IRenderContext
 {
     private readonly IRenderContext _parent;
 
+    // The cell buffer behind this context, when it is ours, and the columns writes
+    // may touch: this region intersected with every enclosing sub-context's. Text that
+    // runs past the region's right edge is cut there rather than handed to the parent,
+    // which would draw it over whatever widget sits next to this one.
+    private readonly RenderContext? _root;
+    private readonly int _clipLeft, _clipRight, _clipTop, _clipBottom;
+
     /// <summary>The allocated region this sub-context is restricted to.</summary>
     public Region Region { get; }
     /// <inheritdoc/>
@@ -31,6 +38,21 @@ public sealed class SubRenderContext : IRenderContext
     {
         _parent = parent;
         Region = region;
+
+        (_clipLeft, _clipRight) = (region.Col, region.Col + region.Width);
+        (_clipTop, _clipBottom) = (region.Row, region.Row + region.Height);
+        if (parent is SubRenderContext sub)
+        {
+            _root       = sub._root;
+            _clipLeft   = Math.Max(_clipLeft,   sub._clipLeft);
+            _clipRight  = Math.Min(_clipRight,  sub._clipRight);
+            _clipTop    = Math.Max(_clipTop,    sub._clipTop);
+            _clipBottom = Math.Min(_clipBottom, sub._clipBottom);
+        }
+        else if (parent is RenderContext root)
+        {
+            _root = root;
+        }
     }
 
     /// <inheritdoc/>
@@ -38,6 +60,13 @@ public sealed class SubRenderContext : IRenderContext
     {
         if (row < Region.Row || row >= Region.Row + Region.Height) return;
         if (col >= Region.Col + Region.Width) return;
+        if (_root is not null)
+        {
+            if (row < _clipTop || row >= _clipBottom) return;
+            _root.WriteClipped(col, row, text, style, _clipLeft, _clipRight);
+            return;
+        }
+        // An unknown parent: forward, and let it clip as it does.
         _parent.Write(col, row, text, style);
     }
 

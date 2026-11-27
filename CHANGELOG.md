@@ -145,6 +145,35 @@ marked **Breaking**.
 - `IRawEscapePayload.Refresh` — the tmux renewal of a stationary image — had no test. It
   is now pinned in both directions: renewed once per frame inside tmux with the same
   placement id and no delete, and not renewed at all outside it.
+- The widget render cache served cells that were not its widget's. A hit copied the
+  widget's whole region out of the previous frame — including anything drawn over it
+  afterwards — so closing a `Modal` (or any `ZStack` layer) above a widget the model keeps
+  between frames left the modal on screen. A hit also dropped what the widget's render had
+  sent outside the cell buffer: the focused input's cursor disappeared, and its images
+  were deleted. The cache now stamps every write, replays only the cells the widget drew
+  itself, refuses a widget anything drew over, and replays its cursor and raw payloads.
+- Non-ASCII text in a widget whose style sets padding, width or height was padded once per
+  glyph: `TextBlock("café", padded)` drew `c  a  f`. Cells are now styled without the
+  block transforms, which belong to the widget.
+- Control characters in text reached the terminal. A `\r` from CRLF line endings returned
+  the cursor to column 0 and the blanks after it erased the line; a tab jumped to the next
+  tab stop and shifted the rest of the row; an `ESC` (or a C1 control) in untrusted text
+  could send any escape sequence — set the title, write the clipboard. They are now
+  dropped, a tab drawn as one blank, and `TextUtils` measures them the same way (`"ab\r"`
+  was 3 columns wide in the ASCII fast paths).
+- Writing over one half of a wide glyph left the other half in the buffer while the
+  terminal erased it, so every later cell on the row was emitted one column off — a
+  `Modal` over CJK text shifted the rest of the line right.
+- Text past a widget's region was drawn over its neighbours: `SubRenderContext` checked
+  only where a write started. Writes are now clipped to the region (intersected with
+  every enclosing one), and a wide glyph cut by an edge is drawn as a blank.
+
+### Performance
+
+- Non-ASCII cells in the Basic Multilingual Plane use the per-char style cache, and
+  wrapping no longer allocates a string per rune: a steady frame of 20 CJK/accented
+  `TextBlock`s allocates ~14 KB instead of ~62 KB, the half-block image fallback 8 KB
+  instead of 29 KB (`PixelHalfBlockBenchmarks`, 18 rows).
 
 ## [0.4.0]
 
