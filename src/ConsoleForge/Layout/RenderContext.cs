@@ -358,6 +358,18 @@ public sealed class RenderContext : IRenderContext
         }
     }
 
+    private static bool AnyAbove(ReadOnlySpan<int> stamps, int limit)
+    {
+        foreach (int s in stamps) if (s > limit) return true;
+        return false;
+    }
+
+    private static bool AnyAtOrBelow(ReadOnlySpan<int> stamps, int limit)
+    {
+        foreach (int s in stamps) if (s <= limit) return true;
+        return false;
+    }
+
     /// <summary>
     /// Prepare cell <paramref name="idx"/> to be overwritten without leaving half a wide
     /// glyph behind. A terminal erases the whole glyph when either half is overwritten;
@@ -534,8 +546,9 @@ public sealed class RenderContext : IRenderContext
         int len = cEnd - cStart;
         var prevStamps = _prevStamps!;
 
+        // Plain loops: the generic span searches box their arguments until tiered up.
         for (int r = rStart; r < rEnd; r++)
-            if (prevStamps.AsSpan(r * w + cStart, len).IndexOfAnyInRange(e.SeqEnd + 1, int.MaxValue) >= 0)
+            if (AnyAbove(prevStamps.AsSpan(r * w + cStart, len), e.SeqEnd))
                 return false;
 
         // One stamp for the whole replay; the new entry spans exactly it.
@@ -547,7 +560,7 @@ public sealed class RenderContext : IRenderContext
             var rowStamps = prevStamps.AsSpan(rowIdx, len);
 
             // The usual case: the widget drew every cell of the row. Copy it whole.
-            if (rowStamps.IndexOfAnyExceptInRange(e.SeqStart + 1, e.SeqEnd) < 0)
+            if (!AnyAtOrBelow(rowStamps, e.SeqStart))
             {
                 _prev.AsSpan(rowIdx, len).CopyTo(_cells.AsSpan(rowIdx, len));
                 stamps.AsSpan(rowIdx, len).Fill(stamp);

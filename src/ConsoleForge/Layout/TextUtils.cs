@@ -54,9 +54,15 @@ public static class TextUtils
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static bool IsPrintableAscii(char c) => c is >= ' ' and < '\x7F';
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static bool IsPrintableAscii(ReadOnlySpan<char> text) =>
-        text.IndexOfAnyExceptInRange(' ', '~') < 0;
+    // A plain loop, not IndexOfAnyExceptInRange: that generic API's type tests box its
+    // arguments until the JIT tiers it up, which made Measure allocate 96 bytes a call in
+    // a cold process.
+    private static bool IsPrintableAscii(ReadOnlySpan<char> text)
+    {
+        foreach (char c in text)
+            if (!IsPrintableAscii(c)) return false;
+        return true;
+    }
 
 
     /// <summary>
