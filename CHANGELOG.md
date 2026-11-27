@@ -27,6 +27,13 @@ marked **Breaking**.
   and `PixelHalfBlockBenchmarks` (the half-block fallback). Run them with
   `./bench.sh -f '*Pixel*'`.
 
+- Images in any format on Kitty terminals: `ImageWidget` sends `RgbaData` as
+  zlib-compressed pixels (`f=32,o=z`) when the terminal supports Kitty graphics and there
+  is no `PngData`, where it used to fall back to half-blocks. Decode a JPEG (or anything
+  else) and pass the pixels; one `RgbaData` now serves Kitty and half-block terminals both.
+  New: `KittyProtocol.CreatePayload(RgbaImageData, …)` (cached against the pixel array, as
+  PNG payloads are), `KittyProtocol.IsPng`, and an
+  `ImageWidget(RgbaImageData, TerminalCapabilities?)` constructor.
 - Bracketed paste: `App.Run(…, enableBracketedPaste: true)` delivers a paste as one
   `PasteMsg(Text)` instead of a `KeyMsg` per character, so a pasted line break cannot press
   Enter. Line breaks are normalised to `\n`. Opt-in, since the model must handle
@@ -44,6 +51,11 @@ marked **Breaking**.
 
 ### Changed
 
+- **Breaking:** `ImageWidget.PngData` and `KittyProtocol.CreatePayload(byte[], …)` reject
+  bytes without the PNG signature with an `ArgumentException`. They were sent as `f=100`
+  regardless, declaring PNG for whatever they held: JPEG drew on WezTerm, which sniffs the
+  content, and nothing at all on kitty or Ghostty — silently, since every command sets
+  `q=2`. The message says what to do: decode the image and pass `RgbaData`.
 - **Input is read as raw characters and decoded by the framework**, on Unix and Windows
   alike, instead of through `Console.ReadKey`. ReadKey decodes the sequences .NET knows
   and hands back anything else as Escape plus loose characters, which the old loop then

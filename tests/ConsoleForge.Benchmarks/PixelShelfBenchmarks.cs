@@ -59,6 +59,7 @@ public class PixelShelfBenchmarks
         {
             var bytes = new byte[PosterBytes];
             rng.NextBytes(bytes);
+            PixelEncodeBenchmarks.PngSignature.CopyTo(bytes, 0); // ImageWidget checks for it
             return bytes;
         }
 

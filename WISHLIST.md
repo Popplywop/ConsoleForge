@@ -32,35 +32,7 @@ Found by running PlexTui against a real Plex server on 0.4.0. All three are in t
 path, which 0.4.0 changed more than any other — and which nothing benchmarks, so what its
 frames actually cost has never been measured, only reasoned about.
 
-Items 10 and 11 have landed — see the Fixed table. Item 12 remains.
-
-### 12. `f=100` declares PNG for whatever bytes it is handed
-
-`KittyPayload.Encode` writes `a=t,f=100`, and `100` means PNG. Nothing checks that the
-bytes are one. PlexTui feeds it Plex artwork, which is JPEG (`ff d8 ff e0`), and it draws
-correctly — because WezTerm sniffs the content rather than trusting the declaration. That
-is a terminal being lenient, not a contract being met.
-
-The protocol offers no JPEG: `f` takes 24 (RGB), 32 (RGBA) or 100 (PNG), so "send the
-right format code" is not on the table. Either reject what cannot be honoured, or give
-callers a path for pixels they decoded themselves.
-
-**Proposal, smallest first:**
-
-- Check the magic bytes where the payload is built and fail loudly, instead of emitting a
-  declaration the data contradicts. `ImageWidget.PngData` is already named for the
-  contract; it is simply not enforced.
-- Let the Kitty path accept `RgbaImageData` as `f=32`. `ImageWidget` already carries
-  `RgbaData` for half-blocks, so this is a branch in `ResolveMode`, and it lets an
-  application decode whatever it has and hand over pixels.
-
-Decoding JPEG inside the framework is the option to avoid — it buys one format and puts an
-image-codec dependency on every consumer, against a runtime dependency list that is
-currently System.Reactive and nothing else.
-
-Note for a consumer meanwhile: Plex returns a real PNG for `&format=png`, at about 5.6x
-the bytes of its JPEG — 77 KB against 13.7 KB for one 160x240 poster — so "ask the server
-for the format you declared" is a real choice with a real price.
+All three have landed — see the Fixed table.
 
 ## Later
 
@@ -169,3 +141,4 @@ What each gap turned out to be, and what shipped.
 | 0.4.1 | A Kitty image uploaded on the frame it was meant to appear in (item 10), so under tmux — which forwards a large DCS-wrapped upload after the cells around it — a shelf's `░` placeholder showed for the gap. `Cmd.Preload(payload)` transmits a payload when its bytes arrive, through the new `IRawEscapePayload.Transmit` (Kitty: the `a=t` chunks `Encode` already started with, now factored out); `RenderContext` records it as held, and its first appearance costs one `a=p`. The event loop sends a synchronously-completing preload straight from `DispatchCmd`, before `ProcessMsg` marks the model dirty, so the upload precedes any frame showing the new model — the render timer's included. Deliberately best-effort: nothing is sent for a payload already on screen or already held, a held entry is consumed by its first appearance and dropped on resize, and before the first frame it is a no-op — each case falling back to today's full `Encode`. Priced as the item asked: opt-in, costs an application one line in the `Update` that receives the bytes, and the frame path gains one `HashSet` lookup per new payload. The effect on the tmux gap itself was reasoned about, not measured against a real tmux. |
 | Unreleased | Input went through `Console.ReadKey`, which had already decoded the bytes, so escape sequences were rebuilt from its `KeyChar`s. That rebuild waited microseconds for the rest of a sequence (↑ split by SSH became Escape, `[`, `A`), could not see the Kitty keyboard protocol, and could not tell a terminal's reply from typing. Input is now raw characters from `poll`/`read` (Unix) or `ReadConsoleInputW` with VT input (Windows) into a pure `InputDecoder`, tested with strings, with the timeout as an input to it rather than a spin loop inside it. Windows should get SGR mouse, which the ReadKey loop could not receive (not yet tried on Windows); macOS stops overflowing a Linux-shaped `termios`. |
 | Unreleased | Kitty graphics replies reached the model as keystrokes — `ESC _ G i=…;OK ESC \` became Alt+`_`, `Gi=…;OK`, Alt+`\` — and the place delete (`a=d`) and continuation chunks did not set `q=2`, so they were left to each terminal's habits. `Detect()` relied on environment variables while `BuildDetectProbe` sat unused: it could not be, as ReadKey could not read the answer, and the probe itself declared `f=32` for PNG bytes and set `q=1`, which suppresses the `OK` it asks for. Replies are now decoded and kept from the model, every command is quiet, and `Detect()` sends a well-formed probe bounded by a device attributes request, falling back to the environment only when the terminal cannot be asked or does not answer. |
+| Unreleased | `f=100` declared PNG for whatever bytes it was handed (item 12). WezTerm sniffs the content, so PlexTui's JPEG artwork drew there; kitty and Ghostty decode only PNG under `f=100` and drew nothing, silently, because of `q=2`. Both proposals landed: `PngData` and `CreatePayload(byte[])` check the PNG signature and throw, naming the fix; and `RgbaImageData` goes to the Kitty path as zlib-compressed `f=32` (`o=z`, RFC 1950 via the BCL's `ZLibStream` — no new dependency), so an application decodes whatever it has. JPEG decoding stays out of the framework. |

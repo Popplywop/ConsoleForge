@@ -1,15 +1,27 @@
+using System.IO.Compression;
 using System.Runtime.CompilerServices;
 using ConsoleForge.Layout;
 using ConsoleForge.Styling;
+using ConsoleForge.Widgets;
 
 namespace ConsoleForge.Terminal;
 
 /// <summary>
 /// Encoding helpers for the Kitty terminal graphics protocol.
 /// <para>
-/// Images are transmitted as base64-encoded PNG data inside APC sequences
-/// (<c>ESC _ G … ESC \</c>), chunked to ≤4096 base64 chars each.
-/// Format: <c>f=100</c> (PNG — terminal reads dimensions from the header).
+/// Images are transmitted base64-encoded inside APC sequences (<c>ESC _ G … ESC \</c>),
+/// chunked to ≤4096 base64 chars each, in one of the two forms the protocol defines for
+/// compressed data:
+/// <list type="bullet">
+///   <item><c>f=100</c> — PNG bytes, which the terminal decodes and reads the size from.</item>
+///   <item><c>f=32,s=…,v=…,o=z</c> — RGBA pixels, zlib-compressed (RFC 1950), for any
+///   image the application decoded itself.</item>
+/// </list>
+/// The protocol has no JPEG format: <c>f</c> is 24, 32 or 100. Terminals that decode only
+/// PNG under <c>f=100</c> — kitty and Ghostty among them — draw nothing for JPEG bytes
+/// declared as PNG, and with <c>q=2</c> they say nothing either; only lenient ones such
+/// as WezTerm sniff the real format. So PNG bytes are checked, and anything else goes in
+/// as pixels.
 /// </para>
 /// <para>
 /// <b>Multiplexer note (tmux):</b> With <c>allow-passthrough on</c>, tmux forwards
@@ -40,22 +52,71 @@ public static class KittyProtocol
     }
 
     /// <summary>
-    /// The per-image work that does not depend on where the image is drawn:
-    /// its Kitty id and its base64 transmission text.
+    /// True when <paramref name="data"/> starts with the eight-byte PNG signature
+    /// (<c>89 50 4E 47 0D 0A 1A 0A</c>).
     /// </summary>
-    internal sealed record EncodedPng(uint ImageId, string Base64);
+    public static bool IsPng(ReadOnlySpan<byte> data) =>
+        data.Length >= 8 && data[..8].SequenceEqual(PngSignature);
+
+    private static ReadOnlySpan<byte> PngSignature => [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
+
+    /// <summary>
+    /// The per-image work that does not depend on where the image is drawn: its Kitty id,
+    /// its base64 transmission text, and the control keys that declare its format.
+    /// </summary>
+    internal sealed record EncodedImage(uint ImageId, string Base64, string Format);
 
     // Widgets are rebuilt every frame, so a payload is constructed every frame for
     // the same picture. Hashing and base64-encoding a poster costs tens of thousands
     // of operations and a ~55 KB string each time, all of it to produce a value the
     // frame diff then uses to decide nothing changed. Keyed on the array's identity
     // and held weakly, so the entry dies with the image it describes.
-    private static readonly ConditionalWeakTable<byte[], EncodedPng> EncodedCache = new();
+    private static readonly ConditionalWeakTable<byte[], EncodedImage> EncodedCache = new();
 
-    internal static EncodedPng GetEncoded(byte[] pngBytes) =>
+    // RGBA pixels are compressed before encoding, which costs more than the hash: the
+    // cache matters even more here. Keyed on the pixel array, like PNG bytes.
+    private static readonly ConditionalWeakTable<byte[], RgbaEntry> EncodedRgbaCache = new();
+
+    private sealed record RgbaEntry(int Width, int Height, EncodedImage Encoded);
+
+    internal static EncodedImage GetEncoded(byte[] pngBytes) =>
         EncodedCache.GetValue(
             pngBytes,
-            static bytes => new EncodedPng(ImageIdFromBytes(bytes), Convert.ToBase64String(bytes)));
+            static bytes => new EncodedImage(ImageIdFromBytes(bytes), Convert.ToBase64String(bytes), "f=100"));
+
+    internal static EncodedImage GetEncoded(RgbaImageData rgba)
+    {
+        if (EncodedRgbaCache.TryGetValue(rgba.Pixels, out var cached) &&
+            cached.Width == rgba.Width && cached.Height == rgba.Height)
+            return cached.Encoded;
+
+        var encoded = EncodeRgba(rgba, $"f=32,s={rgba.Width},v={rgba.Height},o=z");
+        // A pixel array reused under different dimensions replaces its entry: the cache
+        // must always describe the array as it is currently declared.
+        EncodedRgbaCache.AddOrUpdate(rgba.Pixels, new RgbaEntry(rgba.Width, rgba.Height, encoded));
+        return encoded;
+    }
+
+    private static EncodedImage EncodeRgba(RgbaImageData rgba, string format)
+    {
+        var pixels = rgba.Pixels.AsSpan(0, rgba.Width * rgba.Height * 4);
+
+        // The id covers the dimensions too: the same bytes as 2x8 and as 4x4 are different
+        // pictures.
+        uint id = ImageIdFromBytes(pixels);
+        id = (id ^ (uint)rgba.Width) * 16777619u;
+        id = (id ^ (uint)rgba.Height) * 16777619u;
+        if (id == 0) id = 1;
+
+        // Raw RGBA is four bytes a pixel against a few tenths of a byte for a photo's PNG
+        // or JPEG; zlib (o=z, the only compression the protocol defines) wins most of that
+        // back before base64 adds its third.
+        using var compressed = new MemoryStream();
+        using (var zlib = new ZLibStream(compressed, CompressionLevel.Optimal, leaveOpen: true))
+            zlib.Write(pixels);
+
+        return new EncodedImage(id, Convert.ToBase64String(compressed.GetBuffer(), 0, (int)compressed.Length), format);
+    }
 
     /// <summary>
     /// Create a <see cref="KittyPayload"/> wrapping <paramref name="pngBytes"/>.
@@ -66,7 +127,60 @@ public static class KittyProtocol
     /// cached against the array instance and reused.
     /// </para>
     /// </summary>
-    public static KittyPayload CreatePayload(byte[] pngBytes, TerminalCapabilities? capabilities = null) => new(pngBytes, capabilities);
+    /// <exception cref="ArgumentException">
+    /// <paramref name="pngBytes"/> is not a PNG (<see cref="IsPng"/>). The payload would
+    /// declare <c>f=100</c> for data that contradicts it; decode the image and use the
+    /// <see cref="RgbaImageData"/> overload instead.
+    /// </exception>
+    public static KittyPayload CreatePayload(byte[] pngBytes, TerminalCapabilities? capabilities = null)
+    {
+        ThrowIfNotPng(pngBytes, nameof(pngBytes));
+        return new(GetEncoded(pngBytes), capabilities);
+    }
+
+    /// <summary>
+    /// Create a <see cref="KittyPayload"/> that transmits decoded pixels as
+    /// zlib-compressed RGBA (<c>f=32,o=z</c>) — the path for any format the protocol
+    /// cannot declare, JPEG included: decode it, hand over the pixels.
+    /// <para>
+    /// Cheap to call every frame: the compressed encoding is cached against the
+    /// <see cref="RgbaImageData.Pixels"/> array instance and reused.
+    /// </para>
+    /// </summary>
+    /// <exception cref="ArgumentException">
+    /// The dimensions are not positive, or <see cref="RgbaImageData.Pixels"/> holds fewer
+    /// than <c>Width × Height × 4</c> bytes.
+    /// </exception>
+    public static KittyPayload CreatePayload(RgbaImageData rgba, TerminalCapabilities? capabilities = null)
+    {
+        ThrowIfInvalid(rgba, nameof(rgba));
+        return new(GetEncoded(rgba), capabilities);
+    }
+
+    internal static void ThrowIfNotPng(byte[] bytes, string paramName)
+    {
+        ArgumentNullException.ThrowIfNull(bytes, paramName);
+        if (!IsPng(bytes))
+            throw new ArgumentException(
+                "Not PNG data: it does not start with the PNG signature" +
+                (bytes.Length >= 3 && bytes[0] == 0xFF && bytes[1] == 0xD8 && bytes[2] == 0xFF ? " (it is JPEG)" : "") +
+                ". The Kitty protocol has no JPEG format, and kitty and Ghostty draw nothing for " +
+                "other data declared as PNG. Decode the image and pass the pixels as RgbaImageData " +
+                "(sent as f=32), or obtain a real PNG.",
+                paramName);
+    }
+
+    internal static void ThrowIfInvalid(RgbaImageData rgba, string paramName)
+    {
+        if (rgba.Pixels is null)
+            throw new ArgumentException("RgbaImageData.Pixels is null.", paramName);
+        if (rgba.Width <= 0 || rgba.Height <= 0)
+            throw new ArgumentException($"RgbaImageData is {rgba.Width}x{rgba.Height}; both dimensions must be positive.", paramName);
+        if ((long)rgba.Width * rgba.Height * 4 > rgba.Pixels.Length)
+            throw new ArgumentException(
+                $"RgbaImageData declares {rgba.Width}x{rgba.Height} (needs {(long)rgba.Width * rgba.Height * 4} bytes) but Pixels holds {rgba.Pixels.Length}.",
+                paramName);
+    }
 
     /// <summary>The image id <see cref="BuildDetectProbe"/> queries with, and its reply carries.</summary>
     internal const uint ProbeImageId = 31;
@@ -106,11 +220,13 @@ public sealed class KittyPayload : IRawEscapePayload
     private readonly int    _paneRowOffset; // terminal rows above pane top (status bars)
     private readonly int    _paneColOffset; // terminal cols left of pane (split panes)
 
-    internal KittyPayload(byte[] pngBytes, TerminalCapabilities? capabilities = null)
+    private readonly string _format;        // control keys declaring the data: f=100, or f=32,s,v,o=z
+
+    internal KittyPayload(KittyProtocol.EncodedImage encoded, TerminalCapabilities? capabilities = null)
     {
-        var encoded    = KittyProtocol.GetEncoded(pngBytes);
         _imageId       = encoded.ImageId;
         _base64        = encoded.Base64;
+        _format        = encoded.Format;
         // Declared capabilities win when supplied, so a caller states the mode rather than
         // inheriting whatever terminal the process happens to be running in. Only the
         // no-capabilities path falls back to probing the environment.
@@ -207,8 +323,8 @@ public sealed class KittyPayload : IRawEscapePayload
             string data = len > 0 ? _base64.Substring(start, len) : string.Empty;
 
             string apc = i == 0
-                // First chunk: f=100 (PNG), q=2 (suppress response), a=t (transmit only)
-                ? $"\x1b_Ga=t,f=100,i={_imageId},q=2,m={more};{data}\x1b\\"
+                // First chunk: the format keys, q=2 (suppress response), a=t (transmit only)
+                ? $"\x1b_Ga=t,{_format},i={_imageId},q=2,m={more};{data}\x1b\\"
                 // Continuation chunks: only m= and q= are allowed. q=2 here too, since a
                 // terminal may take quietness from the chunk it replies after — the last.
                 : $"\x1b_Gm={more},q=2;{data}\x1b\\";
