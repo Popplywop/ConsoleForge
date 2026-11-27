@@ -1,3 +1,4 @@
+using ConsoleForge.Styling;
 using ConsoleForge.Core;
 using ConsoleForge.Layout;
 using ConsoleForge.Widgets;
@@ -442,5 +443,22 @@ public class TextAreaTests
         var cursor = ViewDescriptor.From(area, width: 20, height: 2).Cursor;
 
         Assert.Equal(1, cursor.Row); // line 3 is the second visible row
+    }
+
+    // ── Horizontal scroll ─────────────────────────────────────────────────────
+
+    [Fact]
+    public void LongLine_ScrollsEveryLineToKeepTheCursorInView()
+    {
+        var area = new TextArea(["0123456789", "abcdefghij"], cursorRow: 0, cursorCol: 10)
+            { HasFocus = true, Width = SizeConstraint.Fixed(6), Height = SizeConstraint.Fixed(2) };
+        var root = new Container(Axis.Horizontal, [area, new TextBlock("|")]);
+        var view = new Renderer().Render(root, 7, 2, Theme.Dark, ColorProfile.TrueColor);
+        var sim = new ConsoleForge.Tests.Rendering.TerminalSim(7, 2);
+        sim.Apply(view.Content);
+
+        Assert.Equal("56789 |", sim.Lines[0]);
+        Assert.Equal("fghij", sim.Lines[1].TrimEnd()); // the same columns of every line
+        Assert.Equal(5, view.Cursor.Col);
     }
 }

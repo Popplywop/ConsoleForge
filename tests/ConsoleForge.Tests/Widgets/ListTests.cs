@@ -1,3 +1,5 @@
+using ConsoleForge.Layout;
+using ConsoleForge.Styling;
 using ConsoleForge.Core;
 using ConsoleForge.Widgets;
 
@@ -136,5 +138,17 @@ public class ListTests
         var list = new List(["first", "second", "third"], selectedIndex: 1);
         var descriptor = ViewDescriptor.From(list, width: 20, height: 10);
         Assert.Contains("second", TestHelpers.StripAnsi(descriptor.Content));
+    }
+
+    // ── Scroll offset past the end ────────────────────────────────────────────
+
+    [Fact]
+    public void ScrollOffsetPastTheEnd_ShowsTheLastPage()
+    {
+        // A list filtered down under its offset drew no rows at all.
+        var list = new List(["a", "b", "c", "d", "e"], scrollOffset: 9) { Height = SizeConstraint.Fixed(3) };
+        var sim = new ConsoleForge.Tests.Rendering.TerminalSim(6, 3);
+        sim.Apply(new Renderer().Render(list, 6, 3, Theme.Dark, ColorProfile.TrueColor).Content);
+        Assert.Equal([" c", " d", " e"], sim.Lines.Select(l => l.TrimEnd()));
     }
 }

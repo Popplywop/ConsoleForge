@@ -10,16 +10,41 @@ namespace ConsoleForge.Styling;
 /// </summary>
 public readonly struct Style : IEquatable<Style>
 {
-    // Cache of computed ANSI open/close sequences keyed by (props, fgHash, bgHash, profile).
-    // Style is immutable so these are deterministic — compute once, reuse forever.
-    private static readonly ConcurrentDictionary<(uint props, int fgHash, int bgHash, ColorProfile profile), (string open, string close)>
+    // Cache of computed ANSI open/close sequences keyed by (props, fg, bg, profile).
+    // Style is immutable so these are deterministic — compute once, reuse.
+    //
+    // Keyed by the colours themselves, compared by value, not by their hash codes: two
+    // colours whose hashes collide would otherwise share one entry and draw each other's
+    // escape sequence.
+    private static readonly ConcurrentDictionary<(uint props, IColor? fg, IColor? bg, ColorProfile profile), (string open, string close)>
         _ansiCache = new();
 
-    // Per-char styled cell cache: keyed by (props, fgHash, bgHash, profile, char).
-    // Covers the dominant hot path: single ASCII chars written to cells each frame.
-    // Cache is bounded: 128 ASCII chars × finite distinct styles used per app.
-    private static readonly ConcurrentDictionary<(uint props, int fgHash, int bgHash, ColorProfile profile, char ch), string>
+    // Per-char styled cell cache: keyed by (props, fg, bg, profile, char).
+    // Covers the dominant hot path: single chars written to cells each frame.
+    private static readonly ConcurrentDictionary<(uint props, IColor? fg, IColor? bg, ColorProfile profile, char ch), string>
         _charCache = new();
+
+    // Both caches are bounded. Distinct styles are few in most apps, but a gradient, a
+    // colour animation or a half-block image draws a fresh colour pair per cell, and every
+    // pair used to stay cached for the life of the process. Past the bound a cache is
+    // emptied and refills with what is in use now: the steady state of any one screen is
+    // far below it, so this only ever trims what a moving picture left behind.
+    private const int MaxAnsiEntries = 16_384;
+    private const int MaxCharEntries = 65_536;
+    private static int _ansiCount, _charCount;
+
+    private static void AddBounded<TKey, TValue>(
+        ConcurrentDictionary<TKey, TValue> cache, ref int count, int max, TKey key, TValue value)
+        where TKey : notnull
+    {
+        if (!cache.TryAdd(key, value)) return;
+        if (Interlocked.Increment(ref count) <= max) return;
+        cache.Clear();
+        Interlocked.Exchange(ref count, 0);
+    }
+
+    /// <summary>Entries in the two style caches, for tests that pin the bound.</summary>
+    internal static (int Ansi, int Char) CacheCounts => (_ansiCache.Count, _charCache.Count);
 
     // Bitmask constants for set properties
     private const uint FgBit        = 1 << 0;
@@ -253,9 +278,7 @@ public readonly struct Style : IEquatable<Style>
     {
         if (_props == 0) return ch <= 127 ? _asciiStrings[ch] : ch.ToString();
 
-        int fgHash = _fg?.GetHashCode() ?? 0;
-        int bgHash = _bg?.GetHashCode() ?? 0;
-        var key = (_props, fgHash, bgHash, colorProfile, ch);
+        var key = (_props, _fg, _bg, colorProfile, ch);
 
         if (_charCache.TryGetValue(key, out var cached)) return cached;
 
@@ -264,7 +287,7 @@ public readonly struct Style : IEquatable<Style>
             ? (ch <= 127 ? _asciiStrings[ch] : ch.ToString())
             : string.Concat(open, ch <= 127 ? _asciiStrings[ch] : ch.ToString(), close);
 
-        _charCache.TryAdd(key, result);
+        AddBounded(_charCache, ref _charCount, MaxCharEntries, key, result);
         return result;
     }
 
@@ -292,16 +315,14 @@ public readonly struct Style : IEquatable<Style>
     /// </summary>
     private (string open, string close) GetCachedAnsiSequences(ColorProfile colorProfile)
     {
-        int fgHash = _fg?.GetHashCode() ?? 0;
-        int bgHash = _bg?.GetHashCode() ?? 0;
-        var key = (_props, fgHash, bgHash, colorProfile);
+        var key = (_props, _fg, _bg, colorProfile);
 
         if (_ansiCache.TryGetValue(key, out var cached)) return cached;
 
         // Copy fields needed by ComputeAnsiSequences out to locals — structs can't
         // capture 'this' inside lambdas, so we compute directly here.
         var result = ComputeAnsiSequences(colorProfile);
-        _ansiCache.TryAdd(key, result);
+        AddBounded(_ansiCache, ref _ansiCount, MaxAnsiEntries, key, result);
         return result;
     }
 

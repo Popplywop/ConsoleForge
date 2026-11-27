@@ -36,7 +36,7 @@ namespace ConsoleForge.Widgets;
 /// behaviour of the flag, not a bug; leave it off to keep context visible.
 /// </para>
 /// </remarks>
-public sealed record Modal : IWidget, ISingleBodyWidget
+public sealed record Modal : IWidget, ISingleBodyWidget, IPointerOpaque
 {
     // ── IWidget ─────────────────────────────────────────────────────────────
     /// <summary>
@@ -128,10 +128,7 @@ public sealed record Modal : IWidget, ISingleBodyWidget
     /// </summary>
     public Region ComputeBodyRegion(Region outer)
     {
-        var dw = Math.Clamp(DialogWidth,  2, outer.Width);
-        var dh = Math.Clamp(DialogHeight, 2, outer.Height);
-        var dc = outer.Col + (outer.Width  - dw) / 2;
-        var dr = outer.Row + (outer.Height - dh) / 2;
+        var (dc, dr, dw, dh) = DialogRegion(outer);
         var s  = Style;
         int t  = 1 + (s.HasPadding ? s.PaddingTop    : 0);
         int r  = 1 + (s.HasPadding ? s.PaddingRight  : 0);
@@ -139,6 +136,25 @@ public sealed record Modal : IWidget, ISingleBodyWidget
         int l  = 1 + (s.HasPadding ? s.PaddingLeft   : 0);
         return new Region(dc + l, dr + t,
             Math.Max(0, dw - l - r), Math.Max(0, dh - t - b));
+    }
+
+    /// <summary>The centered dialog box, border included, inside <paramref name="outer"/>.</summary>
+    private Region DialogRegion(Region outer)
+    {
+        var dw = Math.Clamp(DialogWidth,  2, outer.Width);
+        var dh = Math.Clamp(DialogHeight, 2, outer.Height);
+        return new Region(outer.Col + (outer.Width - dw) / 2, outer.Row + (outer.Height - dh) / 2, dw, dh);
+    }
+
+    /// <inheritdoc/>
+    /// <remarks>
+    /// The dialog box always; with <see cref="ShowBackdrop"/>, everything — the backdrop
+    /// hides what is under it, so a click there must not focus it.
+    /// </remarks>
+    bool IPointerOpaque.BlocksPointerAt(Region region, int col, int row)
+    {
+        var r = ShowBackdrop ? region : DialogRegion(region);
+        return col >= r.Col && col < r.Col + r.Width && row >= r.Row && row < r.Row + r.Height;
     }
 
     // ── Render ───────────────────────────────────────────────────────────────
@@ -156,20 +172,21 @@ public sealed record Modal : IWidget, ISingleBodyWidget
         if (ShowBackdrop)
         {
             var bdStyle = BackdropStyle.Inherit(ctx.Theme.BaseStyle);
-            var fill = new string(' ', region.Width);
+            var fill = TextUtils.Spaces(region.Width);
             for (var r = 0; r < region.Height; r++)
                 ctx.Write(region.Col, region.Row + r, fill, bdStyle);
         }
 
         // ── Center the dialog box ─────────────────────────────────────────────
-        var dw = Math.Clamp(DialogWidth,  2, region.Width);
-        var dh = Math.Clamp(DialogHeight, 2, region.Height);
-
-        var dialogCol = region.Col + (region.Width  - dw) / 2;
-        var dialogRow = region.Row + (region.Height - dh) / 2;
-
-        var dialogRegion = new Region(dialogCol, dialogRow, dw, dh);
+        var dialogRegion = DialogRegion(region);
         var dialogCtx    = new SubRenderContext(ctx, dialogRegion);
+
+        // The dialog is opaque even without a backdrop: whatever its body leaves blank
+        // must not show the screen beneath it through the box.
+        var fillStyle = Style.Inherit(ctx.Theme.BaseStyle);
+        var blank     = TextUtils.Spaces(dialogRegion.Width);
+        for (var r = 0; r < dialogRegion.Height; r++)
+            dialogCtx.Write(dialogRegion.Col, dialogRegion.Row + r, blank, fillStyle);
 
         // ── Dialog box ────────────────────────────────────────────────────────
         var effectiveStyle = Style.Inherit(ctx.Theme.BorderStyle);

@@ -129,7 +129,7 @@ public sealed record Tabs : IFocusable
 
         // ── Tab bar row ───────────────────────────────────────────────────────
         // Fill entire bar row with base style first
-        ctx.Write(region.Col, region.Row, new string(' ', region.Width), barStyle);
+        ctx.Write(region.Col, region.Row, TextUtils.Spaces(region.Width), barStyle);
 
         int col = region.Col;
         for (var i = 0; i < Labels.Count; i++)

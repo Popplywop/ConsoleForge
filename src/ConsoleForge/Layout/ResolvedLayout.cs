@@ -22,7 +22,15 @@ public sealed class ResolvedLayout
     {
         Allocations.Clear();
         _clips?.Clear();
+        HasDuplicates = false;
     }
+
+    /// <summary>
+    /// Some widget instance appears more than once in the tree. Its entry then holds only
+    /// the last of its regions, so a region read from here is not necessarily the one a
+    /// given occurrence renders at — containers lay their children out themselves instead.
+    /// </summary>
+    internal bool HasDuplicates { get; set; }
 
     // Visible part of each widget inside a scrolling container. Such a widget keeps its
     // whole region — it renders as if unclipped — but only this part of it is on screen,

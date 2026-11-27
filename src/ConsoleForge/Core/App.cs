@@ -173,6 +173,10 @@ public sealed class App
                     {
                         if (msg is QuitMsg) goto quit;
 
+                        // A run of resizes is drawn once, at its end — but before anything
+                        // else, so every other message still sees the resize it followed.
+                        if (msg is not WindowResizeMsg) DrawPendingResize(currentModel);
+
                         if (!TryHandleLoopMsg(msg))
                         {
                             var inner = msg switch
@@ -191,6 +195,7 @@ public sealed class App
                                 foreach (var m in inner)
                                 {
                                     if (m is QuitMsg) goto quit;
+                                    if (m is not WindowResizeMsg) DrawPendingResize(currentModel);
                                     if (TryHandleLoopMsg(m)) continue;
                                     ProcessMsg(m, ref currentModel);
                                 }
@@ -202,7 +207,8 @@ public sealed class App
                         if (!_channel.Reader.TryRead(out msg!)) break;
                     }
 
-                    DrawPendingFrame(currentModel, frameMs);
+                    if (!DrawPendingResize(currentModel))
+                        DrawPendingFrame(currentModel, frameMs);
                     continue;
                 quit:
                     break;
@@ -318,21 +324,41 @@ public sealed class App
         if (!ReferenceEquals(newModel, prevModel) || msg is RedrawMsg)
             _renderer.MarkDirty();
 
-        // Force immediate re-render on resize; invalidate prev buffer to force full redraw
-        if (msg is WindowResizeMsg && _terminal is not null)
+        // A resize needs a full redraw, drawn once the run of resizes it belongs to ends —
+        // at the next other message, or when the queue is drained. Not here: dragging a
+        // window edge delivers a resize per step (two, in fact: the terminal raises both
+        // its Resized event and a ResizeInputEvent), and drawing each in full, before the
+        // next one already queued makes it obsolete, redrew the screen once per event.
+        if (msg is WindowResizeMsg)
+            _resizePending = true;
+    }
+
+    private bool _resizePending;
+
+    /// <summary>
+    /// The full redraw a resize needs, once for however many resizes arrived in a row.
+    /// Returns false when there was none to do.
+    /// </summary>
+    private bool DrawPendingResize(IModel model)
+    {
+        if (!_resizePending) return false;
+        _resizePending = false;
+        if (_terminal is null) return true;
+
+        lock (_renderLock)
         {
-            lock (_renderLock)
+            // Invalidate the previous buffer: the terminal reflowed or cleared what it held.
+            _renderer.Invalidate();
+            if (!_quitting && _terminal is not null)
             {
-                _renderer.Invalidate();
-                if (!_quitting && _terminal is not null)
-                {
-                    var root = model.View();
-                    _renderer.Render(root, _terminal.Width, _terminal.Height, _theme, ColorProfile);
-                    _renderer.Flush(_terminal);
-                    ReportRegions();
-                }
+                var root = model.View();
+                _renderer.Render(root, _terminal.Width, _terminal.Height, _theme, ColorProfile);
+                _renderer.Flush(_terminal);
+                _lastFrameTimestamp = Stopwatch.GetTimestamp();
+                ReportRegions();
             }
         }
+        return true;
     }
 
     // Touched only under the render lock, right after a frame.

@@ -212,4 +212,16 @@ public class TableTests
         Assert.Same(table, msg.Source);
         Assert.Equal(0, msg.NewIndex);
     }
+
+    // ── Scroll offset past the end ────────────────────────────────────────────
+
+    [Fact]
+    public void ScrollOffsetPastTheEnd_ShowsTheLastRows()
+    {
+        var table = new Table([new TableColumn("H", 4)], [["r0"], ["r1"], ["r2"], ["r3"]], scrollOffset: 10);
+        var sim = new ConsoleForge.Tests.Rendering.TerminalSim(8, 3);
+        sim.Apply(new Renderer().Render(table, 8, 3, Theme.Dark, ColorProfile.TrueColor).Content);
+        Assert.Contains("r2", sim.Lines[1]);
+        Assert.Contains("r3", sim.Lines[2]);
+    }
 }

@@ -90,7 +90,7 @@ public sealed record Spinner : IWidget, IMeasurable
         var frameText = Frames[((Frame % Frames.Count) + Frames.Count) % Frames.Count];
         var text = Label is null ? frameText : $"{frameText} {Label}";
 
-        if (text.Length > region.Width) text = text[..region.Width];
+        text = TextUtils.TruncateToWidth(text, region.Width); // columns, not chars: a label may be wide
         ctx.Write(region.Col, region.Row, text, effectiveStyle);
     }
 }

@@ -156,9 +156,11 @@ public sealed record Table : IWidget
             }
 
             // Data rows — only render the visible window [ScrollOffset, ScrollOffset+visibleRows)
+            // The offset is clamped as List's is: one past the end drew an empty table.
             var visibleRows = maxRow - renderRow; // rows remaining after header
-            var lastRow     = Math.Min(ScrollOffset + visibleRows, Rows.Count);
-            for (var i = ScrollOffset; i < lastRow && renderRow < maxRow; i++, renderRow++)
+            var scroll      = Math.Clamp(ScrollOffset, 0, Math.Max(0, Rows.Count - visibleRows));
+            var lastRow     = Math.Min(scroll + visibleRows, Rows.Count);
+            for (var i = scroll; i < lastRow && renderRow < maxRow; i++, renderRow++)
             {
                 var style = i == SelectedIndex ? effectiveSelected : effectiveRow;
                 RenderDataRow(ctx, region.Col, renderRow, colWidths, Rows[i], style, effectiveRow);
@@ -223,9 +225,9 @@ public sealed record Table : IWidget
             text = TextUtils.FitToWidth(text, textW);
 
             // Write: left-pad · text · right-pad — fills exactly w columns.
-            ctx.Write(col,          row, new string(' ', padL), style);
+            ctx.Write(col,          row, TextUtils.Spaces(padL), style);
             ctx.Write(col + padL,   row, text,                  style);
-            ctx.Write(col + padL + textW, row, new string(' ', padR), style);
+            ctx.Write(col + padL + textW, row, TextUtils.Spaces(padR), style);
             col += w;
         }
     }
@@ -256,9 +258,9 @@ public sealed record Table : IWidget
             // Per-column style override (applied on top of rowStyle).
             var cellStyle = (Columns[i].Style?.Inherit(rowStyle)) ?? rowStyle;
 
-            ctx.Write(col,          row, new string(' ', padL), rowStyle);
+            ctx.Write(col,          row, TextUtils.Spaces(padL), rowStyle);
             ctx.Write(col + padL,   row, text,                  cellStyle);
-            ctx.Write(col + padL + textW, row, new string(' ', padR), rowStyle);
+            ctx.Write(col + padL + textW, row, TextUtils.Spaces(padR), rowStyle);
             col += w;
         }
     }

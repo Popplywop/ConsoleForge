@@ -57,6 +57,8 @@ public sealed record ProgressBar : IWidget
     }
 
     // ── Render ───────────────────────────────────────────────────────────────
+    private const int LabelWidth = 5; // " 100%"
+
     /// <summary>
     /// Renders the progress bar into <paramref name="ctx"/>'s allocated region.
     /// Draws a filled portion followed by an empty portion, then an optional
@@ -78,10 +80,12 @@ public sealed record ProgressBar : IWidget
         var barWidth = region.Width;
         string? percentLabel = null;
 
-        if (ShowPercent)
+        // The label needs room beside at least one bar cell; narrower than that, the bar
+        // alone is drawn rather than a label cut off mid-number.
+        if (ShowPercent && barWidth > LabelWidth)
         {
             percentLabel = $" {(int)(ratio * 100),3}%";
-            barWidth = Math.Max(1, barWidth - percentLabel.Length);
+            barWidth -= percentLabel.Length;
         }
 
         var fillCount  = (int)Math.Round(ratio * barWidth);

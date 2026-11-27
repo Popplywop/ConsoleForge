@@ -271,4 +271,32 @@ public class StyleTests
         var rendered = style.Render("hello", ColorProfile.TrueColor);
         Assert.EndsWith("\x1b[0m", rendered);
     }
+
+    // ── Cache bounds ──────────────────────────────────────────────────────────
+
+    [Fact]
+    public void StyleCaches_StayBounded_UnderEndlesslyChangingColours()
+    {
+        // A gradient or a half-block image makes a new colour pair per cell; every one
+        // used to stay cached for the life of the process.
+        for (int i = 0; i < 100_000; i++)
+        {
+            var style = Style.Default.Foreground(Color.FromRgb((byte)i, (byte)(i >> 8), (byte)(i >> 16)));
+            style.RenderChar('x', ColorProfile.TrueColor);
+        }
+
+        var (ansi, chars) = Style.CacheCounts;
+        Assert.True(ansi <= 16_384, $"{ansi} ANSI entries cached");
+        Assert.True(chars <= 65_536, $"{chars} char entries cached");
+    }
+
+    [Fact]
+    public void StyleCache_DistinguishesColoursByValue()
+    {
+        // Keyed by hash code, two colours whose hashes collided shared one entry.
+        var red  = Style.Default.Foreground(Color.FromRgb(255, 0, 0)).RenderChar('x', ColorProfile.TrueColor);
+        var blue = Style.Default.Foreground(Color.FromRgb(0, 0, 255)).RenderChar('x', ColorProfile.TrueColor);
+        Assert.Contains("255;0;0", red);
+        Assert.Contains("0;0;255", blue);
+    }
 }

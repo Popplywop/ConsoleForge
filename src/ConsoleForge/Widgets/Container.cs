@@ -149,12 +149,19 @@ public sealed record Container : IWidget, IContainer, IMeasurable, IScrollableCo
         var bgStyle = Style.Inherit(ctx.Theme.BaseStyle);
         if (!bgStyle.Equals(Styling.Style.Default))
         {
-            var fill = new string(' ', region.Width);
+            var fill = TextUtils.Spaces(region.Width);
             for (var r = 0; r < region.Height; r++)
                 ctx.Write(region.Col, region.Row + r, fill, bgStyle);
         }
 
         if (Children.Count == 0) return;
+
+        // The layout pass has already placed every child, through the same LayoutSolver
+        // call this method would make; read the regions back instead of solving — and
+        // measuring every Auto child — a second time per frame. Only when the layout is
+        // this tree's and this container is where it says: a container rendered outside
+        // the layout pass, or a widget instance used twice, solves for itself below.
+        if (TryRenderFromLayout(ctx, region)) return;
 
         // ── Fast-path gate: no container padding and no child margins ───────────────
         // Pre-check is O(1) + O(n) scan with early exit.
@@ -231,6 +238,35 @@ public sealed record Container : IWidget, IContainer, IMeasurable, IScrollableCo
             cur += ts;
             RenderChild(viewCtx, Children[i], cr, lReg);
         }
+    }
+
+    private bool TryRenderFromLayout(IRenderContext ctx, Region region)
+    {
+        var layout = ctx.Layout;
+        if (layout is null || layout.HasDuplicates
+            || !layout.TryGetRegion(this, out var placed) || placed != region)
+            return false;
+
+        for (int i = 0; i < Children.Count; i++)
+            if (!layout.TryGetRegion(Children[i], out _)) return false;
+
+        // Children are clipped to the area inside the padding, as the solving path does.
+        var viewport = region;
+        if (Style.HasPadding)
+        {
+            viewport = new Region(region.Col + Style.PaddingLeft, region.Row + Style.PaddingTop,
+                Math.Max(0, region.Width  - Style.PaddingLeft - Style.PaddingRight),
+                Math.Max(0, region.Height - Style.PaddingTop  - Style.PaddingBottom));
+            if (viewport.Width <= 0 || viewport.Height <= 0) return true;
+        }
+        var viewCtx = Scrollable && Style.HasPadding ? new SubRenderContext(ctx, viewport) : ctx;
+
+        for (int i = 0; i < Children.Count; i++)
+        {
+            layout.TryGetRegion(Children[i], out var cr);
+            RenderChild(viewCtx, Children[i], cr, viewport);
+        }
+        return true;
     }
 
     /// <summary>

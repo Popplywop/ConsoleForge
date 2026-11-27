@@ -70,6 +70,7 @@ marked **Breaking**.
   see the `Detect()` change below. `FromEnvironment` is the old environment-only detection.
 - `ResolvedLayout.GetVisibleRegion(widget)` — the part of a widget's region on screen,
   which differs from `GetRegion` only inside a scrolling `Container`.
+- `TextUtils.Spaces(count)` — a shared string of blanks, for background fills.
 
 ### Changed
 
@@ -184,12 +185,44 @@ marked **Breaking**.
   to the content, and only the visible part of a scrolled child answers a click
   (`ResolvedLayout.GetVisibleRegion`).
 
+- `TextInput` and `TextArea` did not scroll sideways: text was cut at the box's width and
+  the cursor pinned to its edge, so typing past the width went in unseen (and
+  `TextInput`'s cursor could sit one column outside its box). Both now scroll to keep the
+  cursor in view — `TextArea` shifting every line by the same columns, as an editor does.
+  The offset is a pure function of the cursor column and the width, so no state is added.
+- A `Modal` without a backdrop left its dialog box transparent: the screen beneath showed
+  through every cell the body did not draw. The box is now filled first.
+- Clicking a `Modal` focused the widget beneath it — on its border, its blank interior,
+  or anywhere on its backdrop. Hit-testing now searches the topmost layer first and stops
+  at a layer that covers the point.
+- `List` and `Table` drew no rows when `ScrollOffset` was past the end — a list filtered
+  down under its offset went blank. The offset is clamped when drawn, as `ListState`
+  clamps it once it knows the viewport.
+- `ProgressBar` narrower than its percentage label wrote the label past its region; it
+  now draws the bar alone. `Spinner` cut its label by chars, not columns, so a wide label
+  overflowed.
+
 ### Performance
 
 - Non-ASCII cells in the Basic Multilingual Plane use the per-char style cache, and
   wrapping no longer allocates a string per rune: a steady frame of 20 CJK/accented
   `TextBlock`s allocates ~14 KB instead of ~62 KB, the half-block image fallback 8 KB
   instead of 29 KB (`PixelHalfBlockBenchmarks`, 18 rows).
+- `Container.Render` reads its children's regions from the layout pass instead of solving
+  again, so an `Auto` child is measured once per frame, not twice — or once per level of
+  `Auto` nesting on top of that — and the solver's per-container array is gone. A
+  container the layout did not place (one built inside another widget's `Render`), or a
+  tree that holds one widget instance twice, still solves for itself.
+- A resize was drawn in full the moment it was handled, and a terminal reports each one
+  twice (its `Resized` event and a `ResizeInputEvent`), so dragging a window edge redrew
+  the screen twice per step. A run of resizes is now drawn once, before the next other
+  message or when the queue drains: 60 resize steps went from 120 frames to a handful.
+- The style caches were unbounded: a gradient or a half-block image left every colour
+  pair it ever drew cached for the life of the process. They are now emptied past 16,384
+  (sequences) and 65,536 (cells) entries. They are also keyed by the colours themselves
+  rather than their hash codes, which two colours could share.
+- Background fills (`List`, `Table`, `TextArea`, `Tabs`, `Checkbox`, `Container`, `Modal`)
+  use shared blank strings (`TextUtils.Spaces`) instead of allocating a row per frame.
 
 ## [0.4.0]
 
