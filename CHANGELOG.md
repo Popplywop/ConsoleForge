@@ -34,6 +34,14 @@ marked **Breaking**.
   New: `KittyProtocol.CreatePayload(RgbaImageData, …)` (cached against the pixel array, as
   PNG payloads are), `KittyProtocol.IsPng`, and an
   `ImageWidget(RgbaImageData, TerminalCapabilities?)` constructor.
+- `KeyBinding` — patterns plus the help text that describes them (`new KeyBinding("q",
+  "quit", KeyPattern.OfChar('q'))`), with an `Enabled` flag derived from model state via
+  `with`. `KeyMap.On(KeyBinding, …)` registers every pattern and records the binding in
+  `KeyMap.Bindings`; a disabled binding is skipped for input and help alike.
+- `HelpBar` — renders `q quit · esc back · ? help` from a list of `KeyBinding`s, typically
+  `KeyMap.Bindings`, so the help shown and the keys handled cannot drift apart. Keys in the
+  widget's style, descriptions in the theme's muted `DisabledStyle`; entries that do not fit
+  are dropped from the end behind `…`. Sizes to content.
 - Bracketed paste: `App.Run(…, enableBracketedPaste: true)` delivers a paste as one
   `PasteMsg(Text)` instead of a `KeyMsg` per character, so a pasted line break cannot press
   Enter. Line breaks are normalised to `\n`. Opt-in, since the model must handle

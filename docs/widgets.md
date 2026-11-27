@@ -20,6 +20,7 @@ All sixteen ship in `ConsoleForge.Widgets`, except the state reducers, which liv
 | `Tabs` | A row of labels with one active. | |
 | `ProgressBar` | A proportion of a whole. | |
 | `Spinner` | Work is happening, length unknown. | yes |
+| `HelpBar` | The keys that do something right now. | yes |
 | `BorderBox` | A titled frame around one child. | yes |
 | `Container` | Children stacked along an axis. | yes |
 | `ZStack` | Children stacked front to back. | yes |
