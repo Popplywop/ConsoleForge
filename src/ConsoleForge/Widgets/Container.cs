@@ -8,7 +8,7 @@ namespace ConsoleForge.Widgets;
 /// Participates in two-pass layout via <see cref="IContainer"/>.
 /// Supports optional scrolling along the main axis.
 /// </summary>
-public sealed record Container : IWidget, IContainer, IMeasurable
+public sealed record Container : IWidget, IContainer, IMeasurable, IScrollableContainer
 {
     /// <summary>
     /// Primary constructor matching quickstart usage:
@@ -48,12 +48,19 @@ public sealed record Container : IWidget, IContainer, IMeasurable
     // ── Container-specific ──────────────────────────────────────────────────
     /// <summary>Visual style applied as background fill before children render.</summary>
     public Style Style      { get; init; } = Style.Default;
-    /// <summary>When true, children that overflow the container's main axis are clipped and scrollable via <see cref="ScrollOffset"/>.</summary>
+    /// <summary>
+    /// When true, children keep their own sizes along the main axis even when together they
+    /// overflow the container; the overflow is clipped and scrolled through with
+    /// <see cref="ScrollOffset"/>. <c>Auto</c> children are measured without a limit along
+    /// that axis, and flex children share only what the viewport has left over.
+    /// </summary>
     public bool  Scrollable { get; init; }
 
     /// <summary>
     /// Row/column offset for scrollable containers. 0-based lines/columns
-    /// from the start of the children along the main axis.
+    /// from the start of the children along the main axis. Clamped when laid out, to
+    /// between 0 and the point where the last child's end meets the viewport's, so a
+    /// model can add to it freely without knowing how long the content is.
     /// </summary>
     public int ScrollOffset { get; init; }
 
@@ -171,26 +178,17 @@ public sealed record Container : IWidget, IContainer, IMeasurable
                 LayoutSolver.ResolveSizes(
                     Children, Direction, availO,
                     crossAvailable: isHO ? region.Height : region.Width,
-                    includeMargins: false, throwWhenImpossible: false, resO);
+                    includeMargins: false, throwWhenImpossible: false, resO, Scrollable);
 
-                int curO = isHO ? region.Col : region.Row;
+                int curO = (isHO ? region.Col : region.Row)
+                         - (Scrollable ? LayoutSolver.ClampScroll(ScrollOffset, resO, availO) : 0);
                 for (var i = 0; i < Children.Count; i++)
                 {
                     int sz = Math.Max(0, resO[i]); if (sz == 0) { curO += sz; continue; }
                     Region cr = isHO ? new Region(curO, region.Row, sz, region.Height)
                                      : new Region(region.Col, curO, region.Width, sz);
                     curO += sz;
-                    if (Scrollable && ScrollOffset > 0)
-                        cr = Direction == Axis.Vertical ? cr with { Row = cr.Row - ScrollOffset }
-                                                        : cr with { Col = cr.Col - ScrollOffset };
-                    if (!Overlaps(cr, region)) continue;
-                    Region cl = Clip(cr, region);
-                    if (cl.Width <= 0 || cl.Height <= 0) continue;
-                    // A cache hit re-registers the widget itself; only the miss path registers here.
-                    if (IsComposite(Children[i]) && ctx.TryReuseWidget(Children[i], cl)) { }
-                    else
-                    { Children[i].Render(new SubRenderContext(ctx, cl));
-                      if (IsComposite(Children[i])) ctx.RegisterWidget(Children[i], cl); }
+                    RenderChild(ctx, Children[i], cr, region);
                 }
                 return; // ← fast path exits here
             }
@@ -213,9 +211,12 @@ public sealed record Container : IWidget, IContainer, IMeasurable
         LayoutSolver.ResolveSizes(
             Children, Direction, avail,
             crossAvailable: isH ? lH : lW,
-            includeMargins: true, throwWhenImpossible: false, resolved);
+            includeMargins: true, throwWhenImpossible: false, resolved, Scrollable);
 
-        int cur = isH ? lCol : lRow, cross = isH ? lH : lW, crossO = isH ? lRow : lCol;
+        // Scrolled children must stop at the padding, not the container's edge.
+        var viewCtx = Scrollable ? new SubRenderContext(ctx, lReg) : ctx;
+        int cur = (isH ? lCol : lRow) - (Scrollable ? LayoutSolver.ClampScroll(ScrollOffset, resolved, avail) : 0);
+        int cross = isH ? lH : lW, crossO = isH ? lRow : lCol;
         for (var i = 0; i < Children.Count; i++)
         {
             int ts = Math.Max(0, resolved[i]); if (ts == 0) { cur += ts; continue; }
@@ -228,21 +229,27 @@ public sealed record Container : IWidget, IContainer, IMeasurable
                 ? new Region(cur + mS, crossO + cS, Math.Max(0, ts - mS - mE), Math.Max(0, cross - cS - cE))
                 : new Region(crossO + cS, cur + mS, Math.Max(0, cross - cS - cE), Math.Max(0, ts - mS - mE));
             cur += ts;
-            if (Scrollable && ScrollOffset > 0)
-                cr = Direction == Axis.Vertical ? cr with { Row = cr.Row - ScrollOffset }
-                                                : cr with { Col = cr.Col - ScrollOffset };
-            if (!Overlaps(cr, lReg)) continue;
-            Region cl = Clip(cr, lReg);
-            if (cl.Width <= 0 || cl.Height <= 0) continue;
-            // A cache hit re-registers the widget itself; only the miss path registers here.
-            if (IsComposite(Children[i]) && ctx.TryReuseWidget(Children[i], cl)) { }
-            else
-            { Children[i].Render(new SubRenderContext(ctx, cl));
-              if (IsComposite(Children[i])) ctx.RegisterWidget(Children[i], cl); }
+            RenderChild(viewCtx, Children[i], cr, lReg);
         }
     }
 
-    // Removed helper methods — fast path and full path both inline above.
+    /// <summary>
+    /// Render one child at its full region <paramref name="cr"/>, or skip it when none of
+    /// it is inside <paramref name="viewport"/>.
+    /// </summary>
+    /// <remarks>
+    /// The child always renders at its whole region, never at the visible part of it: a
+    /// child half scrolled out of view must draw its lower half, not squeeze its top half
+    /// into the space that is left. The sub-context clips the writes to what is visible.
+    /// </remarks>
+    private static void RenderChild(IRenderContext ctx, IWidget child, Region cr, Region viewport)
+    {
+        if (cr.Width <= 0 || cr.Height <= 0 || !Overlaps(cr, viewport)) return;
+        // A cache hit re-registers the widget itself; only the miss path registers here.
+        if (IsComposite(child) && ctx.TryReuseWidget(child, cr)) return;
+        child.Render(new SubRenderContext(ctx, cr));
+        if (IsComposite(child)) ctx.RegisterWidget(child, cr);
+    }
 
     private static bool Overlaps(Region a, Region b) =>
         a.Col < b.Col + b.Width  &&
@@ -250,12 +257,4 @@ public sealed record Container : IWidget, IContainer, IMeasurable
         a.Row < b.Row + b.Height &&
         a.Row + a.Height > b.Row;
 
-    private static Region Clip(Region child, Region container)
-    {
-        int col    = Math.Max(child.Col,  container.Col);
-        int row    = Math.Max(child.Row,  container.Row);
-        int right  = Math.Min(child.Col  + child.Width,  container.Col  + container.Width);
-        int bottom = Math.Min(child.Row  + child.Height, container.Row  + container.Height);
-        return new Region(col, row, Math.Max(0, right - col), Math.Max(0, bottom - row));
-    }
 }

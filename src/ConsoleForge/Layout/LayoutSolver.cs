@@ -42,6 +42,12 @@ internal static class LayoutSolver
     /// throwing again would only turn a drawable frame into a crash.
     /// </param>
     /// <param name="sizes">Destination, at least <c>children.Count</c> long.</param>
+    /// <param name="scrollable">
+    /// The container scrolls along <paramref name="axis"/>: children keep their own sizes
+    /// even when together they overflow <paramref name="available"/> — that overflow is what
+    /// there is to scroll — and an <c>Auto</c> child is measured without an along-axis
+    /// limit. Flex children still share only what the viewport has left.
+    /// </param>
     /// <exception cref="LayoutConstraintException">
     /// Fixed children cannot fit and there is no flex child to give up space.
     /// </exception>
@@ -52,11 +58,12 @@ internal static class LayoutSolver
         int crossAvailable,
         bool includeMargins,
         bool throwWhenImpossible,
-        Span<int> sizes)
+        Span<int> sizes,
+        bool scrollable = false)
     {
         bool horizontal = axis == Axis.Horizontal;
         int totalFixed = 0, totalFlexWeight = 0;
-        bool anyMeasured = false;
+        bool anyMeasured = false, anyBoundedFlex = false;
 
         // Pass 1: fixed children take their size; flex children are parked as negative
         // weights so a second pass can recognise them without a second constraint switch.
@@ -80,7 +87,7 @@ internal static class LayoutSolver
             int measured = -1;
             if (child is IMeasurable measurable && ContainsAuto(constraint))
             {
-                int alongBudget = Math.Max(0, available - margin);
+                int alongBudget = scrollable ? UnboundedAlong : Math.Max(0, available - margin);
                 var desired = horizontal
                     ? measurable.Measure(alongBudget, crossAvailable)
                     : measurable.Measure(crossAvailable, alongBudget);
@@ -99,27 +106,20 @@ internal static class LayoutSolver
                 int weight = GetFlexWeight(constraint);
                 sizes[i]         = -weight;
                 totalFlexWeight += weight;
+                if (constraint is SizeConstraint.MinConstraint or SizeConstraint.MaxConstraint)
+                    anyBoundedFlex = true;
             }
         }
 
-        // Pass 2: split what's left between the flex children, giving the rounding
-        // remainder to the last of them so the row is filled exactly.
         int freeSpace = Math.Max(0, available - totalFixed);
-        int distributed = 0, lastFlex = -1;
-        for (int i = 0; i < children.Count; i++)
-        {
-            if (sizes[i] >= 0) continue;
-            int weight = -sizes[i];
-            int share  = totalFlexWeight > 0 ? freeSpace * weight / totalFlexWeight : 0;
-            sizes[i]    = share;
-            distributed += share;
-            lastFlex     = i;
-        }
-        if (lastFlex >= 0) sizes[lastFlex] += freeSpace - distributed;
+        if (anyBoundedFlex)
+            DistributeBounded(children, horizontal, includeMargins, freeSpace, sizes);
+        else
+            DistributeFlex(children.Count, freeSpace, totalFlexWeight, sizes);
 
         int total = 0;
         for (int i = 0; i < children.Count; i++) total += Math.Max(0, sizes[i]);
-        if (total <= available || total == 0) return;
+        if (scrollable || total <= available || total == 0) return;
 
         // Only an impossible *explicit* layout is an error. A container holding more
         // measured content than fits is ordinary — more text than rows, say — and must
@@ -143,6 +143,124 @@ internal static class LayoutSolver
         }
     }
 
+    // An along-axis measure budget for a scrolling container: no limit worth the name,
+    // with room left for a widget that adds padding to it without overflowing.
+    private const int UnboundedAlong = int.MaxValue / 4;
+
+    /// <summary>
+    /// Split <paramref name="freeSpace"/> between the flex children (those holding a
+    /// negative weight in <paramref name="sizes"/>), giving the rounding remainder to the
+    /// last of them so the row is filled exactly.
+    /// </summary>
+    private static void DistributeFlex(int count, int freeSpace, int totalFlexWeight, Span<int> sizes)
+    {
+        int distributed = 0, lastFlex = -1;
+        for (int i = 0; i < count; i++)
+        {
+            if (sizes[i] >= 0) continue;
+            int weight = -sizes[i];
+            int share  = totalFlexWeight > 0 ? freeSpace * weight / totalFlexWeight : 0;
+            sizes[i]    = share;
+            distributed += share;
+            lastFlex     = i;
+        }
+        if (lastFlex >= 0) sizes[lastFlex] += freeSpace - distributed;
+    }
+
+    /// <summary>
+    /// <see cref="DistributeFlex"/> for when some flex children carry Min/Max bounds.
+    /// </summary>
+    /// <remarks>
+    /// The flexbox resolution: share the space by weight, clamp each share to its bounds,
+    /// and if clamping moved the total, freeze the children that moved in the dominant
+    /// direction — all the ones raised to a minimum if the shares came out short, all
+    /// the ones cut to a maximum if long — and share what is left among the rest again.
+    /// Each round freezes at least one child, so it ends within one round per child.
+    /// </remarks>
+    private static void DistributeBounded(
+        IReadOnlyList<IWidget> children, bool horizontal, bool includeMargins, int freeSpace, Span<int> sizes)
+    {
+        int remaining = freeSpace;
+        while (true)
+        {
+            int totalWeight = 0, lastActive = -1;
+            for (int i = 0; i < children.Count; i++)
+                if (sizes[i] < 0) { totalWeight -= sizes[i]; lastActive = i; }
+            if (lastActive < 0) return;
+
+            // Unclamped shares and how far clamping would move each, without writing yet.
+            int space = Math.Max(0, remaining), distributed = 0, violation = 0;
+            for (int i = 0; i <= lastActive; i++)
+            {
+                if (sizes[i] >= 0) continue;
+                int share = i == lastActive ? space - distributed : space * -sizes[i] / totalWeight;
+                distributed += share;
+                violation   += ClampSlot(children[i], horizontal, includeMargins, share) - share;
+            }
+
+            distributed = 0;
+            for (int i = 0; i <= lastActive; i++)
+            {
+                if (sizes[i] >= 0) continue;
+                int weight  = -sizes[i];
+                int share   = i == lastActive ? space - distributed : space * weight / totalWeight;
+                distributed += share;
+                int clamped = ClampSlot(children[i], horizontal, includeMargins, share);
+
+                // No violation: every share stands. Otherwise freeze only the children
+                // clamped in the direction the total moved; the rest go round again.
+                if (violation == 0 || (violation > 0 ? clamped > share : clamped < share))
+                {
+                    sizes[i]   = clamped;
+                    remaining -= clamped;
+                }
+            }
+            if (violation == 0) return;
+        }
+    }
+
+    // A slot holds the child's margins when the caller asked for them; the bounds are on
+    // the child itself, so they apply to the slot less its margins.
+    private static int ClampSlot(IWidget child, bool horizontal, bool includeMargins, int slot)
+    {
+        var constraint = horizontal ? child.Width : child.Height;
+        if (constraint is not (SizeConstraint.MinConstraint or SizeConstraint.MaxConstraint))
+            return slot;
+
+        int margin = 0;
+        if (includeMargins && child.Style.HasMargin)
+        {
+            var style = child.Style;
+            margin = horizontal ? style.MarginLeft + style.MarginRight
+                                : style.MarginTop  + style.MarginBottom;
+        }
+        return Clamp(constraint, Math.Max(0, slot - margin)) + margin;
+    }
+
+    /// <summary>
+    /// Fold a flex constraint's Min/Max wrappers over a share of free space, inside out:
+    /// <c>Max(10, Min(4, Flex))</c> raises a share to at least 4, then caps it at 10.
+    /// </summary>
+    internal static int Clamp(SizeConstraint constraint, int share) =>
+        constraint switch
+        {
+            SizeConstraint.MinConstraint m  => Math.Max(m.MinSize, Clamp(m.Inner, share)),
+            SizeConstraint.MaxConstraint mx => Math.Min(mx.MaxSize, Clamp(mx.Inner, share)),
+            _                               => share,
+        };
+
+    /// <summary>
+    /// <paramref name="offset"/> limited to the scroll range of content with the given
+    /// <paramref name="sizes"/> in a viewport <paramref name="available"/> cells long: never
+    /// negative, and never past the point where the content's end meets the viewport's.
+    /// </summary>
+    internal static int ClampScroll(int offset, ReadOnlySpan<int> sizes, int available)
+    {
+        int total = 0;
+        foreach (int s in sizes) total += Math.Max(0, s);
+        return Math.Clamp(offset, 0, Math.Max(0, total - available));
+    }
+
     /// <summary>
     /// The fixed cell count for a constraint, or -1 when it should take a share of the free
     /// space instead.
@@ -152,7 +270,8 @@ internal static class LayoutSolver
     /// The child's measured size along this axis, or -1 when it could not be measured.
     /// <c>Auto</c> resolves to it; passing -1 therefore restores the older behaviour of
     /// treating <c>Auto</c> as flex weight 1. Min and Max wrappers fold over the result,
-    /// so <c>Max(40, Auto)</c> is a content size capped at 40.
+    /// so <c>Max(40, Auto)</c> is a content size capped at 40. Over a flex inner they
+    /// leave the constraint flex: the bounds apply to its share, in <see cref="Clamp"/>.
     /// </param>
     [System.Runtime.CompilerServices.MethodImpl(
         System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
@@ -161,7 +280,9 @@ internal static class LayoutSolver
         {
             SizeConstraint.FixedConstraint f => f.Size,
             SizeConstraint.AutoConstraint    => measured,
-            SizeConstraint.MinConstraint m   => Math.Max(m.MinSize, ResolveFixed(m.Inner, measured)),
+            SizeConstraint.MinConstraint m   => ResolveFixed(m.Inner, measured) is int inner and >= 0
+                                                   ? Math.Max(m.MinSize, inner)
+                                                   : -1,
             SizeConstraint.MaxConstraint mx  => ResolveFixed(mx.Inner, measured) is int inner and >= 0
                                                    ? Math.Min(mx.MaxSize, inner)
                                                    : -1,
@@ -197,8 +318,8 @@ internal static class LayoutSolver
         int width  = ResolveFixed(child.Width,  autoWidth  ? measured.Width  : -1);
         int height = ResolveFixed(child.Height, autoHeight ? measured.Height : -1);
 
-        return new Size(width  < 0 ? flexWidth  : width,
-                        height < 0 ? flexHeight : height);
+        return new Size(width  < 0 ? Clamp(child.Width,  flexWidth)  : width,
+                        height < 0 ? Clamp(child.Height, flexHeight) : height);
     }
 
     /// <summary>True when the constraint is <c>Auto</c> or wraps one in Min/Max.</summary>

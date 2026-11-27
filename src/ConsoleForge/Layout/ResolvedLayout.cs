@@ -18,7 +18,30 @@ public sealed class ResolvedLayout
     /// <summary>Map from each widget to its allocated absolute terminal region.</summary>
     public Dictionary<IWidget, Region> Allocations { get; }
 
-    internal void Reset() => Allocations.Clear();
+    internal void Reset()
+    {
+        Allocations.Clear();
+        _clips?.Clear();
+    }
+
+    // Visible part of each widget inside a scrolling container. Such a widget keeps its
+    // whole region — it renders as if unclipped — but only this part of it is on screen,
+    // so only this part may answer a click. Absent for everything else, which is visible
+    // wherever its region is.
+    private Dictionary<IWidget, Region>? _clips;
+
+    internal void SetClip(IWidget widget, Region clip)
+        => (_clips ??= new Dictionary<IWidget, Region>(Identity))[widget] = clip;
+
+    /// <summary>
+    /// The part of <paramref name="widget"/>'s region that is on screen: its region,
+    /// unless a scrolling container has scrolled some or all of it out of view.
+    /// </summary>
+    public Region? GetVisibleRegion(IWidget widget)
+    {
+        if (!Allocations.TryGetValue(widget, out var region)) return null;
+        return _clips is not null && _clips.TryGetValue(widget, out var clip) ? clip : region;
+    }
 
     /// <summary>Get the region for a specific widget, or null if not found.</summary>
     public Region? GetRegion(IWidget widget) =>

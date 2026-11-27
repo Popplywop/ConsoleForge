@@ -1,3 +1,4 @@
+using ConsoleForge.Core;
 using ConsoleForge.Layout;
 using ConsoleForge.Styling;
 using ConsoleForge.Widgets;
@@ -211,6 +212,64 @@ public class LayoutEngineTests
 
         var layout = LayoutEngine.Resolve(root, 80, 24);
         Assert.Equal(15, layout.GetRegion(a)!.Value.Width);
+    }
+
+    // ── Min / Max over Flex ───────────────────────────────────────────────────
+    // Over a flex inner the bounds apply to the flex share. Min used to turn the child
+    // into a fixed child of its minimum, and Max was dropped entirely.
+
+    private static int[] Widths(int available, params SizeConstraint[] widths)
+    {
+        var children = widths.Select(w => (IWidget)new TextBlock("x") { Width = w }).ToArray();
+        var layout = LayoutEngine.Resolve(new Container(Axis.Horizontal, children), available, 1);
+        return children.Select(c => layout.GetRegion(c)!.Value.Width).ToArray();
+    }
+
+    [Fact]
+    public void MinOverFlex_BelowItsShare_IsAnOrdinaryFlexChild()
+        => Assert.Equal([50, 50], Widths(100, SizeConstraint.Min(10, SizeConstraint.Flex(1)), SizeConstraint.Flex(1)));
+
+    [Fact]
+    public void MinOverFlex_AboveItsShare_IsRaisedAndTheRestShareTheRemainder()
+        => Assert.Equal([60, 40], Widths(100, SizeConstraint.Min(60, SizeConstraint.Flex(1)), SizeConstraint.Flex(1)));
+
+    [Fact]
+    public void MaxOverFlex_CapsTheShare_AndTheRestTakeTheDifference()
+        => Assert.Equal([20, 80], Widths(100, SizeConstraint.Max(20, SizeConstraint.Flex(1)), SizeConstraint.Flex(1)));
+
+    [Fact]
+    public void MaxOverFlex_EveryChildCapped_LeavesSpaceUnused()
+        => Assert.Equal([20, 20], Widths(100, SizeConstraint.Max(20, SizeConstraint.Flex(1)), SizeConstraint.Max(20, SizeConstraint.Flex(1))));
+
+    [Fact]
+    public void MaxOverFlex_RespectsTheOtherWeights()
+        => Assert.Equal([10, 30, 60], Widths(100, SizeConstraint.Max(10, SizeConstraint.Flex(1)), SizeConstraint.Flex(1), SizeConstraint.Flex(2)));
+
+    [Fact]
+    public void MinAndMaxOverFlex_ClampInsideOut()
+        => Assert.Equal([30, 70], Widths(100, SizeConstraint.Max(30, SizeConstraint.Min(5, SizeConstraint.Flex(1))), SizeConstraint.Flex(1)));
+
+    [Fact]
+    public void BoundedFlex_RendersWhereLayoutPutsIt()
+    {
+        var a = new TextBlock("A") { Width = SizeConstraint.Max(5, SizeConstraint.Flex(1)) };
+        var b = new TextBlock("B") { Width = SizeConstraint.Flex(1) };
+        var root = new Container(Axis.Horizontal, [a, b]);
+
+        var sim = new ConsoleForge.Tests.Rendering.TerminalSim(20, 1);
+        sim.Apply(new Renderer().Render(root, 20, 1, Theme.Dark, ColorProfile.TrueColor).Content);
+        Assert.Equal(5, LayoutEngine.Resolve(root, 20, 1).GetRegion(b)!.Value.Col);
+        Assert.Equal("A    B", sim.Lines[0].TrimEnd());
+    }
+
+    [Fact]
+    public void BoundedFlex_MeasuresToItsBoundAcrossTheAxis()
+    {
+        // An Auto container measuring a capped flex child across its axis gets the cap,
+        // not the whole width on offer.
+        var child = new TextBlock("x") { Width = SizeConstraint.Max(7, SizeConstraint.Flex(1)), Height = SizeConstraint.Fixed(1) };
+        var column = new Container(Axis.Vertical, [child]);
+        Assert.Equal(7, column.Measure(40, 10).Width);
     }
 
     // ── Empty container ───────────────────────────────────────────────────────

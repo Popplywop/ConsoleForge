@@ -134,6 +134,15 @@ SizeConstraint.Min(10, inner)   // minimum bound
 SizeConstraint.Max(40, inner)   // maximum bound
 ```
 
+`Min` and `Max` bound whatever they wrap: `Max(40, Auto)` is content capped at 40, and
+`Max(40, Flex(1))` is a flex share capped at 40, with the other flex children taking the
+rest.
+
+A `Container` created with `scrollable: true` lets its children overflow along its axis
+instead of squeezing them in: each keeps its own size (`Auto` children are measured
+without a limit along that axis), and `ScrollOffset` picks the part in view. The offset is
+clamped to the content, so a model can add to it without knowing how long the content is.
+
 `Auto` asks the widget how much room its content wants, via `IMeasurable`:
 
 ```csharp

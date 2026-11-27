@@ -40,36 +40,51 @@ public static class LayoutEngine
     public static ResolvedLayout ResolveInto(ResolvedLayout target, IWidget root, int w, int h)
     {
         target.Reset();
-        Allocate(root, new Region(0, 0, w, h), target.Allocations);
+        Allocate(root, new Region(0, 0, w, h), target, clip: null);
         return target;
     }
 
-    private static void Allocate(IWidget widget, Region region, Dictionary<IWidget, Region> allocations)
+    // `clip` is the visible area when `widget` is inside a scrolling container, which
+    // may have scrolled part of it out of view; null everywhere else.
+    private static void Allocate(IWidget widget, Region region, ResolvedLayout target, Region? clip)
     {
-        allocations[widget] = region;
+        target.Allocations[widget] = region;
+        if (clip is { } c) target.SetClip(widget, Intersect(region, c));
 
         if (widget is IContainer container)
-            AllocateContainer(container, region, allocations);
+            AllocateContainer(container, region, target, clip);
         else if (widget is ILayeredContainer layered)
         {
-            // Each layer shares the same outer region.
-            foreach (var layer in layered.Layers)
-                Allocate(layer, region, allocations);
+            // Each layer shares the same outer region. Indexed: enumerating the interface
+            // would box an enumerator per layered widget per frame.
+            var layers = layered.Layers;
+            for (int i = 0; i < layers.Count; i++)
+                Allocate(layers[i], region, target, clip);
         }
         else if (widget is ISingleBodyWidget wrapper && wrapper.Body is not null)
         {
             // Recurse into the body using the widget's declared body region.
             var bodyRegion = wrapper.ComputeBodyRegion(region);
-            Allocate(wrapper.Body, bodyRegion, allocations);
+            Allocate(wrapper.Body, bodyRegion, target, clip);
         }
     }
 
-    private static void AllocateContainer(IContainer container, Region region, Dictionary<IWidget, Region> allocations)
+    private static Region Intersect(Region a, Region b)
+    {
+        int col = Math.Max(a.Col, b.Col), row = Math.Max(a.Row, b.Row);
+        int right = Math.Min(a.Col + a.Width, b.Col + b.Width);
+        int bottom = Math.Min(a.Row + a.Height, b.Row + b.Height);
+        return new Region(col, row, Math.Max(0, right - col), Math.Max(0, bottom - row));
+    }
+
+    private static void AllocateContainer(IContainer container, Region region, ResolvedLayout target, Region? clip)
     {
         var children = container.Children;
         if (children.Count == 0) return;
 
         bool isHorizontal = container.Direction == Axis.Horizontal;
+        bool scrollable   = container is IScrollableContainer { Scrollable: true };
+        int scrollOffset  = scrollable ? ((IScrollableContainer)container).ScrollOffset : 0;
 
         // ── Fast-path gate: no padding on container, no margins on children ────────────
         bool hasPad = container is IWidget cwp && cwp.Style.HasPadding;
@@ -86,13 +101,16 @@ public static class LayoutEngine
                 var resolved = ArrayPool<int>.Shared.Rent(children.Count);
                 try
                 {
+                    var sizes = resolved.AsSpan(0, children.Count);
                     LayoutSolver.ResolveSizes(
                         children, container.Direction, available,
                         crossAvailable: isHorizontal ? region.Height : region.Width,
                         includeMargins: false, throwWhenImpossible: true,
-                        resolved.AsSpan(0, children.Count));
+                        sizes, scrollable);
 
-                    int cursor = isHorizontal ? region.Col : region.Row;
+                    var childClip = scrollable ? Intersect(region, clip ?? region) : clip;
+                    int cursor = (isHorizontal ? region.Col : region.Row)
+                               - (scrollable ? LayoutSolver.ClampScroll(scrollOffset, sizes, available) : 0);
                     for (var i = 0; i < children.Count; i++)
                     {
                         int size = Math.Max(0, resolved[i]);
@@ -100,7 +118,7 @@ public static class LayoutEngine
                             ? new Region(cursor, region.Row, size, region.Height)
                             : new Region(region.Col, cursor, region.Width, size);
                         cursor += size;
-                        Allocate(children[i], childRegion, allocations);
+                        Allocate(children[i], childRegion, target, childClip);
                     }
                 }
                 finally { ArrayPool<int>.Shared.Return(resolved); }
@@ -124,13 +142,16 @@ public static class LayoutEngine
         var resolved2 = ArrayPool<int>.Shared.Rent(children.Count);
         try
         {
+            var sizes2 = resolved2.AsSpan(0, children.Count);
             LayoutSolver.ResolveSizes(
                 children, container.Direction, avail2,
                 crossAvailable: isHorizontal ? layout.Height : layout.Width,
                 includeMargins: true, throwWhenImpossible: true,
-                resolved2.AsSpan(0, children.Count));
+                sizes2, scrollable);
 
-            int cursor2 = isHorizontal ? layout.Col : layout.Row;
+            var childClip2 = scrollable ? Intersect(layout, clip ?? layout) : clip;
+            int cursor2 = (isHorizontal ? layout.Col : layout.Row)
+                        - (scrollable ? LayoutSolver.ClampScroll(scrollOffset, sizes2, avail2) : 0);
             int cross2 = isHorizontal ? layout.Height : layout.Width;
             for (var i = 0; i < children.Count; i++)
             {
@@ -146,7 +167,7 @@ public static class LayoutEngine
                     ? new Region(cursor2 + mS, xS, cm, cc)
                     : new Region(xS, cursor2 + mS, cc, cm);
                 cursor2 += ts;
-                Allocate(children[i], childRegion, allocations);
+                Allocate(children[i], childRegion, target, childClip2);
             }
         }
         finally { ArrayPool<int>.Shared.Return(resolved2); }

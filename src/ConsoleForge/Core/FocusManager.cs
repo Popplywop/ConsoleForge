@@ -122,7 +122,9 @@ public static class FocusManager
         IFocusable? best = null;
         foreach (var f in all)
         {
-            var region = layout.GetRegion(f);
+            // The visible part only: a widget scrolled out of view keeps a region that
+            // reaches outside its container, over whatever is drawn there.
+            var region = layout.GetVisibleRegion(f);
             if (region is null) continue;
             var r = region.Value;
             if (col >= r.Col && col < r.Col + r.Width &&
