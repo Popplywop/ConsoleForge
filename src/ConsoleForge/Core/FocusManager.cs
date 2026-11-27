@@ -20,6 +20,16 @@ public static class FocusManager
     }
 
     /// <summary>
+    /// <see cref="CollectFocusable(IWidget)"/> into a caller-owned list, which is cleared
+    /// first — for the per-frame region report, which must not allocate a list per frame.
+    /// </summary>
+    internal static void CollectFocusable(IWidget root, List<IFocusable> into)
+    {
+        into.Clear();
+        Collect(root, into);
+    }
+
+    /// <summary>
     /// Collect the focus key of every <see cref="IFocusable"/> in the tree rooted at
     /// <paramref name="root"/>, in depth-first, declaration order. A widget whose
     /// <see cref="IFocusable.FocusKey"/> is null is skipped — it is not a focus target.
@@ -56,15 +66,19 @@ public static class FocusManager
     {
         if (widget is IFocusable f) result.Add(f);
 
+        // Indexed rather than foreach: enumerating an IReadOnlyList through the interface
+        // boxes an enumerator per container, and this walk now runs after every frame.
         if (widget is IContainer container)
         {
-            foreach (var child in container.Children)
-                Collect(child, result);
+            var children = container.Children;
+            for (int i = 0; i < children.Count; i++)
+                Collect(children[i], result);
         }
         else if (widget is ILayeredContainer layered)
         {
-            foreach (var layer in layered.Layers)
-                Collect(layer, result);
+            var layers = layered.Layers;
+            for (int i = 0; i < layers.Count; i++)
+                Collect(layers[i], result);
         }
         else if (widget is ISingleBodyWidget wrapper && wrapper.Body is not null)
         {

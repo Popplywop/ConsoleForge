@@ -74,20 +74,23 @@ sealed record Model(ListState Rows, string[] Items) : IModel
 
     public (IModel Model, ICmd? Cmd) Update(IMsg msg) => msg switch
     {
-        // The viewport is a layout result, so feed it back in on resize.
-        WindowResizeMsg r => (this with { Rows = Rows.WithViewport(r.Height - 2) }, null),
-        KeyMsg k          => (this with { Rows = Rows.HandleKey(k) }, null),
-        _                 => (this, null),
+        // The viewport is a layout result: the framework reports it for keyed widgets.
+        RegionChangedMsg { FocusKey: "rows" } r => (this with { Rows = Rows.WithViewport(r.Region.Height) }, null),
+        KeyMsg k => (this with { Rows = Rows.HandleKey(k) }, null),
+        _        => (this, null),
     };
 
     public IWidget View() =>
-        new List(Items, selectedIndex: Rows.SelectedIndex, scrollOffset: Rows.ScrollOffset);
+        new List(Items, selectedIndex: Rows.SelectedIndex, scrollOffset: Rows.ScrollOffset) { FocusKey = "rows" };
 }
 ```
 
 `MoveUp`, `MoveDown` and `MoveTo` move the selection; `WithCount` tells it the list changed
 length; `WithViewport` tells it how many rows are on screen. `ViewportHeight` is a layout
-result rather than something you decide, which is why it arrives from a resize message.
+result rather than something you decide, which is why it arrives in a message: after each
+frame the framework sends a `RegionChangedMsg` for every focusable widget with a
+`FocusKey` that appeared, moved or resized — so the height follows the layout around the
+list, not just the terminal, and nothing has to subtract the chrome by hand.
 
 Keep `Count` in step with the collection you are actually rendering. `WithCount` clamps the
 selection for you when the list shrinks.

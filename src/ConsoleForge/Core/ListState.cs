@@ -31,9 +31,10 @@ namespace ConsoleForge.Core;
 /// <para>
 /// <see cref="ViewportHeight"/> is the number of visible rows, which is a layout result
 /// rather than model state — a widget only learns its region at render time. Set it from
-/// whatever the application knows (a resize message, a fixed pane height) and leave it 0
-/// when nothing knows it yet: scroll is then left exactly as the caller set it, and paging
-/// does nothing, because a page has no size.
+/// <see cref="RegionChangedMsg"/>, which reports the region of every focusable widget with
+/// a <see cref="Layout.IFocusable.FocusKey"/>, and leave it 0 until that arrives: scroll is
+/// then left exactly as the caller set it, and paging does nothing, because a page has no
+/// size.
 /// </para>
 /// <para>Bindings handled by <see cref="HandleKey"/>:</para>
 /// <list type="table">

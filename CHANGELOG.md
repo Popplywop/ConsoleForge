@@ -34,6 +34,11 @@ marked **Breaking**.
   New: `KittyProtocol.CreatePayload(RgbaImageData, …)` (cached against the pixel array, as
   PNG payloads are), `KittyProtocol.IsPng`, and an
   `ImageWidget(RgbaImageData, TerminalCapabilities?)` constructor.
+- `RegionChangedMsg(FocusKey, Region)` — after each frame the framework reports the region
+  of every focusable widget with a `FocusKey` that appeared, moved or resized, so a model
+  sets `ListState.WithViewport(r.Region.Height)` (or a `TextArea`'s viewport) from layout
+  instead of hard-coding a row count that goes wrong when the layout around it changes.
+  Unchanged frames report nothing; widgets without a key are never reported.
 - Subscriptions of nested components: `Component.Subscriptions(prefix, child, map?)`
   returns a child's subscriptions keyed `"prefix/key"` (nothing for a null child or one
   without `IHasSubscriptions`), `Sub.Batch(...)` concatenates keyed lists and rejects a

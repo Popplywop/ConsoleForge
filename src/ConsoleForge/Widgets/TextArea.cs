@@ -126,7 +126,10 @@ public sealed record TextArea : IFocusable
     /// <see cref="Update"/> returned, and on <see cref="WindowResizeMsg"/>.
     /// </summary>
     /// <param name="cursorRow">The cursor row after the edit.</param>
-    /// <param name="viewportHeight">Number of visible rows in the TextArea's region.</param>
+    /// <param name="viewportHeight">
+    /// Number of visible rows in the TextArea's region — <c>Region.Height</c> from the
+    /// <see cref="Core.RegionChangedMsg"/> for its <see cref="FocusKey"/>.
+    /// </param>
     /// <param name="currentScrollRow">Current scroll offset.</param>
     /// <returns>Adjusted scroll row ensuring cursor is visible.</returns>
     /// <remarks>

@@ -263,7 +263,10 @@ public sealed class App
             if (_terminal is null || _quitting) return;
 
             if (_renderer.RenderIfDirty(model, _terminal.Width, _terminal.Height, _theme, ColorProfile, _terminal))
+            {
                 _lastFrameTimestamp = Stopwatch.GetTimestamp();
+                ReportRegions();
+            }
         }
     }
 
@@ -326,9 +329,24 @@ public sealed class App
                     var root = model.View();
                     _renderer.Render(root, _terminal.Width, _terminal.Height, _theme, ColorProfile);
                     _renderer.Flush(_terminal);
+                    ReportRegions();
                 }
             }
         }
+    }
+
+    // Touched only under the render lock, right after a frame.
+    private readonly RegionReporter _regionReporter = new();
+    private Action<RegionChangedMsg>? _postRegion; // cached: a lambda per frame would allocate
+
+    /// <summary>
+    /// Post a <see cref="RegionChangedMsg"/> for every keyed focusable the last frame moved,
+    /// resized or placed for the first time. Call under the render lock, right after a frame.
+    /// </summary>
+    private void ReportRegions()
+    {
+        if (!_renderer.TryGetLastFrame(out var root, out var layout)) return;
+        _regionReporter.Report(root, layout, _postRegion ??= msg => _channel.Writer.TryWrite(msg));
     }
 
     private void HandleMouseFocus(MouseMsg click)

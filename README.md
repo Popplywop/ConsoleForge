@@ -191,7 +191,8 @@ await App.Run(model, theme: Theme.Dark, enableMouse: true);
 
 - **Click-to-focus** — give a widget a `FocusKey`, and a left-click on it sends
   `FocusRequestedMsg(key)` to your model. The framework hit-tests; your model decides
-  what focus means. A widget without a key is not a click-focus target.
+  what focus means. A widget without a key is not a click-focus target. (The same key
+  also gets you `RegionChangedMsg` — where the widget ended up — with or without a mouse.)
 - **Scroll wheel** — `MouseMsg` with `MouseButton.ScrollUp` / `ScrollDown`
 - **Button events** — press, release, motion tracking via `MouseMsg`
 
@@ -394,7 +395,7 @@ sealed record Model(ListState Rows, string[] Items) : IModel
 {
     public (IModel, ICmd?) Update(IMsg msg) => msg switch
     {
-        WindowResizeMsg r => (this with { Rows = Rows.WithViewport(r.Height - Chrome) }, null),
+        RegionChangedMsg { FocusKey: "rows" } r => (this with { Rows = Rows.WithViewport(r.Region.Height) }, null),
         KeyMsg k          => (this with { Rows = Rows.HandleKey(k) }, null),
         _                 => (this, null),
     };
@@ -409,8 +410,12 @@ it yet: scroll is then left alone and paging does nothing, since a page has no s
 
 `VisibleRange` gives the `(offset, length)` slice a view should draw.
 
-> **Note:** the `List` widget cannot use the viewport half — a widget learns its region
-> only at render time — so it leaves `ScrollOffset` to the model via
+`RegionChangedMsg` is how the viewport arrives: after each frame the framework reports the
+region of every focusable widget with a `FocusKey` that appeared, moved or resized, so
+`ViewportHeight` comes from layout rather than from arithmetic on the terminal size.
+
+> **Note:** the `List` widget itself cannot use the viewport half — a widget learns its
+> region only at render time — so it leaves `ScrollOffset` to the model via
 > `List.ComputeScrollOffset`. A model holding a `ListState` gets both.
 
 ## Commands

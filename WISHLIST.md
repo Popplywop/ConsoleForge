@@ -38,28 +38,9 @@ All three have landed — see the Fixed table.
 
 Additive, so deferring costs no one a migration.
 
-### 9. A widget's viewport height never reaches the model
-
-Scroll is a function of how many rows are visible, and nothing tells a model that
-number. A widget learns its region at render time, and `WindowResizeMsg` carries the
-terminal's size, not a widget's — so every consumer hand-computes it and hardcodes
-the result: `PlexTui` has `private const int ViewportRows = 20`, the Gallery passes
-`viewportHeight: 12` and `8`, and `TextArea` pages by a fixed 10 rows. Each of those
-is a guess that silently goes wrong when the layout around it changes.
-
-`ListState` carries a `ViewportHeight` and keeps scroll correct against it, which
-makes the missing input the only crude part left: `List` itself has nothing to put
-there, so it constructs the state with no viewport and leaves `ScrollOffset` to the
-model.
-
-**Proposal:** report resolved regions back to the model, so `ViewportHeight` comes
-from layout rather than arithmetic. A `RegionChangedMsg` keyed by `FocusKey` — the
-identity the application already assigns for click-focus — would fit the existing
-shape, and `FocusRequestedMsg` is the precedent: the framework reports what only it
-can know, and the model decides what it means.
-
-Letting a widget own its own scroll would also close it, and is the thing to avoid:
-that is the stateful-component mechanism the design target rules out.
+Nothing open. Follow-ups noticed while closing the last batch, not yet items: the Gallery
+still hard-codes `viewportHeight: 12` and hand-writes its help line, both of which
+`RegionChangedMsg` and `HelpBar` now cover.
 
 ## Fixed (for the record)
 
@@ -101,3 +82,4 @@ What each gap turned out to be, and what shipped.
 | Unreleased | An image the terminal evicted was never sent again (item 13). The protocol says terminals delete older images past their quota (kitty: 320 MB per screen), preferring images without placements — preloaded ones. Uploads and placements now use `q=1`; `InputDecoder` already decoded the `ENOENT` reply, and it now reaches `App`, which tells `Renderer.ForgetRawPayload` so the next frame encodes the image in full. Bounded: an image whose upload was rejected (any non-`ENOENT` error) is never retried, and recoveries stop after three per image. Tier 1 tests count uploads through `RenderContext` and through `App`; Tier 3 not run (no NuGet access where it was written). Under tmux replies generally do not return, so nothing changes there. |
 | Unreleased | `KeyMap` carried no help text, so applications kept a second hand-synced list for their help bar (item 2). `KeyBinding` (patterns + `HelpKey` + `HelpDescription` + `Enabled`) is now in `ConsoleForge.Core`, `KeyMap.On(KeyBinding, …)` registers it and lists it in `KeyMap.Bindings`, and `HelpBar` renders that list. Taken from `bubbles`' `key.WithHelp` + `help.Model` as the goal, not the mechanism: bubbles toggles a binding with `SetEnabled` on a pointer, here `Enabled` is an immutable property the model derives per state with `with`, and a map is built per state. Short help only; a multi-column full help can follow if wanted. |
 | Unreleased | Components could not declare subscriptions (item 1): only the root's `IHasSubscriptions` was consulted, so pages fell back to self-re-arming `Cmd.Tick` chains that died when a modal swallowed a tick. The proposal's explicit-composition variant landed, shaped on Elm's `Sub.batch`/`Sub.map` and Elmish's `Sub.map "prefix"`: `Component.Subscriptions(prefix, child, map?)`, `Sub.Batch`, `Sub.Map`. The framework still asks only the root — it does not walk the model looking for components — so what runs stays the parent's decision and visible in one method. |
+| Unreleased | A widget's viewport height never reached the model (item 9), so PlexTui hard-coded `ViewportRows = 20`, and the Gallery `viewportHeight: 12`. `RegionChangedMsg(FocusKey, Region)` landed as proposed: after each frame, a `RegionReporter` compares every keyed focusable's region with the last one reported and posts only what appeared, moved or resized — the push model of the web's `ResizeObserver`, keyed the way `FocusRequestedMsg` already is; Elm itself would pull with a `Browser.Dom.getElement` task, which suits a DOM the runtime does not own. Converges: an unchanged layout reports nothing, so a model that stores the height and re-renders gets no second message. |
