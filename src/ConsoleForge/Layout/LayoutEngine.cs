@@ -44,10 +44,8 @@ public static class LayoutEngine
         return target;
     }
 
-    /// <param name="clip">
-    /// The visible area when <paramref name="widget"/> is inside a scrolling container,
-    /// which may have scrolled part of it out of view; null everywhere else.
-    /// </param>
+    // `clip` is the visible area when `widget` is inside a scrolling container, which
+    // may have scrolled part of it out of view; null everywhere else.
     private static void Allocate(IWidget widget, Region region, ResolvedLayout target, Region? clip)
     {
         target.Allocations[widget] = region;
