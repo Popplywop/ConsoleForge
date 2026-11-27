@@ -20,6 +20,7 @@ All sixteen ship in `ConsoleForge.Widgets`, except the state reducers, which liv
 | `Tabs` | A row of labels with one active. | |
 | `ProgressBar` | A proportion of a whole. | |
 | `Spinner` | Work is happening, length unknown. | yes |
+| `HelpBar` | The keys that do something right now. | yes |
 | `BorderBox` | A titled frame around one child. | yes |
 | `Container` | Children stacked along an axis. | yes |
 | `ZStack` | Children stacked front to back. | yes |
@@ -104,10 +105,25 @@ children front to back, the last one on top. `Modal` is the dialog case of that 
 
 ## Images
 
-`ImageWidget` draws a PNG through the Kitty graphics protocol where the terminal supports
-it, and falls back to half-block cells with 24-bit colour everywhere else. It takes either
-`PngData` or `RgbaData`, and you can pin the `RenderMode` rather than letting
+`ImageWidget` draws an image through the Kitty graphics protocol where the terminal
+supports it, and falls back to half-block cells with 24-bit colour everywhere else. It takes
+`PngData`, `RgbaData`, or both, and you can pin the `RenderMode` rather than letting
 `TerminalCapabilities` decide.
+
+`PngData` must be PNG: the protocol's only compressed format is PNG (`f=100`), and kitty and
+Ghostty draw nothing for other data declared as PNG, so the widget rejects anything without
+the PNG signature. For JPEG or any other format, decode it with the image library of your
+choice and pass the pixels as `RgbaData` — on a Kitty terminal they are sent zlib-compressed
+(`f=32,o=z`), elsewhere drawn as half-blocks, so one value covers every terminal:
+
+```csharp
+// Pixels decoded from a JPEG — by whatever library the application already uses.
+var image = new ImageWidget(new RgbaImageData(rgba, width, height), caps);
+```
+
+A PNG is smaller on the wire than compressed pixels, so where a server can return either
+(Plex does for `&format=png`) it is a trade between the bytes it costs to fetch and the
+bytes it costs to send to the terminal; with both set, the widget sends the PNG.
 
 Get the capabilities once at startup, before `App.Run`, with `TerminalCapabilities.Detect()`.
 It asks the terminal directly — a Kitty graphics query followed by a device attributes

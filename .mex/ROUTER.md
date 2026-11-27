@@ -36,8 +36,9 @@ Version 0.4.0 (both packages) — the release that finished the Elm-purity migra
 - Layout via one `LayoutSolver`, `SizeConstraint.Auto` through `IMeasurable`, margin/padding
 - Double-buffered cell-diff renderer with a working widget render cache (guarded by counting tests)
 - Pure reducers `TextInputState`, `TextAreaState`, `ListState`; model-owned focus with `FocusKey` + `FocusRequestedMsg`
-- 0.4.1 (unreleased, branch `release/0.4.1`): `Cmd.Preload` + `IRawEscapePayload.Transmit` (WISHLIST item 10), tmux `Refresh` tests and `Pixel*Benchmarks` (item 11). Item 12 (`f=100` on non-PNG bytes) still open
-- Unreleased: input decoded by the framework (`StdinReader` + pure `InputDecoder`, Kitty keyboard protocol, opt-in bracketed paste → `PasteMsg`), Kitty graphics replies kept from the model, `TerminalCapabilities.Detect()` probes the terminal. Item 13 (re-send an image the terminal evicted) open
+- 0.4.1 (unreleased, branch `release/0.4.1`): `Cmd.Preload` + `IRawEscapePayload.Transmit` (WISHLIST item 10), tmux `Refresh` tests and `Pixel*Benchmarks` (item 11). Item 12 (`f=100` on non-PNG bytes) resolved in the wishlist sweep below
+- Unreleased: input decoded by the framework (`StdinReader` + pure `InputDecoder`, Kitty keyboard protocol, opt-in bracketed paste → `PasteMsg`), Kitty graphics replies kept from the model, `TerminalCapabilities.Detect()` probes the terminal.
+- Unreleased (wishlist sweep): every open WISHLIST item closed — 12 (PNG signature check; `RgbaImageData` → Kitty `f=32,o=z`), 13 (`q=1` + `ENOENT` → `Renderer.ForgetRawPayload` re-upload), 2 (`KeyBinding` + `HelpBar`), 1 (`Component.Subscriptions`, `Sub.Batch`, `Sub.Map`), 9 (`RegionChangedMsg` via `RegionReporter`). Tier 3 not run for these (written without NuGet access)
 - `[DispatchUpdate]` / `[Component]` source generators; DocFX site deployed from `main`; CI runs build, tests and doc-sample compile on every push/PR
 
 **Not yet built (WISHLIST "Later"):**

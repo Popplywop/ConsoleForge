@@ -127,6 +127,8 @@ public sealed class App
                     _channel.Writer.TryWrite(m.Mouse);
                 else if (ev is PasteInputEvent p)
                     _channel.Writer.TryWrite(new PasteMsg(p.Text));
+                else if (ev is KittyGraphicsReplyEvent { ImageId: { } imageId } reply)
+                    _channel.Writer.TryWrite(new GraphicsReplyMsg(imageId, reply.Message));
             });
 
             // Init model
@@ -261,7 +263,10 @@ public sealed class App
             if (_terminal is null || _quitting) return;
 
             if (_renderer.RenderIfDirty(model, _terminal.Width, _terminal.Height, _theme, ColorProfile, _terminal))
+            {
                 _lastFrameTimestamp = Stopwatch.GetTimestamp();
+                ReportRegions();
+            }
         }
     }
 
@@ -324,9 +329,24 @@ public sealed class App
                     var root = model.View();
                     _renderer.Render(root, _terminal.Width, _terminal.Height, _theme, ColorProfile);
                     _renderer.Flush(_terminal);
+                    ReportRegions();
                 }
             }
         }
+    }
+
+    // Touched only under the render lock, right after a frame.
+    private readonly RegionReporter _regionReporter = new();
+    private Action<RegionChangedMsg>? _postRegion; // cached: a lambda per frame would allocate
+
+    /// <summary>
+    /// Post a <see cref="RegionChangedMsg"/> for every keyed focusable the last frame moved,
+    /// resized or placed for the first time. Call under the render lock, right after a frame.
+    /// </summary>
+    private void ReportRegions()
+    {
+        if (!_renderer.TryGetLastFrame(out var root, out var layout)) return;
+        _regionReporter.Report(root, layout, _postRegion ??= msg => _channel.Writer.TryWrite(msg));
     }
 
     private void HandleMouseFocus(MouseMsg click)
@@ -356,6 +376,7 @@ public sealed class App
             case BatchDispatchMsg bd: foreach (var c in bd.Cmds) DispatchCmd(c); return true;
             case RateLimitDispatchMsg rl: HandleRateLimit(rl); return true;
             case PreloadMsg p: HandlePreload(p); return true;
+            case GraphicsReplyMsg g: HandleGraphicsReply(g); return true;
             default: return false;
         }
     }
@@ -368,6 +389,42 @@ public sealed class App
         {
             if (_terminal is null || _quitting) return;
             _renderer.Preload(p.Payload, _terminal);
+        }
+    }
+
+    // Re-uploads granted per image id. Eviction is the terminal reclaiming its quota, so
+    // the same image can legitimately be evicted again later; but an upload the terminal
+    // keeps rejecting without saying why must not turn into an upload every frame.
+    private const int MaxGraphicsRecoveries = 3;
+    private readonly Dictionary<uint, int> _graphicsRecoveries = new();
+
+    // Images whose upload the terminal rejected (EBADPNG, EINVAL, ENOMEM, …). A placement
+    // of one then fails with ENOENT too, and uploading it again would only fail again.
+    private readonly HashSet<uint> _graphicsRejected = new();
+
+    /// <summary>
+    /// A Kitty graphics error. <c>ENOENT</c> on a placement means the terminal evicted the
+    /// image; the renderer forgets it held one, and the next frame uploads it again.
+    /// Any other error is an upload the terminal rejected, and that image is left alone.
+    /// </summary>
+    private void HandleGraphicsReply(GraphicsReplyMsg g)
+    {
+        if (!g.Message.StartsWith("ENOENT", StringComparison.Ordinal))
+        {
+            _graphicsRejected.Add(g.ImageId);
+            return;
+        }
+
+        if (_graphicsRejected.Contains(g.ImageId)) return;
+        _graphicsRecoveries.TryGetValue(g.ImageId, out int attempts);
+        if (attempts >= MaxGraphicsRecoveries) return;
+        _graphicsRecoveries[g.ImageId] = attempts + 1;
+
+        lock (_renderLock)
+        {
+            if (_terminal is null || _quitting) return;
+            // A Kitty payload's ContentHash is its image id.
+            _renderer.ForgetRawPayload(unchecked((int)g.ImageId));
         }
     }
 

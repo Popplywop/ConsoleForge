@@ -13,8 +13,11 @@ namespace ConsoleForge.Widgets;
 ///     <term>Kitty</term>
 ///     <description>
 ///       Uses the Kitty terminal graphics protocol for true pixel rendering.
-///       Requires <see cref="PngData"/> and a <see cref="Capabilities"/> instance
-///       with <see cref="TerminalCapabilities.SupportsKittyGraphics"/> set.
+///       Requires <see cref="PngData"/> or <see cref="RgbaData"/> and a
+///       <see cref="Capabilities"/> instance with
+///       <see cref="TerminalCapabilities.SupportsKittyGraphics"/> set. PNG is sent as
+///       is (<c>f=100</c>); pixels are sent zlib-compressed (<c>f=32</c>), which is how
+///       any other format — JPEG included — reaches the terminal: decode it first.
 ///     </description>
 ///   </item>
 ///   <item>
@@ -29,9 +32,10 @@ namespace ConsoleForge.Widgets;
 /// </para>
 /// <para>
 /// Set <see cref="RenderMode"/> to <see cref="ImageRenderMode.Auto"/> (default) to let
-/// the widget choose: Kitty when <see cref="Capabilities"/> reports support and
-/// <see cref="PngData"/> is present; HalfBlock when <see cref="RgbaData"/> is present;
-/// otherwise no-op.
+/// the widget choose: Kitty when <see cref="Capabilities"/> reports support and either
+/// source is present (PNG preferred, being smaller on the wire); HalfBlock when
+/// <see cref="RgbaData"/> is present; otherwise no-op. One <see cref="RgbaData"/> therefore
+/// serves both a Kitty terminal and every other one.
 /// </para>
 /// </summary>
 public sealed class ImageWidget : IWidget
@@ -44,7 +48,10 @@ public sealed class ImageWidget : IWidget
     /// <summary>
     /// Positional constructor for Kitty / Auto rendering.
     /// </summary>
-    /// <param name="pngData">Raw PNG bytes. The terminal handles decoding and scaling.</param>
+    /// <param name="pngData">
+    /// Raw PNG bytes. The terminal handles decoding and scaling. Must be PNG — see
+    /// <see cref="PngData"/>.
+    /// </param>
     /// <param name="capabilities">
     /// Detected terminal capabilities. When null, <see cref="ImageRenderMode.Auto"/>
     /// will fall back to HalfBlock (or no-op if <see cref="RgbaData"/> is also absent).
@@ -64,6 +71,19 @@ public sealed class ImageWidget : IWidget
         RgbaData = rgbaData;
     }
 
+    /// <summary>
+    /// Positional constructor for decoded pixels on any terminal: Kitty (<c>f=32</c>)
+    /// where <paramref name="capabilities"/> reports support, half-blocks elsewhere.
+    /// The way to show a JPEG or any other format the Kitty protocol cannot declare.
+    /// </summary>
+    /// <param name="rgbaData">Decoded RGBA pixel data.</param>
+    /// <param name="capabilities">Detected terminal capabilities; null means half-blocks.</param>
+    public ImageWidget(RgbaImageData rgbaData, TerminalCapabilities? capabilities)
+    {
+        RgbaData     = rgbaData;
+        Capabilities = capabilities;
+    }
+
     // ── Properties ────────────────────────────────────────────────────────────
 
     /// <inheritdoc/>
@@ -80,12 +100,27 @@ public sealed class ImageWidget : IWidget
     /// source. The terminal reads image dimensions from the PNG header; no pixel
     /// pre-processing is required by the application.
     /// </summary>
-    public byte[]? PngData { get; init; }
+    /// <exception cref="ArgumentException">
+    /// Set to bytes that are not PNG. Sent as <c>f=100</c> they would declare a format
+    /// the data contradicts, which kitty and Ghostty answer by drawing nothing. Decode
+    /// other formats and use <see cref="RgbaData"/>.
+    /// </exception>
+    public byte[]? PngData
+    {
+        get => _pngData;
+        init
+        {
+            if (value is not null) KittyProtocol.ThrowIfNotPng(value, nameof(PngData));
+            _pngData = value;
+        }
+    }
+
+    private readonly byte[]? _pngData;
 
     /// <summary>
-    /// Pre-decoded RGBA pixel data used for the half-block fallback renderer.
-    /// Required when <see cref="RenderMode"/> is <see cref="ImageRenderMode.HalfBlock"/>
-    /// or when Auto mode cannot use Kitty.
+    /// Pre-decoded RGBA pixel data. Drawn with half-blocks when the terminal has no Kitty
+    /// graphics, and sent as zlib-compressed pixels (<c>f=32</c>) when it does and
+    /// <see cref="PngData"/> is absent.
     /// </summary>
     public RgbaImageData? RgbaData { get; init; }
 
@@ -129,8 +164,8 @@ public sealed class ImageWidget : IWidget
         ImageRenderMode.Kitty     => ImageRenderMode.Kitty,
         ImageRenderMode.HalfBlock => ImageRenderMode.HalfBlock,
         ImageRenderMode.None      => ImageRenderMode.None,
-        // Auto: prefer Kitty when supported and PNG data is present
-        _ => (Capabilities?.SupportsKittyGraphics == true && PngData is not null)
+        // Auto: prefer Kitty when supported and there is anything to send it
+        _ => (Capabilities?.SupportsKittyGraphics == true && (PngData is not null || RgbaData.HasValue))
                 ? ImageRenderMode.Kitty
                 : (RgbaData.HasValue
                     ? ImageRenderMode.HalfBlock
@@ -139,9 +174,13 @@ public sealed class ImageWidget : IWidget
 
     private void RenderKitty(IRenderContext ctx)
     {
-        if (PngData is null) return;
-        var payload = KittyProtocol.CreatePayload(PngData, Capabilities);
-        ctx.WriteRawEscape(ctx.Region, payload);
+        // PNG first: the terminal decodes it, and it is far smaller than raw pixels even
+        // compressed. Pixels otherwise — the path for every format the protocol lacks.
+        KittyPayload? payload =
+            PngData is not null      ? KittyProtocol.CreatePayload(PngData, Capabilities) :
+            RgbaData is { } rgba     ? KittyProtocol.CreatePayload(rgba, Capabilities) :
+            null;
+        if (payload is not null) ctx.WriteRawEscape(ctx.Region, payload);
     }
 
     private void RenderHalfBlock(IRenderContext ctx)
@@ -181,15 +220,15 @@ public enum ImageRenderMode
     /// <summary>
     /// Automatically select the best available mode: Kitty when
     /// <see cref="TerminalCapabilities.SupportsKittyGraphics"/> is true and
-    /// <see cref="ImageWidget.PngData"/> is present; otherwise HalfBlock when
-    /// <see cref="ImageWidget.RgbaData"/> is present; otherwise no-op.
+    /// <see cref="ImageWidget.PngData"/> or <see cref="ImageWidget.RgbaData"/> is present;
+    /// otherwise HalfBlock when <see cref="ImageWidget.RgbaData"/> is present; otherwise no-op.
     /// </summary>
     Auto,
 
     /// <summary>
     /// Use the Kitty terminal graphics protocol. Requires
-    /// <see cref="ImageWidget.PngData"/> and a capable terminal.
-    /// Falls back to no-op if PNG data is absent.
+    /// <see cref="ImageWidget.PngData"/> or <see cref="ImageWidget.RgbaData"/> and a
+    /// capable terminal. Falls back to no-op if both are absent.
     /// </summary>
     Kitty,
 

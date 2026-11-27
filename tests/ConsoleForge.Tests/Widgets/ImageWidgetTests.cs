@@ -150,22 +150,62 @@ public class ImageWidgetTests
     }
 
     [Fact]
-    public void Render_AutoMode_KittyCapable_NullPng_FallsToHalfBlock()
+    public void Render_AutoMode_KittyCapable_RgbaOnly_SendsPixels()
+    {
+        // Decoded pixels reach a Kitty terminal as f=32 rather than falling back to
+        // half-blocks: this is the path for JPEG and every other format f=100 cannot carry.
+        var pixels = new byte[2 * 2 * 4];
+        var ctx    = new RecordingContext(4, 2);
+        var widget = new ImageWidget(new RgbaImageData(pixels, 2, 2), TerminalCapabilities.WithKitty);
+
+        widget.Render(ctx);
+
+        var (_, payload) = Assert.Single(ctx.RawEscapes);
+        var transmit = string.Concat(payload.Transmit(ColorProfile.TrueColor)!);
+        Assert.Contains("f=32,s=2,v=2,o=z", transmit);
+        Assert.Empty(ctx.Writes);
+    }
+
+    [Fact]
+    public void Render_AutoMode_RgbaOnly_WithoutKitty_IsHalfBlock()
     {
         var pixels = new byte[2 * 2 * 4];
         var ctx    = new RecordingContext(4, 2);
-        var widget = new ImageWidget
-        {
-            PngData      = null, // no PNG → Kitty unavailable despite capability
-            RgbaData     = new RgbaImageData(pixels, 2, 2),
-            Capabilities = TerminalCapabilities.WithKitty,
-            RenderMode   = ImageRenderMode.Auto,
-        };
+        var widget = new ImageWidget(new RgbaImageData(pixels, 2, 2), capabilities: null);
 
         widget.Render(ctx);
 
         Assert.Empty(ctx.RawEscapes);
         Assert.NotEmpty(ctx.Writes);
+    }
+
+    [Fact]
+    public void Render_AutoMode_BothSources_PrefersPng()
+    {
+        var ctx    = new RecordingContext(4, 2);
+        var widget = new ImageWidget
+        {
+            PngData      = TinyPng,
+            RgbaData     = new RgbaImageData(new byte[2 * 2 * 4], 2, 2),
+            Capabilities = TerminalCapabilities.WithKitty,
+        };
+
+        widget.Render(ctx);
+
+        var (_, payload) = Assert.Single(ctx.RawEscapes);
+        Assert.Contains("f=100", string.Concat(payload.Transmit(ColorProfile.TrueColor)!));
+    }
+
+    [Fact]
+    public void PngData_RejectsJpeg()
+    {
+        // JPEG SOI + APP0 marker, as Plex artwork starts. Declared f=100 it drew on
+        // WezTerm, which sniffs, and nothing at all on kitty or Ghostty.
+        byte[] jpeg = [0xFF, 0xD8, 0xFF, 0xE0, 0x00, 0x10, 0x4A, 0x46, 0x49, 0x46];
+
+        var ex = Assert.Throws<ArgumentException>(() => new ImageWidget { PngData = jpeg });
+        Assert.Contains("JPEG", ex.Message);
+        Assert.Throws<ArgumentException>(() => new ImageWidget(jpeg, TerminalCapabilities.WithKitty));
     }
 
     // ── Guard conditions ──────────────────────────────────────────────────────

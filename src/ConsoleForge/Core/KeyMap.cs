@@ -28,6 +28,7 @@ public sealed class KeyMap
 {
     private readonly List<(KeyPattern Pattern, Func<KeyMsg, IMsg> Handler)> _keys = [];
     private readonly List<(Func<MouseMsg, bool> Predicate, Func<MouseMsg, IMsg> Handler)> _mouse = [];
+    private readonly List<KeyBinding> _bindings = [];
 
     // ── Key bindings ──────────────────────────────────────────────────────────
 
@@ -80,6 +81,36 @@ public sealed class KeyMap
         _keys.Add((pattern, handler));
         return this;
     }
+
+    /// <summary>
+    /// Bind every pattern of <paramref name="binding"/> to a message factory, and record the
+    /// binding for <see cref="Bindings"/>. A disabled binding is skipped entirely: it neither
+    /// handles keys nor appears in help.
+    /// </summary>
+    public KeyMap On(KeyBinding binding, Func<IMsg> handler) => On(binding, _ => handler());
+
+    /// <summary>
+    /// Bind every pattern of <paramref name="binding"/> to a message factory that receives
+    /// the original <see cref="KeyMsg"/>, and record the binding for <see cref="Bindings"/>.
+    /// A disabled binding is skipped entirely.
+    /// </summary>
+    public KeyMap On(KeyBinding binding, Func<KeyMsg, IMsg> handler)
+    {
+        ArgumentNullException.ThrowIfNull(binding);
+        if (!binding.Enabled) return this;
+
+        foreach (var pattern in binding.Patterns)
+            _keys.Add((pattern, handler));
+        _bindings.Add(binding);
+        return this;
+    }
+
+    /// <summary>
+    /// The <see cref="KeyBinding"/>s registered through <see cref="On(KeyBinding, Func{IMsg})"/>,
+    /// in registration order — what a <see cref="Widgets.HelpBar"/> should list for this map.
+    /// Bindings registered from bare keys or patterns carry no help text and are not included.
+    /// </summary>
+    public IReadOnlyList<KeyBinding> Bindings => _bindings;
 
     // ── Mouse bindings ────────────────────────────────────────────────────────
 
@@ -157,6 +188,8 @@ public sealed class KeyMap
         merged._keys.AddRange(other._keys);
         merged._mouse.AddRange(_mouse);
         merged._mouse.AddRange(other._mouse);
+        merged._bindings.AddRange(_bindings);
+        merged._bindings.AddRange(other._bindings);
         return merged;
     }
 

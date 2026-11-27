@@ -32,106 +32,15 @@ Found by running PlexTui against a real Plex server on 0.4.0. All three are in t
 path, which 0.4.0 changed more than any other — and which nothing benchmarks, so what its
 frames actually cost has never been measured, only reasoned about.
 
-Items 10 and 11 have landed — see the Fixed table. Item 12 remains.
-
-### 12. `f=100` declares PNG for whatever bytes it is handed
-
-`KittyPayload.Encode` writes `a=t,f=100`, and `100` means PNG. Nothing checks that the
-bytes are one. PlexTui feeds it Plex artwork, which is JPEG (`ff d8 ff e0`), and it draws
-correctly — because WezTerm sniffs the content rather than trusting the declaration. That
-is a terminal being lenient, not a contract being met.
-
-The protocol offers no JPEG: `f` takes 24 (RGB), 32 (RGBA) or 100 (PNG), so "send the
-right format code" is not on the table. Either reject what cannot be honoured, or give
-callers a path for pixels they decoded themselves.
-
-**Proposal, smallest first:**
-
-- Check the magic bytes where the payload is built and fail loudly, instead of emitting a
-  declaration the data contradicts. `ImageWidget.PngData` is already named for the
-  contract; it is simply not enforced.
-- Let the Kitty path accept `RgbaImageData` as `f=32`. `ImageWidget` already carries
-  `RgbaData` for half-blocks, so this is a branch in `ResolveMode`, and it lets an
-  application decode whatever it has and hand over pixels.
-
-Decoding JPEG inside the framework is the option to avoid — it buys one format and puts an
-image-codec dependency on every consumer, against a runtime dependency list that is
-currently System.Reactive and nothing else.
-
-Note for a consumer meanwhile: Plex returns a real PNG for `&format=png`, at about 5.6x
-the bytes of its JPEG — 77 KB against 13.7 KB for one 160x240 poster — so "ask the server
-for the format you declared" is a real choice with a real price.
+All three have landed — see the Fixed table.
 
 ## Later
 
 Additive, so deferring costs no one a migration.
 
-### 9. A widget's viewport height never reaches the model
-
-Scroll is a function of how many rows are visible, and nothing tells a model that
-number. A widget learns its region at render time, and `WindowResizeMsg` carries the
-terminal's size, not a widget's — so every consumer hand-computes it and hardcodes
-the result: `PlexTui` has `private const int ViewportRows = 20`, the Gallery passes
-`viewportHeight: 12` and `8`, and `TextArea` pages by a fixed 10 rows. Each of those
-is a guess that silently goes wrong when the layout around it changes.
-
-`ListState` carries a `ViewportHeight` and keeps scroll correct against it, which
-makes the missing input the only crude part left: `List` itself has nothing to put
-there, so it constructs the state with no viewport and leaves `ScrollOffset` to the
-model.
-
-**Proposal:** report resolved regions back to the model, so `ViewportHeight` comes
-from layout rather than arithmetic. A `RegionChangedMsg` keyed by `FocusKey` — the
-identity the application already assigns for click-focus — would fit the existing
-shape, and `FocusRequestedMsg` is the precedent: the framework reports what only it
-can know, and the model decides what it means.
-
-Letting a widget own its own scroll would also close it, and is the thing to avoid:
-that is the stateful-component mechanism the design target rules out.
-
-### 1. Component-level subscriptions
-
-`IHasSubscriptions` is only consulted on the **root** model
-(`App.ReconcileSubscriptions`). Pages/components can't declare recurring
-timers, so they fall back to self-re-arming `Cmd.Tick` chains — which die
-whenever a message gets routed elsewhere (devo's spinner froze because an
-open modal swallowed the in-flight `TickMsg`; gating the chain on the loading
-flag helped, but the fragility is structural).
-
-**Proposal:** aggregate subscriptions from nested components — e.g.
-`IHasSubscriptions` on any `IComponent`, with the root composing keys like
-`"prlist/spinner"` (explicit `Component.CollectSubs(PageA, PageB)` helper or
-similar). Spinner animation then becomes declarative:
-`("spinner", Sub.Interval(120ms, _ => TickMsg))` active only while loading.
-
-### 2. `KeyBinding` with help metadata + `HelpBar` widget
-
-`KeyMap` handles dispatch but carries no help text, so applications maintain
-a second hand-synced list for the help bar — the two inevitably drift apart
-(bubbles prevents this with `key.WithHelp` + `help.Model`). devo hand-rolled:
-
-```csharp
-record KeyBinding(IReadOnlyList<KeyPattern> Patterns, string HelpKey, string HelpDescription);
-KeyMap On(this KeyMap map, KeyBinding b, Func<IMsg> msg); // registers all patterns
-```
-
-**Proposal:** promote `KeyBinding` into `ConsoleForge.Core` with an `Enabled`
-flag (disabled = skipped by `Handle`, hidden from help), a
-`KeyMap.On(KeyBinding, ...)` overload, and a `HelpBar` widget rendering
-`q quit · esc back · ? help` from `IReadOnlyList<KeyBinding>` in the theme's
-muted style.
-
-### 13. An image the terminal evicted is never sent again
-
-Kitty keeps uploaded images in a storage quota and discards old ones when it fills. The
-frame tracking assumes that whatever it uploaded is still held, so an evicted image is
-re-*placed* — and the placement fails silently, because every command sets `q=2`.
-
-**Proposal:** place with `q=1` (errors only), and route a `KittyGraphicsReplyEvent` with
-`ENOENT` for image id *n* to the renderer, which forgets content hash *n* so the next frame
-encodes it in full. `InputDecoder` already decodes the reply; what is missing is the path
-from `AnsiTerminal` to `RenderContext` — which is a render-path change, so it comes with a
-Tier 3 run.
+Nothing open. Follow-ups noticed while closing the last batch, not yet items: the Gallery
+still hard-codes `viewportHeight: 12` and hand-writes its help line, both of which
+`RegionChangedMsg` and `HelpBar` now cover.
 
 ## Fixed (for the record)
 
@@ -169,3 +78,8 @@ What each gap turned out to be, and what shipped.
 | 0.4.1 | A Kitty image uploaded on the frame it was meant to appear in (item 10), so under tmux — which forwards a large DCS-wrapped upload after the cells around it — a shelf's `░` placeholder showed for the gap. `Cmd.Preload(payload)` transmits a payload when its bytes arrive, through the new `IRawEscapePayload.Transmit` (Kitty: the `a=t` chunks `Encode` already started with, now factored out); `RenderContext` records it as held, and its first appearance costs one `a=p`. The event loop sends a synchronously-completing preload straight from `DispatchCmd`, before `ProcessMsg` marks the model dirty, so the upload precedes any frame showing the new model — the render timer's included. Deliberately best-effort: nothing is sent for a payload already on screen or already held, a held entry is consumed by its first appearance and dropped on resize, and before the first frame it is a no-op — each case falling back to today's full `Encode`. Priced as the item asked: opt-in, costs an application one line in the `Update` that receives the bytes, and the frame path gains one `HashSet` lookup per new payload. The effect on the tmux gap itself was reasoned about, not measured against a real tmux. |
 | Unreleased | Input went through `Console.ReadKey`, which had already decoded the bytes, so escape sequences were rebuilt from its `KeyChar`s. That rebuild waited microseconds for the rest of a sequence (↑ split by SSH became Escape, `[`, `A`), could not see the Kitty keyboard protocol, and could not tell a terminal's reply from typing. Input is now raw characters from `poll`/`read` (Unix) or `ReadConsoleInputW` with VT input (Windows) into a pure `InputDecoder`, tested with strings, with the timeout as an input to it rather than a spin loop inside it. Windows should get SGR mouse, which the ReadKey loop could not receive (not yet tried on Windows); macOS stops overflowing a Linux-shaped `termios`. |
 | Unreleased | Kitty graphics replies reached the model as keystrokes — `ESC _ G i=…;OK ESC \` became Alt+`_`, `Gi=…;OK`, Alt+`\` — and the place delete (`a=d`) and continuation chunks did not set `q=2`, so they were left to each terminal's habits. `Detect()` relied on environment variables while `BuildDetectProbe` sat unused: it could not be, as ReadKey could not read the answer, and the probe itself declared `f=32` for PNG bytes and set `q=1`, which suppresses the `OK` it asks for. Replies are now decoded and kept from the model, every command is quiet, and `Detect()` sends a well-formed probe bounded by a device attributes request, falling back to the environment only when the terminal cannot be asked or does not answer. |
+| Unreleased | `f=100` declared PNG for whatever bytes it was handed (item 12). WezTerm sniffs the content, so PlexTui's JPEG artwork drew there; kitty and Ghostty decode only PNG under `f=100` and drew nothing, silently, because of `q=2`. Both proposals landed: `PngData` and `CreatePayload(byte[])` check the PNG signature and throw, naming the fix; and `RgbaImageData` goes to the Kitty path as zlib-compressed `f=32` (`o=z`, RFC 1950 via the BCL's `ZLibStream` — no new dependency), so an application decodes whatever it has. JPEG decoding stays out of the framework. |
+| Unreleased | An image the terminal evicted was never sent again (item 13). The protocol says terminals delete older images past their quota (kitty: 320 MB per screen), preferring images without placements — preloaded ones. Uploads and placements now use `q=1`; `InputDecoder` already decoded the `ENOENT` reply, and it now reaches `App`, which tells `Renderer.ForgetRawPayload` so the next frame encodes the image in full. Bounded: an image whose upload was rejected (any non-`ENOENT` error) is never retried, and recoveries stop after three per image. Tier 1 tests count uploads through `RenderContext` and through `App`; Tier 3 not run (no NuGet access where it was written). Under tmux replies generally do not return, so nothing changes there. |
+| Unreleased | `KeyMap` carried no help text, so applications kept a second hand-synced list for their help bar (item 2). `KeyBinding` (patterns + `HelpKey` + `HelpDescription` + `Enabled`) is now in `ConsoleForge.Core`, `KeyMap.On(KeyBinding, …)` registers it and lists it in `KeyMap.Bindings`, and `HelpBar` renders that list. Taken from `bubbles`' `key.WithHelp` + `help.Model` as the goal, not the mechanism: bubbles toggles a binding with `SetEnabled` on a pointer, here `Enabled` is an immutable property the model derives per state with `with`, and a map is built per state. Short help only; a multi-column full help can follow if wanted. |
+| Unreleased | Components could not declare subscriptions (item 1): only the root's `IHasSubscriptions` was consulted, so pages fell back to self-re-arming `Cmd.Tick` chains that died when a modal swallowed a tick. The proposal's explicit-composition variant landed, shaped on Elm's `Sub.batch`/`Sub.map` and Elmish's `Sub.map "prefix"`: `Component.Subscriptions(prefix, child, map?)`, `Sub.Batch`, `Sub.Map`. The framework still asks only the root — it does not walk the model looking for components — so what runs stays the parent's decision and visible in one method. |
+| Unreleased | A widget's viewport height never reached the model (item 9), so PlexTui hard-coded `ViewportRows = 20`, and the Gallery `viewportHeight: 12`. `RegionChangedMsg(FocusKey, Region)` landed as proposed: after each frame, a `RegionReporter` compares every keyed focusable's region with the last one reported and posts only what appeared, moved or resized — the push model of the web's `ResizeObserver`, keyed the way `FocusRequestedMsg` already is; Elm itself would pull with a `Browser.Dom.getElement` task, which suits a DOM the runtime does not own. Converges: an unchanged layout reports nothing, so a model that stores the height and re-renders gets no second message. |

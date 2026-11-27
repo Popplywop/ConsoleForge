@@ -27,6 +27,33 @@ marked **Breaking**.
   and `PixelHalfBlockBenchmarks` (the half-block fallback). Run them with
   `./bench.sh -f '*Pixel*'`.
 
+- Images in any format on Kitty terminals: `ImageWidget` sends `RgbaData` as
+  zlib-compressed pixels (`f=32,o=z`) when the terminal supports Kitty graphics and there
+  is no `PngData`, where it used to fall back to half-blocks. Decode a JPEG (or anything
+  else) and pass the pixels; one `RgbaData` now serves Kitty and half-block terminals both.
+  New: `KittyProtocol.CreatePayload(RgbaImageData, …)` (cached against the pixel array, as
+  PNG payloads are), `KittyProtocol.IsPng`, and an
+  `ImageWidget(RgbaImageData, TerminalCapabilities?)` constructor.
+- `RegionChangedMsg(FocusKey, Region)` — after each frame the framework reports the region
+  of every focusable widget with a `FocusKey` that appeared, moved or resized, so a model
+  sets `ListState.WithViewport(r.Region.Height)` (or a `TextArea`'s viewport) from layout
+  instead of hard-coding a row count that goes wrong when the layout around it changes.
+  Unchanged frames report nothing; widgets without a key are never reported.
+- Subscriptions of nested components: `Component.Subscriptions(prefix, child, map?)`
+  returns a child's subscriptions keyed `"prefix/key"` (nothing for a null child or one
+  without `IHasSubscriptions`), `Sub.Batch(...)` concatenates keyed lists and rejects a
+  duplicate key, and `Sub.Map(sub, fn)` transforms a subscription's messages — Elm's
+  `Sub.batch`/`Sub.map`, keyed. The root composes its children's subscriptions, so a
+  page's spinner can be an interval that runs while the page is loading rather than a
+  `Cmd.Tick` chain that dies the first time a tick is routed elsewhere.
+- `KeyBinding` — patterns plus the help text that describes them (`new KeyBinding("q",
+  "quit", KeyPattern.OfChar('q'))`), with an `Enabled` flag derived from model state via
+  `with`. `KeyMap.On(KeyBinding, …)` registers every pattern and records the binding in
+  `KeyMap.Bindings`; a disabled binding is skipped for input and help alike.
+- `HelpBar` — renders `q quit · esc back · ? help` from a list of `KeyBinding`s, typically
+  `KeyMap.Bindings`, so the help shown and the keys handled cannot drift apart. Keys in the
+  widget's style, descriptions in the theme's muted `DisabledStyle`; entries that do not fit
+  are dropped from the end behind `…`. Sizes to content.
 - Bracketed paste: `App.Run(…, enableBracketedPaste: true)` delivers a paste as one
   `PasteMsg(Text)` instead of a `KeyMsg` per character, so a pasted line break cannot press
   Enter. Line breaks are normalised to `\n`. Opt-in, since the model must handle
@@ -44,6 +71,11 @@ marked **Breaking**.
 
 ### Changed
 
+- **Breaking:** `ImageWidget.PngData` and `KittyProtocol.CreatePayload(byte[], …)` reject
+  bytes without the PNG signature with an `ArgumentException`. They were sent as `f=100`
+  regardless, declaring PNG for whatever they held: JPEG drew on WezTerm, which sniffs the
+  content, and nothing at all on kitty or Ghostty — silently, since every command sets
+  `q=2`. The message says what to do: decode the image and pass `RgbaData`.
 - **Input is read as raw characters and decoded by the framework**, on Unix and Windows
   alike, instead of through `Console.ReadKey`. ReadKey decodes the sequences .NET knows
   and hands back anything else as Escape plus loose characters, which the old loop then
@@ -100,6 +132,16 @@ marked **Breaking**.
   (`CSI row ; col R`, sent when anything reads the cursor position) is dropped rather than
   decoded as a modified F3, and a bracketed paste whose end marker never arrives is ended
   after 3 s of silence instead of swallowing every later key.
+- A Kitty image the terminal evicted was never sent again. Kitty and Ghostty keep uploaded
+  images within a storage quota (320 MB) and delete the oldest past it — images without
+  placements first, which is what `Cmd.Preload` leaves behind — while the frame tracking
+  assumed everything it uploaded was still held, and re-placed it into nothing. Uploads
+  and placements now set `q=1` (errors only, where they set `q=2`); a placement answered
+  `ENOENT` makes the renderer forget the image, and the next frame uploads it in full. An
+  image whose upload the terminal rejected is not retried, and recoveries are capped at
+  three per image so a terminal that keeps failing cannot cost an upload every frame.
+  Replies under tmux generally do not come back through it, so there the old behaviour
+  stands.
 - `IRawEscapePayload.Refresh` — the tmux renewal of a stationary image — had no test. It
   is now pinned in both directions: renewed once per frame inside tmux with the same
   placement id and no delete, and not renewed at all outside it.

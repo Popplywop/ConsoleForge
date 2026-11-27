@@ -95,6 +95,18 @@ internal sealed class Renderer
     }
 
     /// <summary>
+    /// The terminal reported that it no longer holds the payload with
+    /// <paramref name="contentHash"/>: encode it in full on the next frame, and mark the
+    /// renderer dirty so there is one. See <see cref="RenderContext.ForgetRawPayload"/>.
+    /// </summary>
+    internal void ForgetRawPayload(int contentHash)
+    {
+        if (_ctx is null) return;
+        _ctx.ForgetRawPayload(contentHash);
+        MarkDirty();
+    }
+
+    /// <summary>
     /// Render only if dirty. Returns true if a frame was produced and flushed.
     /// If clean (model/theme/size unchanged), skips View()+Render() entirely — zero alloc.
     /// </summary>

@@ -16,9 +16,16 @@ public delegate IAsyncEnumerable<IMsg> ISub(CancellationToken cancellationToken)
 /// Implement alongside <see cref="IModel"/> to participate in subscription management.
 /// </summary>
 /// <remarks>
+/// <para>
 /// After every <c>Update</c> call the framework invokes <see cref="Subscriptions"/> and
 /// compares the returned set (by subscription key) with the currently running set.
 /// New subscriptions are started; subscriptions whose key is no longer present are cancelled.
+/// </para>
+/// <para>
+/// Only the root model is asked. A nested component implements this interface too, and the
+/// root includes its subscriptions with <see cref="Component.Subscriptions"/> and
+/// <see cref="Sub.Batch"/> — composition is the parent's decision, as in Elm.
+/// </para>
 /// </remarks>
 public interface IHasSubscriptions
 {

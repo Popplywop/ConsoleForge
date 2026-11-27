@@ -26,6 +26,32 @@ public sealed record KeyMsg(
 /// <param name="Text">The pasted text.</param>
 public sealed record PasteMsg(string Text) : IMsg;
 
+/// <summary>
+/// The region a focusable widget occupies, reported after the frame that first placed it
+/// there — when it appears, and whenever layout moves or resizes it. Keyed by the widget's
+/// <see cref="Layout.IFocusable.FocusKey"/>; widgets without one are not reported.
+/// </summary>
+/// <remarks>
+/// <para>
+/// Scrolling depends on how many rows a widget shows, and only layout knows that. Store the
+/// height in the model rather than hard-coding a guess:
+/// </para>
+/// <code>
+/// case RegionChangedMsg { FocusKey: "results" } r:
+///     return (this with { Results = Results.WithViewport(r.Region.Height) }, null);
+/// </code>
+/// <para>
+/// The framework reports what only it can know and the model decides what it means, as
+/// with <see cref="FocusRequestedMsg"/>. Reports follow frames, so a model that changes
+/// its layout in response gets a second report only if the region actually changed —
+/// which settles as long as the response does not keep resizing the widget. Give each
+/// focusable a distinct key: with two, only the first in declaration order is reported.
+/// </para>
+/// </remarks>
+/// <param name="FocusKey">The <see cref="Layout.IFocusable.FocusKey"/> of the widget.</param>
+/// <param name="Region">Its allocated region, in absolute terminal cells.</param>
+public sealed record RegionChangedMsg(string FocusKey, Layout.Region Region) : IMsg;
+
 /// <summary>Terminal was resized.</summary>
 public sealed record WindowResizeMsg(int Width, int Height) : IMsg;
 
@@ -46,6 +72,12 @@ internal sealed record BatchDispatchMsg(IReadOnlyList<ICmd> Cmds) : IMsg;
 /// <summary>Carries a <see cref="Cmd.Preload"/> request to the event loop, which owns
 /// the terminal and the frame state that records what it holds.</summary>
 internal sealed record PreloadMsg(Layout.IRawEscapePayload Payload) : IMsg;
+
+/// <summary>
+/// A Kitty graphics error reply from the terminal, for the event loop. Never reaches the
+/// model: the loop handles it (see <c>App.HandleGraphicsReply</c>).
+/// </summary>
+internal sealed record GraphicsReplyMsg(uint ImageId, string Message) : IMsg;
 
 /// <summary>Internal: aggregates results from Cmd.Sequence serial execution.</summary>
 internal sealed record SequenceMsg(IMsg[] Messages) : IMsg;

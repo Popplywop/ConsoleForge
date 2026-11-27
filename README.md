@@ -11,7 +11,7 @@ Built for developers who want the predictability of Bubble Tea in C#: no mutable
 ## Features
 
 - **Elm loop** — `Init` → `Update` → `View`. Your model is an immutable record. `Update` returns a new copy. `View` is pure.
-- **15 built-in widgets** — TextBlock, TextInput, TextArea, List, Table, Checkbox, Tabs, ProgressBar, Spinner, BorderBox, Container, Modal, ZStack, ImageWidget, HorizontalShelf
+- **16 built-in widgets** — TextBlock, TextInput, TextArea, List, Table, Checkbox, Tabs, ProgressBar, Spinner, BorderBox, Container, Modal, ZStack, ImageWidget, HorizontalShelf, HelpBar
 - **6 named themes** — Dark, Light, Dracula, Nord, Monokai, Tokyo Night. Switch at runtime with one message.
 - **Mouse support** — SGR 1006 extended mouse tracking. Click-to-focus, scroll wheel, button/motion events.
 - **Keyboard input decoded by the framework** — modified keys (Ctrl+PageUp, Shift+F5, …), the Kitty keyboard protocol where the terminal offers it (instant Escape, Ctrl+Enter, Shift+Enter, Ctrl+I distinct from Tab), and opt-in bracketed paste. Replies the terminal sends to queries never reach your model as keystrokes.
@@ -77,6 +77,7 @@ sealed record HelloModel(int Count = 0) : IModel
 | `Tabs` | Tab bar + body content. Left/Right arrows, number keys 1–9. |
 | `ProgressBar` | Horizontal fill bar with optional percentage label. |
 | `Spinner` | Animated spinner with braille, ASCII, and arc frame sets. |
+| `HelpBar` | One-line key help (`q quit · esc back`) rendered from `KeyBinding`s. |
 | `BorderBox` | Bordered box with title. 6 border styles: Normal, Rounded, Thick, Double, ASCII, Hidden. |
 | `Container` | Flex layout along horizontal or vertical axis. Supports scrolling. |
 | `Modal` | Centered dialog overlay. Compose with `ZStack` for layered UIs. |
@@ -190,7 +191,8 @@ await App.Run(model, theme: Theme.Dark, enableMouse: true);
 
 - **Click-to-focus** — give a widget a `FocusKey`, and a left-click on it sends
   `FocusRequestedMsg(key)` to your model. The framework hit-tests; your model decides
-  what focus means. A widget without a key is not a click-focus target.
+  what focus means. A widget without a key is not a click-focus target. (The same key
+  also gets you `RegionChangedMsg` — where the widget ended up — with or without a mouse.)
 - **Scroll wheel** — `MouseMsg` with `MouseButton.ScrollUp` / `ScrollDown`
 - **Button events** — press, release, motion tracking via `MouseMsg`
 
@@ -257,6 +259,27 @@ if (SidebarKeys.Handle(msg) is { } action) msg = action;
 Shift stays a wildcard for a character pattern, since it has already been consumed producing the glyph; Ctrl and Alt must be absent, because `Ctrl+letter` arrives as a control character and `Alt+key` is a separate binding. Every `KeyPattern` field is optional and null means "don't care", so `default(KeyPattern)` matches every key — useful as a trailing catch-all, and worth avoiding by accident.
 
 Compose maps: `globalKeys.Merge(pageKeys)` — first map takes priority.
+
+### Help that cannot drift
+
+A `KeyBinding` carries its patterns and the help text that describes them, so the keys a map
+handles and the keys a `HelpBar` lists are one value:
+
+```csharp
+static readonly KeyBinding Quit = new("q", "quit", KeyPattern.OfChar('q'), KeyPattern.WithCtrl(ConsoleKey.C));
+static readonly KeyBinding Save = new("ctrl+s", "save", KeyPattern.WithCtrl(ConsoleKey.S));
+
+// Enabled is part of the value: derive it from the model instead of toggling it.
+KeyMap Keys => new KeyMap()
+    .On(Quit, () => new QuitMsg())
+    .On(Save with { Enabled = IsDirty }, () => new SaveMsg());
+
+// Update:  if (Keys.Handle(msg) is { } action) msg = action;
+// View:    new HelpBar(Keys.Bindings)        →  q quit · ctrl+s save
+```
+
+A disabled binding matches nothing and is left out of help. What does not fit the width is
+dropped from the end and replaced by `…`.
 
 ## IComponent — Sub-Programs
 
@@ -372,7 +395,7 @@ sealed record Model(ListState Rows, string[] Items) : IModel
 {
     public (IModel, ICmd?) Update(IMsg msg) => msg switch
     {
-        WindowResizeMsg r => (this with { Rows = Rows.WithViewport(r.Height - Chrome) }, null),
+        RegionChangedMsg { FocusKey: "rows" } r => (this with { Rows = Rows.WithViewport(r.Region.Height) }, null),
         KeyMsg k          => (this with { Rows = Rows.HandleKey(k) }, null),
         _                 => (this, null),
     };
@@ -387,8 +410,12 @@ it yet: scroll is then left alone and paging does nothing, since a page has no s
 
 `VisibleRange` gives the `(offset, length)` slice a view should draw.
 
-> **Note:** the `List` widget cannot use the viewport half — a widget learns its region
-> only at render time — so it leaves `ScrollOffset` to the model via
+`RegionChangedMsg` is how the viewport arrives: after each frame the framework reports the
+region of every focusable widget with a `FocusKey` that appeared, moved or resized, so
+`ViewportHeight` comes from layout rather than from arithmetic on the terminal size.
+
+> **Note:** the `List` widget itself cannot use the viewport half — a widget learns its
+> region only at render time — so it leaves `ScrollOffset` to the model via
 > `List.ComputeScrollOffset`. A model holding a `ListState` gets both.
 
 ## Commands
@@ -437,6 +464,10 @@ public IReadOnlyList<(string Key, ISub Sub)> Subscriptions() =>
 ];
 ```
 
+Nested components declare theirs the same way, and the root composes them —
+`Sub.Batch(own, Component.Subscriptions("page", Page), …)` keys each child's under its
+prefix (`"page/spinner"`).
+
 ## Samples
 
 | Sample | Description |
@@ -453,7 +484,7 @@ dotnet run --project samples/ConsoleForge.Gallery
 
 ```
 src/ConsoleForge/
-  Core/       App, IModel, IMsg, ICmd, IComponent, KeyMap, KeyPattern, Component,
+  Core/       App, IModel, IMsg, ICmd, IComponent, KeyMap, KeyPattern, KeyBinding, Component,
               Cmd, CmdDispatcher, Sub, FocusManager, Renderer, ViewDescriptor,
               Messages, TextInputState, TextAreaState, ListState, Attributes
   Layout/     IWidget, IContainer, IFocusable, IMeasurable, ISingleBodyWidget,
@@ -464,7 +495,7 @@ src/ConsoleForge/
               TerminalProbe, KittyProtocol, Termios (Unix), WindowsConsole
   Widgets/    TextBlock, TextInput, TextArea, List, Table, Checkbox, Tabs,
               ProgressBar, Spinner, BorderBox, Container, Modal, ZStack,
-              ImageWidget, HorizontalShelf
+              ImageWidget, HorizontalShelf, HelpBar
 
 src/ConsoleForge.SourceGen/      Roslyn incremental generator (netstandard2.0)
 
